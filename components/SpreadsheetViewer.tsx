@@ -5,17 +5,11 @@ import { SheetData } from '../types';
 declare const XLSX: any;
 
 const IconSearch = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
-const IconFindReplace = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>;
 const IconColumns = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>;
 const IconExport = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
 const IconSort = () => <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>;
 const IconType = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h10M10 7v10m4-10v10M7 17h10" /></svg>;
-
-interface FilterCondition {
-  columnIdx: number;
-  value: string;
-  type: 'include' | 'exclude' | 'greaterThan' | 'lessThan' | 'equals';
-}
+const IconSlicer = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>;
 
 interface SlicerSettings {
   mode: 'all' | 'first' | 'last' | 'range';
@@ -49,88 +43,115 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   const data = sheets[activeSheet] || { headers: [], rows: [] };
   const prevRowsRef = useRef<any[][]>(data.rows);
   
+  // Local UI State
   const [sortConfig, setSortConfig] = useState<{ key: number; direction: 'asc' | 'desc' | null }>({ key: -1, direction: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [editingCell, setEditingCell] = useState<{ r: number, c: number } | null>(null);
   const [isTypeAwareEnabled, setIsTypeAwareEnabled] = useState(true);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
-  
-  const [hiddenColumns] = useState<Set<number>>(new Set());
-  const [filters] = useState<FilterCondition[]>([]);
-  const [slicer] = useState<SlicerSettings>({ mode: 'all', value: 100, endValue: 200 });
-  
+  const [isSlicerOpen, setIsSlicerOpen] = useState(false);
+  const [isColumnManagerOpen, setIsColumnManagerOpen] = useState(false);
+  const [hiddenColumns, setHiddenColumns] = useState<Set<number>>(new Set());
+  const [slicer, setSlicer] = useState<SlicerSettings>({ mode: 'all', value: 100, endValue: 200 });
   const [cellHistory, setCellHistory] = useState<Record<string, CellChange>>({});
+  
   const resizeRef = useRef<{ colIdx: number, startX: number, startWidth: number } | null>(null);
+
+  useEffect(() => {
+    setSortConfig({ key: -1, direction: null });
+    setSearchTerm('');
+    setSlicer({ mode: 'all', value: 100, endValue: 200 });
+    setHiddenColumns(new Set());
+    setEditingCell(null);
+    setIsExportMenuOpen(false);
+    setIsSlicerOpen(false);
+    setIsColumnManagerOpen(false);
+  }, [activeSheet]);
 
   useEffect(() => {
     if (prevRowsRef.current !== data.rows) {
       const newHistory: Record<string, CellChange> = { ...cellHistory };
-      let changedCount = 0;
       data.rows.forEach((row, rIdx) => {
         const prevRow = prevRowsRef.current[rIdx];
         if (prevRow) {
           row.forEach((cell, cIdx) => {
             if (cell !== prevRow[cIdx]) {
               newHistory[`${rIdx}_${cIdx}`] = { oldValue: prevRow[cIdx], newValue: cell, timestamp: Date.now() };
-              changedCount++;
             }
           });
         }
       });
-      if (changedCount > 0) setCellHistory(newHistory);
+      setCellHistory(newHistory);
       prevRowsRef.current = data.rows;
     }
   }, [data.rows]);
 
   const filteredData = useMemo(() => {
     let processed = data.rows.map((row, index) => ({ row, originalIndex: index }));
+    
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      processed = processed.filter(({ row }) => row.some(cell => String(cell ?? '').toLowerCase().includes(term)));
+      processed = processed.filter(({ row }) => 
+        row.some(cell => String(cell ?? '').toLowerCase().includes(term))
+      );
     }
-    if (filters.length > 0) {
-      processed = processed.filter(({ row }) => {
-        return filters.every(filter => {
-          const val = row[filter.columnIdx];
-          const cellValue = String(val ?? '').toLowerCase();
-          const filterValue = filter.value.toLowerCase();
-          const numCellValue = parseFloat(cellValue);
-          const numFilterValue = parseFloat(filterValue);
-          switch (filter.type) {
-            case 'include': return cellValue.includes(filterValue);
-            case 'exclude': return !cellValue.includes(filterValue);
-            case 'equals': return cellValue === filterValue;
-            case 'greaterThan': return !isNaN(numCellValue) && numCellValue > numFilterValue;
-            case 'lessThan': return !isNaN(numCellValue) && numCellValue < numFilterValue;
-            default: return true;
-          }
-        });
-      });
-    }
+
     if (sortConfig.key !== -1 && sortConfig.direction) {
-      processed.sort((a, b) => {
-        const valA = a.row[sortConfig.key];
-        const valB = b.row[sortConfig.key];
-        const numA = parseFloat(valA);
-        const numB = parseFloat(valB);
-        if (!isNaN(numA) && !isNaN(numB)) return sortConfig.direction === 'asc' ? numA - numB : numB - numA;
-        const strA = String(valA ?? '');
-        const strB = String(valB ?? '');
-        if (strA === strB) return 0;
-        const res = strA < strB ? -1 : 1;
-        return sortConfig.direction === 'asc' ? res : -res;
+      const { key, direction } = sortConfig;
+      processed = [...processed].sort((a, b) => {
+        const valA = a.row[key];
+        const valB = b.row[key];
+
+        const isEmptyA = valA === null || valA === undefined || String(valA).trim() === '';
+        const isEmptyB = valB === null || valB === undefined || String(valB).trim() === '';
+
+        if (isEmptyA && isEmptyB) return 0;
+        if (isEmptyA) return 1;
+        if (isEmptyB) return -1;
+
+        const strA = String(valA).trim().replace(/,/g, '');
+        const strB = String(valB).trim().replace(/,/g, '');
+        
+        const numA = parseFloat(strA);
+        const numB = parseFloat(strB);
+        const isNumA = !isNaN(numA) && /^-?\d*(\.\d+)?$/.test(strA);
+        const isNumB = !isNaN(numB) && /^-?\d*(\.\d+)?$/.test(strB);
+
+        let res = 0;
+        if (isNumA && isNumB) {
+          res = numA - numB;
+        } else {
+          res = String(valA).localeCompare(String(valB), undefined, { numeric: true, sensitivity: 'base' });
+        }
+        
+        return (direction === 'asc' ? res : -res) || (a.originalIndex - b.originalIndex);
       });
     }
-    if (slicer.mode === 'first') processed = processed.slice(0, Math.max(0, slicer.value));
-    else if (slicer.mode === 'last') processed = processed.slice(-Math.max(0, slicer.value));
-    else if (slicer.mode === 'range') processed = processed.slice(Math.max(0, slicer.value - 1), Math.max(0, slicer.endValue));
+
+    if (slicer.mode === 'first') {
+      processed = processed.slice(0, Math.max(0, slicer.value));
+    } else if (slicer.mode === 'last') {
+      processed = processed.slice(-Math.max(0, slicer.value));
+    } else if (slicer.mode === 'range') {
+      processed = processed.slice(Math.max(0, slicer.value - 1), Math.max(0, slicer.endValue));
+    }
+
     return processed;
-  }, [data.rows, searchTerm, sortConfig, filters, slicer]);
+  }, [data.rows, searchTerm, sortConfig, slicer]);
+
+  const handleToggleSort = (colIdx: number) => {
+    setSortConfig(prev => {
+      if (prev.key !== colIdx) return { key: colIdx, direction: 'asc' };
+      if (prev.direction === 'asc') return { key: colIdx, direction: 'desc' };
+      return { key: -1, direction: null };
+    });
+  };
 
   const handleExport = (type: 'xlsx' | 'csv' | 'json') => {
     if (typeof XLSX === 'undefined') return;
+    const exportData = filteredData.map(d => d.row);
     if (type === 'json') {
-      const jsonData = data.rows.map(row => {
+      const jsonData = exportData.map(row => {
         const obj: any = {};
         data.headers.forEach((h, i) => { obj[h || `Col_${i+1}`] = row[i]; });
         return obj;
@@ -142,7 +163,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
       a.download = `${activeSheet}.json`;
       a.click();
     } else {
-      const ws = XLSX.utils.aoa_to_sheet([data.headers, ...data.rows]);
+      const ws = XLSX.utils.aoa_to_sheet([data.headers, ...exportData]);
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, activeSheet);
       XLSX.writeFile(wb, `${activeSheet}.${type}`, { bookType: type });
@@ -169,6 +190,13 @@ export const SpreadsheetViewer: React.FC<Props> = ({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
+  const toggleColumnVisibility = (idx: number) => {
+    const next = new Set(hiddenColumns);
+    if (next.has(idx)) next.delete(idx);
+    else next.add(idx);
+    setHiddenColumns(next);
+  };
+
   const renderCell = (value: any, originalRowIndex: number, cIdx: number) => {
     const isEditing = editingCell?.r === originalRowIndex && editingCell?.c === cIdx;
     const history = cellHistory[`${originalRowIndex}_${cIdx}`];
@@ -181,7 +209,8 @@ export const SpreadsheetViewer: React.FC<Props> = ({
           defaultValue={value}
           onBlur={(e) => {
             if (e.target.value !== String(value ?? '')) {
-              const newRows = data.rows.map((row, idx) => idx === originalRowIndex ? [...row] : row);
+              const newRows = [...data.rows];
+              newRows[originalRowIndex] = [...newRows[originalRowIndex]];
               newRows[originalRowIndex][cIdx] = e.target.value;
               onUpdate?.(activeSheet, newRows);
             }
@@ -220,13 +249,20 @@ export const SpreadsheetViewer: React.FC<Props> = ({
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-white dark:bg-slate-950">
-      <div className="flex items-center gap-3 p-2.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm z-30">
-        <div className="relative flex-1 max-w-xs">
-          <input type="text" placeholder="Filter sheet..." className="w-full pl-8 pr-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+      {/* Toolbar - Increased z-index to ensure dropdowns are always on top */}
+      <div className="flex items-center gap-3 p-2.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm z-50 overflow-visible">
+        <div className="relative flex-1 min-w-[180px] max-w-xs shrink-0">
+          <input 
+            type="text" 
+            placeholder="Search sheet..." 
+            className="w-full pl-8 pr-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 dark:border-slate-700 bg-transparent text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm transition-all" 
+            value={searchTerm} 
+            onChange={(e) => setSearchTerm(e.target.value)} 
+          />
           <div className="absolute left-2.5 top-2 text-slate-400"><IconSearch /></div>
         </div>
         
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           <button 
             onClick={() => setIsTypeAwareEnabled(!isTypeAwareEnabled)} 
             className={`p-1.5 rounded-lg transition-all border ${isTypeAwareEnabled ? 'bg-indigo-50 border-indigo-200 text-indigo-600 dark:bg-indigo-900/30 dark:border-indigo-800 dark:text-indigo-400' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'}`}
@@ -234,56 +270,185 @@ export const SpreadsheetViewer: React.FC<Props> = ({
           >
             <IconType />
           </button>
+
+          <div className="relative">
+            <button 
+              onClick={() => { setIsSlicerOpen(!isSlicerOpen); setIsColumnManagerOpen(false); setIsExportMenuOpen(false); }}
+              className={`p-1.5 rounded-lg transition-all border ${slicer.mode !== 'all' ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-900/30 dark:border-amber-800' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'}`}
+              title="Data Slicing"
+            >
+              <IconSlicer />
+            </button>
+            {isSlicerOpen && (
+              <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-4 z-[100] animate-in fade-in slide-in-from-top-2">
+                <h4 className="text-[10px] font-black uppercase tracking-widest mb-3 text-slate-400">View Slicer</h4>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  {['all', 'first', 'last', 'range'].map(mode => (
+                    <button 
+                      key={mode} 
+                      onClick={() => setSlicer(s => ({ ...s, mode: mode as any }))} 
+                      className={`text-[10px] font-black uppercase tracking-tighter py-2 rounded-md transition-all ${slicer.mode === mode ? 'bg-indigo-600 text-white' : 'bg-slate-100 dark:bg-slate-700 text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}
+                    >
+                      {mode}
+                    </button>
+                  ))}
+                </div>
+                {slicer.mode !== 'all' && (
+                  <div className="flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-black uppercase text-slate-400">{slicer.mode === 'range' ? 'Start' : 'Limit'}</span>
+                      <input 
+                        type="number" 
+                        className="w-16 p-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs font-bold" 
+                        value={slicer.value} 
+                        onChange={(e) => setSlicer(s => ({ ...s, value: parseInt(e.target.value) || 0 }))} 
+                      />
+                    </div>
+                    {slicer.mode === 'range' && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-black uppercase text-slate-400">End</span>
+                        <input 
+                          type="number" 
+                          className="w-16 p-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded text-xs font-bold" 
+                          value={slicer.endValue} 
+                          onChange={(e) => setSlicer(s => ({ ...s, endValue: parseInt(e.target.value) || 0 }))} 
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="relative">
+            <button 
+              onClick={() => { setIsColumnManagerOpen(!isColumnManagerOpen); setIsSlicerOpen(false); setIsExportMenuOpen(false); }}
+              className={`p-1.5 rounded-lg transition-all border ${hiddenColumns.size > 0 ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/30 dark:border-rose-800' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400'}`}
+              title="Column Visibility"
+            >
+              <IconColumns />
+            </button>
+            {isColumnManagerOpen && (
+              <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl p-4 z-[100] max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-100 dark:border-slate-700">
+                  <h4 className="text-[10px] font-black uppercase tracking-widest text-slate-400">Column Layout</h4>
+                  <div className="flex gap-2">
+                    <button onClick={() => setHiddenColumns(new Set())} className="text-[8px] font-black uppercase text-indigo-500 hover:text-indigo-600 transition-colors">Show All</button>
+                    <div className="w-px h-2.5 bg-slate-200 dark:bg-slate-700 self-center" />
+                    <button onClick={() => setHiddenColumns(new Set(data.headers.map((_, i) => i)))} className="text-[8px] font-black uppercase text-rose-500 hover:text-rose-600 transition-colors">Hide All</button>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  {data.headers.map((h, i) => (
+                    <button key={i} onClick={() => toggleColumnVisibility(i)} className="w-full flex items-center justify-between px-2.5 py-2 hover:bg-slate-50 dark:hover:bg-slate-700 rounded-lg transition-all">
+                      <span className={`text-[10px] font-bold uppercase truncate max-w-[150px] ${hiddenColumns.has(i) ? 'text-slate-300 line-through' : 'text-slate-700 dark:text-slate-200'}`}>{h || `Col ${i+1}`}</span>
+                      {!hiddenColumns.has(i) ? (
+                        <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/20" />
+                      ) : (
+                        <div className="w-2.5 h-2.5 rounded-full bg-slate-200 dark:bg-slate-700" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          
+          <button 
+            onClick={() => {
+              setSearchTerm('');
+              setSortConfig({ key: -1, direction: null });
+              setSlicer({ mode: 'all', value: 100, endValue: 200 });
+              setHiddenColumns(new Set());
+            }} 
+            className="p-1.5 rounded-lg transition-all border bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-slate-700"
+            title="Reset All Filters"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+          </button>
         </div>
 
-        <div className="relative ml-auto">
-          <button onClick={() => setIsExportMenuOpen(!isExportMenuOpen)} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white shadow transition-all">
+        <div className="relative ml-auto shrink-0">
+          <button onClick={() => { setIsExportMenuOpen(!isExportMenuOpen); setIsSlicerOpen(false); setIsColumnManagerOpen(false); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-indigo-600 text-white shadow-lg hover:bg-indigo-700 transition-all active:scale-95 shadow-indigo-500/20">
             <IconExport /> Export
           </button>
           {isExportMenuOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl py-1.5 z-[60] animate-in slide-in-from-top-2 duration-200">
-              <button onClick={() => handleExport('xlsx')} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Excel (XLSX)</button>
-              <button onClick={() => handleExport('csv')} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">CSV</button>
-              <button onClick={() => handleExport('json')} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-700">JSON Data</button>
+            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-2xl py-1.5 z-[100] animate-in slide-in-from-top-2 duration-200">
+              <button onClick={() => handleExport('xlsx')} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">Excel (.xlsx)</button>
+              <button onClick={() => handleExport('csv')} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">CSV File</button>
+              <button onClick={() => handleExport('json')} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 hover:bg-slate-50 dark:hover:bg-slate-700 font-bold">JSON Structure</button>
             </div>
           )}
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-950 relative">
+      <div className="flex-1 overflow-auto bg-slate-50 dark:bg-slate-950 relative custom-scrollbar">
         <table className="w-full border-collapse table-fixed">
-          <thead className="sticky top-0 z-20">
+          <thead className="sticky top-0 z-20 shadow-sm">
             <tr className="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
               <th className="w-12 border-r border-slate-200 dark:border-slate-800 text-[9px] text-slate-400 font-black uppercase py-2">#</th>
               {data.headers.map((header, i) => !hiddenColumns.has(i) && (
-                <th key={i} style={{ width: columnWidths[i] || 150 }} className="relative px-3 py-2 text-left text-[10px] font-black text-slate-500 border-r border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-200 group transition-colors uppercase select-none">
-                  <div className="flex items-center justify-between" onClick={() => setSortConfig(p => ({ key: i, direction: p.key === i && p.direction === 'asc' ? 'desc' : 'asc' }))}>
-                    <span className="truncate pr-4">{header}</span>
-                    <IconSort />
+                <th 
+                  key={i} 
+                  style={{ width: columnWidths[i] || 150 }} 
+                  className={`relative px-3 py-2 text-left text-[10px] font-black border-r border-slate-200 dark:border-slate-800 cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-800 group transition-colors uppercase select-none ${sortConfig.key === i ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20' : 'text-slate-500'}`}
+                >
+                  <div className="flex items-center justify-between h-full" onClick={() => handleToggleSort(i)}>
+                    <span className="truncate pr-4">{header || `Col ${i+1}`}</span>
+                    <div className={`${sortConfig.key === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}>
+                      <IconSort />
+                    </div>
                   </div>
-                  <div onMouseDown={(e) => handleResizeStart(e, i)} className="absolute right-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-indigo-500 transition-colors z-30" />
+                  <div onMouseDown={(e) => handleResizeStart(e, i)} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-indigo-500 transition-colors z-30" />
                 </th>
               ))}
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-slate-950">
-            {filteredData.map(({ row, originalIndex }) => (
-              <tr key={originalIndex} className="group border-b border-slate-100 dark:border-slate-900 hover:bg-slate-50/40 dark:hover:bg-slate-900/40">
-                <td className="text-center text-[10px] text-slate-400 font-mono font-black border-r border-slate-200 dark:border-slate-800 py-2 align-top">{originalIndex + 1}</td>
-                {row.map((cell, cIdx) => !hiddenColumns.has(cIdx) && (
-                  <td key={cIdx} className="p-0 border-r border-slate-200 dark:border-slate-800 align-top">{renderCell(cell, originalIndex, cIdx)}</td>
-                ))}
+            {filteredData.length > 0 ? (
+              filteredData.map(({ row, originalIndex }) => (
+                <tr key={originalIndex} className="group border-b border-slate-100 dark:border-slate-900 hover:bg-slate-50/40 dark:hover:bg-slate-900/40 transition-colors">
+                  <td className="text-center text-[10px] text-slate-400 font-mono font-black border-r border-slate-200 dark:border-slate-800 py-2 align-top select-none bg-slate-50/50 dark:bg-slate-900/30">{originalIndex + 1}</td>
+                  {row.map((cell, cIdx) => !hiddenColumns.has(cIdx) && (
+                    <td key={cIdx} className="p-0 border-r border-slate-200 dark:border-slate-800 align-top">{renderCell(cell, originalIndex, cIdx)}</td>
+                  ))}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan={data.headers.length + 1} className="py-32 text-center bg-white dark:bg-slate-950">
+                   <div className="flex flex-col items-center gap-4">
+                     <div className="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-300 dark:text-slate-700">
+                        <IconSearch />
+                     </div>
+                     <div>
+                       <p className="text-[11px] font-black uppercase tracking-[0.2em] text-slate-400 mb-1">No Records Found</p>
+                       <p className="text-[10px] text-slate-400 font-medium">Try clearing your filters or changing search terms.</p>
+                     </div>
+                     <button onClick={() => setSearchTerm('')} className="px-6 py-2 border border-slate-200 dark:border-slate-800 rounded-full text-[9px] font-black uppercase tracking-widest text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 transition-all">Reset All Filters</button>
+                   </div>
+                </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
 
-      <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center p-1.5 overflow-x-auto scrollbar-none z-20">
+      <div className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center p-1.5 overflow-x-auto no-scrollbar z-20 shrink-0">
         <div className="flex gap-1 px-1">
           {Object.keys(sheets).map(name => (
-            <button key={name} onClick={() => onSheetChange(name)} className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border ${activeSheet === name ? 'bg-indigo-600 text-white border-indigo-600 shadow' : 'text-slate-500 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800'}`}>{name}</button>
+            <button 
+              key={name} 
+              onClick={() => onSheetChange(name)} 
+              className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border whitespace-nowrap ${activeSheet === name ? 'bg-indigo-600 text-white border-indigo-600 shadow-md scale-105' : 'text-slate-500 border-transparent hover:bg-slate-50 dark:hover:bg-slate-800'}`}
+            >
+              {name}
+            </button>
           ))}
+        </div>
+        <div className="ml-auto flex items-center gap-4 px-4 border-l border-slate-200 dark:border-slate-800">
+           <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">{filteredData.length} <span className="text-[8px] opacity-60">Visible</span></span>
         </div>
       </div>
     </div>
