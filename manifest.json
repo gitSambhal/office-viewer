@@ -1,0 +1,17 @@
+
+{
+  "name": "Suhail Office Viewer",
+  "short_name": "Suhail Viewer",
+  "description": "High-performance private document workstation for XLSX, DOCX, and PDF.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7c3aed",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/281/281760.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

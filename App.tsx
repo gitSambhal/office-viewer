@@ -47,13 +47,11 @@ const App: React.FC = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
 
-  // Requirement: Hide popups on pressing Esc
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setContextMenu(null);
-        // If zenMode is on, we could also use Esc to exit it? 
-        // For now, let's just clear popups as requested.
+        setState(prev => prev.zenMode ? { ...prev, zenMode: false } : prev);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -134,11 +132,9 @@ const App: React.FC = () => {
   const closeTab = (id: string) => {
     setState(prev => {
       const tabToClose = prev.tabs.find(t => t.id === id);
-      // Clean up memory if possible (e.g. revoking URLs)
       if (tabToClose?.type === 'image' && typeof tabToClose.data === 'string' && tabToClose.data.startsWith('blob:')) {
         URL.revokeObjectURL(tabToClose.data);
       }
-      
       const nextTabs = prev.tabs.filter(t => t.id !== id);
       const nextId = prev.activeTabId === id ? (nextTabs.length ? nextTabs[nextTabs.length - 1].id : null) : prev.activeTabId;
       return { ...prev, tabs: nextTabs, activeTabId: nextId };
@@ -188,30 +184,30 @@ const App: React.FC = () => {
              <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
            </div>
            <div className="text-center">
-             <h2 className="text-4xl font-black tracking-tighter text-zinc-800 dark:text-white mb-2">Drop to View</h2>
-             <p className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-widest text-[11px]">All Office Formats Supported</p>
+             <h2 className="text-4xl font-black tracking-tighter text-zinc-800 dark:text-white mb-2">Drop to Open</h2>
+             <p className="text-zinc-500 dark:text-zinc-400 font-bold uppercase tracking-widest text-[11px]">Secure Offline Processing</p>
            </div>
         </div>
       </div>
 
       <header className="hide-in-zen flex items-center justify-between px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 select-none z-30 shadow-sm">
         <div className="flex items-center gap-6">
-          <div title="Return to Home" className="flex items-center gap-2.5 group cursor-pointer" onClick={() => setState(s => ({ ...s, activeTabId: null }))}>
+          <div title="Go to Welcome Screen" className="flex items-center gap-2.5 group cursor-pointer" onClick={() => setState(s => ({ ...s, activeTabId: null }))}>
             <div className="w-9 h-9 bg-violet-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-violet-500/20 group-hover:scale-110 transition-transform italic">S</div>
             <h1 className="font-black text-zinc-800 dark:text-white hidden sm:block tracking-tighter text-lg">Suhail <span className="text-violet-600 dark:text-violet-400">Viewer</span></h1>
           </div>
           <nav className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1 gap-1">
             <button 
-              title="Toggle Sidebar (Document Metadata)" 
+              title="Toggle File Info Sidebar" 
               onClick={() => setState(s => ({ ...s, isSidebarOpen: !s.isSidebarOpen }))} 
               className={`p-2 rounded-lg transition-all ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600 dark:text-violet-400' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
             </button>
-            <button title="Switch Dark/Light Theme" onClick={() => setState(s => ({ ...s, darkMode: !s.darkMode }))} className="p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all text-zinc-500">
+            <button title="Switch Theme" onClick={() => setState(s => ({ ...s, darkMode: !s.darkMode }))} className="p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all text-zinc-500">
               {state.darkMode ? <IconLight /> : <IconDark />}
             </button>
-            <button title="Zen Mode (Distraction Free)" onClick={() => setState(s => ({ ...s, zenMode: !s.zenMode }))} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${state.zenMode ? 'text-violet-600 bg-white dark:bg-zinc-700 shadow-md' : 'text-zinc-500'}`}>
+            <button title="Zen Mode (Esc to exit)" onClick={() => setState(s => ({ ...s, zenMode: !s.zenMode }))} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${state.zenMode ? 'text-violet-600 bg-white dark:bg-zinc-700 shadow-md' : 'text-zinc-500'}`}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             </button>
             <button title="Toggle Fullscreen" onClick={toggleFullscreen} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${isFullscreen ? 'text-violet-600' : 'text-zinc-500'}`}>
@@ -219,8 +215,9 @@ const App: React.FC = () => {
             </button>
           </nav>
         </div>
-        <label title="Select files to view (XLSX, DOCX, PDF, etc.)" className="cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-700 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-violet-500/10 active:scale-95">
-          Launch Document Studio
+        <label title="Choose local files to view" className="cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-violet-500/10 active:scale-95 flex items-center gap-2">
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+          Select Files
           <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
         </label>
       </header>
@@ -245,7 +242,7 @@ const App: React.FC = () => {
       <main className="flex-1 flex overflow-hidden relative">
         {state.zenMode && (
           <button 
-            title="Exit Focus Mode"
+            title="Exit Zen Mode"
             onClick={() => setState(s => ({ ...s, zenMode: false }))}
             className="fixed bottom-6 right-6 z-[100] px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl animate-in fade-in slide-in-from-bottom-4 flex items-center gap-3 active:scale-95 transition-all"
           >
@@ -259,12 +256,12 @@ const App: React.FC = () => {
             <div className="p-6 space-y-8 h-full overflow-y-auto custom-scrollbar">
               <section>
                 <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em]">File Insights</h3>
-                  <button onClick={() => setState(s => ({...s, isSidebarOpen: false}))} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-400" title="Collapse Sidebar">
+                  <h3 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Properties</h3>
+                  <button onClick={() => setState(s => ({...s, isSidebarOpen: false}))} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-400" title="Hide Sidebar">
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
                   </button>
                 </div>
-                {activeMetadata ? (
+                {activeMetadata && (
                   <div className="space-y-6">
                     {activeMetadata.map((m, i) => (
                       <div key={i} className="group animate-in fade-in slide-in-from-left duration-300" style={{ animationDelay: `${i * 50}ms` }}>
@@ -273,10 +270,10 @@ const App: React.FC = () => {
                       </div>
                     ))}
                     <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                      <p className="text-[9px] text-zinc-400 font-black uppercase tracking-widest leading-relaxed">Processing: Offline & Local</p>
+                      <p className="text-[9px] text-zinc-400 font-black uppercase tracking-widest leading-relaxed">Status: Encrypted & Private</p>
                     </div>
                   </div>
-                ) : null}
+                )}
               </section>
             </div>
           </aside>
@@ -309,27 +306,36 @@ const App: React.FC = () => {
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-start p-12 text-center overflow-y-auto custom-scrollbar bg-zinc-50 dark:bg-zinc-950 animate-in fade-in duration-500">
-               <div className="max-w-5xl w-full py-20">
+               <div className="max-w-5xl w-full py-16">
                  <div className="mb-24">
                    <div className="w-24 h-24 bg-violet-600 rounded-[2rem] flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-violet-500/40 mx-auto mb-12 italic transition-transform hover:rotate-6">S</div>
-                   <h2 className="text-7xl font-black text-zinc-950 dark:text-white mb-6 tracking-tighter leading-[1.05]">Office Viewer <span className="text-violet-600">Pro</span></h2>
+                   <h2 className="text-7xl font-black text-zinc-950 dark:text-white mb-6 tracking-tighter leading-[1.05]">Secure Document <span className="text-violet-600">Workstation</span></h2>
                    <p className="text-xl text-zinc-500 dark:text-zinc-400 font-medium mb-12 max-w-2xl mx-auto leading-relaxed">
-                     The industry-standard workstation for viewing Office documents locally. Secure, lightning-fast, and zero-dependency.
+                     Open and manage PDF, Excel (XLSX), Word (DOCX), RTF, Markdown, and Images directly in your browser. All processing is 100% local — your documents never leave your computer.
                    </p>
                    
+                   <div className="flex flex-wrap justify-center gap-3 mb-16">
+                     {['PDF', 'XLSX', 'DOCX', 'RTF', 'Markdown', 'JPG/PNG'].map((fmt) => (
+                       <span key={fmt} className="px-4 py-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[10px] font-black uppercase tracking-widest border border-zinc-300/50 dark:border-zinc-700/50">
+                         {fmt}
+                       </span>
+                     ))}
+                   </div>
+
                    <div className="flex items-center justify-center gap-6 mb-20">
-                    <label title="Open the professional document workspace" className="group relative inline-flex items-center gap-4 cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-[0.1em] shadow-2xl shadow-violet-500/20 transition-all hover:scale-[1.05] active:scale-95">
+                    <label title="Choose local documents to begin" className="group relative inline-flex items-center gap-4 cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-[0.1em] shadow-2xl shadow-violet-500/20 transition-all hover:scale-[1.05] active:scale-95">
                         <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-                        Launch Document Studio
+                        Browse Local Documents
                         <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
                     </label>
                    </div>
 
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
+                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
                       {[
-                        { title: 'Universal Format Engine', desc: 'Native support for XLSX, DOCX, PDF, RTF, Markdown and Images.', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
-                        { title: 'Privacy-First Stack', desc: 'No servers. No uploads. All documents are processed within your browser.', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
-                        { title: 'Pro Toolkit', desc: 'Tabbed interface, sorting, filtering, and high-fidelity rendering.', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' }
+                        { title: 'Local-Only Engine', desc: 'Secure, client-side processing. Zero network dependency for viewing files.', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
+                        { title: 'Multi-Tab Workspace', desc: 'Read and compare multiple documents across formats in one unified view.', icon: 'M4 6h16M4 12h16m-7 6h7' },
+                        { title: 'Zen & Focus Mode', desc: 'Distraction-free interface with full-screen support and ESC-to-exit convenience.', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+                        { title: 'Installable PWA', desc: 'High-performance offline app. Desktop-class document management in a web browser.', icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10' }
                       ].map((feature, i) => (
                         <div key={i} className="p-8 bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-900/30 transition-all group">
                           <div className="w-12 h-12 bg-zinc-50 dark:bg-zinc-800 text-violet-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all shadow-inner">
@@ -353,10 +359,10 @@ const App: React.FC = () => {
           y={contextMenu.y}
           onClose={() => setContextMenu(null)}
           items={[
-            { label: 'Close Active Tab', onClick: () => closeTab(contextMenu.tabId) },
-            { label: 'Close Neighbors', onClick: () => setState(s => ({ ...s, tabs: s.tabs.filter(t => t.id === contextMenu.tabId) })) },
+            { label: 'Close This Tab', onClick: () => closeTab(contextMenu.tabId) },
+            { label: 'Close Other Tabs', onClick: () => setState(s => ({ ...s, tabs: s.tabs.filter(t => t.id === contextMenu.tabId) })) },
             { divider: true },
-            { label: 'Clear Portfolio', onClick: closeAllTabs }
+            { label: 'Close All Tabs', onClick: closeAllTabs }
           ]}
         />
       )}

@@ -4,7 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suhail Office Viewer</title>
+    <title>Suhail Viewer - Professional PDF, XLS, DOC, RTF, Markdown & Image Local Suite</title>
+    <meta name="description" content="View PDF, Excel (XLSX/XLS), Word (DOCX/DOC), RTF, Markdown and Images locally. Secure, offline-first workstation with Zen Mode and multi-tab support.">
+    <meta name="theme-color" content="#7c3aed">
+    <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script>
         tailwind.config = {
@@ -93,5 +96,12 @@
 </head>
 <body class="bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
     <div id="root"></div>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW registration failed:', err));
+        });
+      }
+    </script>
 </body>
 </html>
