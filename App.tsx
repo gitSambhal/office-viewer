@@ -8,7 +8,6 @@ import { DocxViewer } from './components/DocxViewer';
 import { TextViewer } from './components/TextViewer';
 import { ImageViewer } from './components/ImageViewer';
 import { RtfViewer } from './components/RtfViewer';
-import { PptxViewer } from './components/PptxViewer';
 
 // Simple Error Boundary
 class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
@@ -53,7 +52,6 @@ const getFileIcon = (type: FileType) => {
     case 'xlsx': return <div className="w-4 h-4 text-emerald-600"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div>;
     case 'docx': return <div className="w-4 h-4 text-blue-600"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div>;
     case 'pdf': return <div className="w-4 h-4 text-rose-600"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg></div>;
-    case 'pptx': return <div className="w-4 h-4 text-orange-600"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zm-2 10H8v-5h3c.55 0 1 .45 1 1v3c0 .55-.45 1-1 1zm-2-2h1v-1H9v1z"/></svg></div>;
     case 'image': return <div className="w-4 h-4 text-violet-500"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg></div>;
     case 'rtf': return <div className="w-4 h-4 text-amber-500"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM17 19H7v-2h10v2zm0-4H7v-2h10v2z"/></svg></div>;
     default: return <div className="w-4 h-4 text-zinc-400"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg></div>;
@@ -101,11 +99,9 @@ const App: React.FC = () => {
     setErrorMessage(null);
     const newTabs: Tab[] = [];
     
-    // Process files in sequence to avoid parallel memory spikes
     for (let i = 0; i < files.length; i++) {
       try {
         const file = files[i];
-        // Short delay to allow UI to breathe
         await new Promise(resolve => setTimeout(resolve, 50));
         const result = await FileProcessor.process(file);
         if (result.type !== 'unknown') {
@@ -138,49 +134,8 @@ const App: React.FC = () => {
     setIsProcessing(false);
   }, []);
 
-  useEffect(() => {
-    if ('launchQueue' in window) {
-      (window as any).launchQueue.setConsumer(async (launchParams: any) => {
-        if (launchParams.files && launchParams.files.length > 0) {
-          const files: File[] = [];
-          for (const handle of launchParams.files) {
-            const file = await handle.getFile();
-            files.push(file);
-          }
-          handleFiles(files);
-        }
-      });
-    }
-  }, [handleFiles]);
-
-  const onDragOver = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(true); };
-  const onDragLeave = (e: React.DragEvent) => {
-    e.preventDefault(); e.stopPropagation();
-    const rect = document.body.getBoundingClientRect();
-    if (e.clientX <= rect.left || e.clientX >= rect.right || e.clientY <= rect.top || e.clientY >= rect.bottom) {
-      setIsDragging(false);
-    }
-  };
-  const onDrop = (e: React.DragEvent) => { e.preventDefault(); e.stopPropagation(); setIsDragging(false); handleFiles(e.dataTransfer.files); };
-
-  useEffect(() => {
-    const handleFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handleFullscreenChange);
-    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
-
-  useEffect(() => {
-    if (state.darkMode) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-    try { localStorage.setItem('suhail_theme', state.darkMode ? 'dark' : 'light'); } catch (e) {}
-  }, [state.darkMode]);
-
   const closeTab = (id: string) => {
     setState(prev => {
-      const tabToClose = prev.tabs.find(t => t.id === id);
-      if (tabToClose?.type === 'image' && typeof tabToClose.data === 'string' && tabToClose.data.startsWith('blob:')) {
-        URL.revokeObjectURL(tabToClose.data);
-      }
       const nextTabs = prev.tabs.filter(t => t.id !== id);
       const nextId = prev.activeTabId === id ? (nextTabs.length ? nextTabs[nextTabs.length - 1].id : null) : prev.activeTabId;
       return { ...prev, tabs: nextTabs, activeTabId: nextId };
@@ -216,9 +171,9 @@ const App: React.FC = () => {
     <ErrorBoundary>
       <div 
         className={`flex flex-col h-full bg-zinc-50 dark:bg-zinc-950 transition-colors overflow-hidden ${state.zenMode ? 'zen-mode' : ''} ${isDragging ? 'dropzone-active' : ''}`}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
+        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFiles(e.dataTransfer.files); }}
       >
         <div className="dropzone-overlay">
           <div className="bg-white dark:bg-zinc-900 p-16 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 animate-in zoom-in duration-300 border-2 border-violet-100 dark:border-violet-900/30">
@@ -261,25 +216,21 @@ const App: React.FC = () => {
               <h1 className="font-black text-zinc-800 dark:text-white hidden sm:block tracking-tighter text-lg">Suhail <span className="text-violet-600 dark:text-violet-400">Viewer</span></h1>
             </div>
             <nav className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1 gap-1">
-              <button 
-                title="Sidebar (Alt+S)" 
-                onClick={() => setState(s => ({ ...s, isSidebarOpen: !s.isSidebarOpen }))} 
-                className={`p-2 rounded-lg transition-all ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600 dark:text-violet-400' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}
-              >
+              <button title="Sidebar" onClick={() => setState(s => ({ ...s, isSidebarOpen: !s.isSidebarOpen }))} className={`p-2 rounded-lg transition-all ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
               </button>
               <button title="Toggle Theme" onClick={() => setState(s => ({ ...s, darkMode: !s.darkMode }))} className="p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all text-zinc-500">
                 {state.darkMode ? <IconLight /> : <IconDark />}
               </button>
-              <button title="Zen Mode (Z)" onClick={() => setState(s => ({ ...s, zenMode: !s.zenMode }))} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${state.zenMode ? 'text-violet-600 bg-white dark:bg-zinc-700 shadow-md' : 'text-zinc-500'}`}>
+              <button title="Zen Mode" onClick={() => setState(s => ({ ...s, zenMode: !s.zenMode }))} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${state.zenMode ? 'text-violet-600 bg-white dark:bg-zinc-700 shadow-md' : 'text-zinc-500'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
               </button>
-              <button title="Fullscreen (F)" onClick={toggleFullscreen} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${isFullscreen ? 'text-violet-600' : 'text-zinc-500'}`}>
+              <button title="Fullscreen" onClick={toggleFullscreen} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${isFullscreen ? 'text-violet-600' : 'text-zinc-500'}`}>
                 <IconFullscreen />
               </button>
             </nav>
           </div>
-          <label title="Choose local files" className="cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-violet-500/10 active:scale-95 flex items-center gap-2">
+          <label className="cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-violet-500/10 active:scale-95 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
             Open Documents
             <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
@@ -294,22 +245,19 @@ const App: React.FC = () => {
               onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, tabId: tab.id }); }} 
               className={`flex items-center gap-2.5 px-5 py-3 border-r border-zinc-200 dark:border-zinc-800 cursor-pointer min-w-[140px] max-w-[280px] select-none group transition-all relative ${state.activeTabId === tab.id ? 'bg-zinc-50 dark:bg-zinc-950 shadow-inner' : 'hover:bg-zinc-50/50'}`}
             >
-              {state.activeTabId === tab.id && <div className="absolute top-0 left-0 right-0 h-0.5 bg-violet-600 animate-in slide-in-from-left duration-300" />}
+              {state.activeTabId === tab.id && <div className="absolute top-0 left-0 right-0 h-0.5 bg-violet-600" />}
               {getFileIcon(tab.type)}
               <span className={`text-[11px] truncate font-black uppercase tracking-tight flex-1 ${state.activeTabId === tab.id ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400'}`}>{tab.name}</span>
               <button title="Close Tab" onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }} className="opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 p-1 rounded-lg transition-all text-zinc-400"><IconX /></button>
             </div>
           ))}
-          {state.tabs.length > 0 && (
-            <button onClick={closeAllTabs} className="px-4 py-3 text-[10px] font-black uppercase tracking-widest text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-all border-l border-zinc-200 dark:border-zinc-800">Clear All</button>
-          )}
         </div>
 
         <main className="flex-1 flex overflow-hidden relative">
           {state.zenMode && (
             <button 
               onClick={() => setState(s => ({ ...s, zenMode: false }))}
-              className="fixed bottom-6 right-6 z-[100] px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl animate-in fade-in slide-in-from-bottom-4 flex items-center gap-3 active:scale-95 transition-all"
+              className="fixed bottom-6 right-6 z-[100] px-6 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-3 active:scale-95 transition-all"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
               Exit Zen Mode
@@ -322,14 +270,14 @@ const App: React.FC = () => {
                 <section>
                   <div className="flex items-center justify-between mb-6 pb-2 border-b border-zinc-100 dark:border-zinc-800">
                     <h3 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em]">Properties</h3>
-                    <button onClick={() => setState(s => ({...s, isSidebarOpen: false}))} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-400" title="Hide Sidebar">
+                    <button onClick={() => setState(s => ({...s, isSidebarOpen: false}))} className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-400">
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
                     </button>
                   </div>
                   {activeMetadata && (
                     <div className="space-y-6">
                       {activeMetadata.map((m, i) => (
-                        <div key={i} className="group animate-in fade-in slide-in-from-left duration-300" style={{ animationDelay: `${i * 50}ms` }}>
+                        <div key={i} className="group animate-in fade-in slide-in-from-left duration-300">
                           <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-1 group-hover:text-violet-500 transition-colors">{m.label}</div>
                           <div className="text-[12px] font-bold text-zinc-700 dark:text-zinc-200 break-words leading-snug">{m.value}</div>
                         </div>
@@ -365,7 +313,6 @@ const App: React.FC = () => {
                 )}
                 {activeTab.type === 'pdf' && <PdfViewer key={activeTab.id} data={activeTab.data} />}
                 {activeTab.type === 'docx' && <DocxViewer key={activeTab.id} data={activeTab.data} name={activeTab.name} />}
-                {activeTab.type === 'pptx' && <PptxViewer key={activeTab.id} data={activeTab.data} />}
                 {activeTab.type === 'rtf' && <RtfViewer key={activeTab.id} data={activeTab.data} />}
                 {activeTab.type === 'txt' && <TextViewer key={activeTab.id} content={activeTab.data} isMarkdown={false} />}
                 {activeTab.type === 'md' && <TextViewer key={activeTab.id} content={activeTab.data} isMarkdown={true} />}
@@ -381,26 +328,42 @@ const App: React.FC = () => {
                        Securely open and interact with professional documents locally.
                      </p>
                      
-                     <div className="flex flex-wrap justify-center gap-3 mb-16">
-                       {['PDF', 'Excel', 'Word', 'PowerPoint', 'RTF', 'Markdown'].map((fmt) => (
-                         <span key={fmt} className="px-4 py-1.5 rounded-full bg-zinc-200 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 text-[10px] font-black uppercase tracking-widest border border-zinc-300/50 dark:border-zinc-700/50">
-                           {fmt}
+                     <div className="flex flex-wrap justify-center gap-4 mb-16">
+                       {[
+                         { name: 'PDF', icon: getFileIcon('pdf'), color: 'bg-rose-50 dark:bg-rose-900/10' },
+                         { name: 'Excel', icon: getFileIcon('xlsx'), color: 'bg-emerald-50 dark:bg-emerald-900/10' },
+                         { name: 'Word', icon: getFileIcon('docx'), color: 'bg-blue-50 dark:bg-blue-900/10' },
+                         { name: 'RTF', icon: getFileIcon('rtf'), color: 'bg-amber-50 dark:bg-amber-900/10' },
+                         { name: 'Markdown', icon: getFileIcon('md'), color: 'bg-zinc-100 dark:bg-zinc-800/50' },
+                         { name: 'Images', icon: getFileIcon('image'), color: 'bg-violet-50 dark:bg-violet-900/10' }
+                       ].map((fmt) => (
+                         <span key={fmt.name} className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl ${fmt.color} border border-zinc-200 dark:border-zinc-800 transition-all hover:scale-105`}>
+                           {fmt.icon}
+                           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">{fmt.name}</span>
                          </span>
                        ))}
                      </div>
 
-                     <div className="flex items-center justify-center gap-6 mb-20">
-                      <label title="Select documents to start" className="group relative inline-flex items-center gap-4 cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-[0.1em] shadow-2xl shadow-violet-500/20 transition-all hover:scale-[1.05] active:scale-95">
+                     <div className="flex flex-col items-center justify-center gap-8 mb-20">
+                      <label className="group relative inline-flex items-center gap-4 cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-[0.1em] shadow-2xl shadow-violet-500/20 transition-all hover:scale-[1.05] active:scale-95">
                           <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
                           Open Local Files
                           <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
                       </label>
+                      
+                      <div className="flex items-center gap-2 py-4 px-6 bg-white dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-800 shadow-sm animate-in fade-in duration-1000">
+                         <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Designed & Crafted by</span>
+                         <a href="https://www.linkedin.com/in/im-suhail-akhtar/" target="_blank" rel="noopener noreferrer" className="text-[11px] font-black text-violet-600 hover:text-violet-500 transition-colors uppercase tracking-widest flex items-center gap-2 group">
+                            Suhail Akhtar
+                            <svg className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                         </a>
+                      </div>
                      </div>
 
                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
                         {[
                           { title: 'Offline-First', desc: 'All files stay on your machine. No server uploads ever.', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
-                          { title: 'Multi-Format', desc: 'Unified view for PDF, Spreadsheet, Word, and PowerPoint.', icon: 'M4 6h16M4 12h16m-7 6h7' },
+                          { title: 'Multi-Format', desc: 'Unified view for PDF, Spreadsheet, Word, and Documents.', icon: 'M4 6h16M4 12h16m-7 6h7' },
                           { title: 'Zen Focus', desc: 'Distraction-free interface with full-screen and Esc toggle.', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
                           { title: 'Tab Management', desc: 'Open and compare multiple documents simultaneously.', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' }
                         ].map((feature, i) => (

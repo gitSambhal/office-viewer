@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { SheetData } from '../types';
 
@@ -49,9 +48,10 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   
   const [sortConfig, setSortConfig] = useState<{ key: number; direction: 'asc' | 'desc' | null }>({ key: -1, direction: null });
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [editingCell, setEditingCell] = useState<{ r: number, c: number } | null>(null);
   const [isTypeAwareEnabled, setIsTypeAwareEnabled] = useState(true);
-  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
   const [isSlicerOpen, setIsSlicerOpen] = useState(false);
   const [isColumnManagerOpen, setIsColumnManagerOpen] = useState(false);
   const [hiddenColumns, setHiddenColumns] = useState<Set<number>>(new Set());
@@ -64,11 +64,19 @@ export const SpreadsheetViewer: React.FC<Props> = ({
 
   const resizeRef = useRef<{ colIdx: number, startX: number, startWidth: number } | null>(null);
 
+  // Debounce search term to prevent hanging during typing
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setEditingCell(null);
-        setIsExportMenuOpen(false);
+        setIsExportOpen(false);
         setIsSlicerOpen(false);
         setIsColumnManagerOpen(false);
       }
@@ -80,17 +88,16 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   useEffect(() => {
     setSortConfig({ key: -1, direction: null });
     setSearchTerm('');
+    setDebouncedSearchTerm('');
     setSlicer({ mode: 'all', value: 100, endValue: 200 });
     setHiddenColumns(new Set());
     setEditingCell(null);
-    setIsExportMenuOpen(false);
+    setIsExportOpen(false);
     setIsSlicerOpen(false);
     setIsColumnManagerOpen(false);
-    // Reset scroll when switching sheets
     if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
   }, [activeSheet]);
 
-  // Observer for container height to maintain virtualization accuracy
   useEffect(() => {
     const el = scrollContainerRef.current;
     if (!el) return;
@@ -109,62 +116,82 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   };
 
   const filteredData = useMemo(() => {
-    let processed = data.rows.map((row, index) => ({ row, originalIndex: index }));
-    
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      processed = processed.filter(({ row }) => 
-        row.some(cell => String(cell ?? '').toLowerCase().includes(term))
-      );
+    const rows = data.rows;
+    const rowCount = rows.length;
+    let indices: number[] = [];
+
+    // 1. Initial Filtering (Fast loop)
+    if (!debouncedSearchTerm) {
+      // If no search, start with all indices
+      indices = Array.from({ length: rowCount }, (_, i) => i);
+    } else {
+      const term = debouncedSearchTerm.toLowerCase();
+      // Optimized for-loop for large arrays
+      for (let i = 0; i < rowCount; i++) {
+        const row = rows[i];
+        let found = false;
+        const colCount = row.length;
+        for (let j = 0; j < colCount; j++) {
+          if (String(row[j] ?? '').toLowerCase().includes(term)) {
+            found = true;
+            break;
+          }
+        }
+        if (found) indices.push(i);
+      }
     }
 
+    // 2. Sorting
     if (sortConfig.key !== -1 && sortConfig.direction) {
       const { key, direction } = sortConfig;
-      processed = [...processed].sort((a, b) => {
-        const valA = a.row[key];
-        const valB = b.row[key];
+      indices.sort((idxA, idxB) => {
+        const valA = rows[idxA][key];
+        const valB = rows[idxB][key];
         const isEmptyA = valA === null || valA === undefined || String(valA).trim() === '';
         const isEmptyB = valB === null || valB === undefined || String(valB).trim() === '';
         if (isEmptyA && isEmptyB) return 0;
         if (isEmptyA) return 1;
         if (isEmptyB) return -1;
+        
         const strA = String(valA).trim().replace(/,/g, '');
         const strB = String(valB).trim().replace(/,/g, '');
         const numA = parseFloat(strA);
         const numB = parseFloat(strB);
         const isNumA = !isNaN(numA) && /^-?\d*(\.\d+)?$/.test(strA);
         const isNumB = !isNaN(numB) && /^-?\d*(\.\d+)?$/.test(strB);
+        
         let res = 0;
         if (isNumA && isNumB) {
           res = numA - numB;
         } else {
-          res = String(valA).localeCompare(String(valB), undefined, { numeric: true, sensitivity: 'base' });
+          res = strA.localeCompare(strB, undefined, { numeric: true, sensitivity: 'base' });
         }
-        return (direction === 'asc' ? res : -res) || (a.originalIndex - b.originalIndex);
+        return (direction === 'asc' ? res : -res) || (idxA - idxB);
       });
     }
 
-    if (slicer.mode === 'first') processed = processed.slice(0, Math.max(0, slicer.value));
-    else if (slicer.mode === 'last') processed = processed.slice(-Math.max(0, slicer.value));
-    else if (slicer.mode === 'range') processed = processed.slice(Math.max(0, slicer.value - 1), Math.max(0, slicer.endValue));
+    // 3. Slicer (Fast slice)
+    if (slicer.mode === 'first') {
+      indices = indices.slice(0, Math.max(0, slicer.value));
+    } else if (slicer.mode === 'last') {
+      indices = indices.slice(-Math.max(0, slicer.value));
+    } else if (slicer.mode === 'range') {
+      indices = indices.slice(Math.max(0, slicer.value - 1), Math.max(0, slicer.endValue));
+    }
 
-    return processed;
-  }, [data.rows, searchTerm, sortConfig, slicer]);
+    // 4. Map to object structure for view
+    return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
+  }, [data.rows, debouncedSearchTerm, sortConfig, slicer]);
 
-  // Virtualization window calculations
   const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVER_SCAN);
   const endIndex = Math.min(filteredData.length, Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + OVER_SCAN);
   const visibleRows = filteredData.slice(startIndex, endIndex);
 
-  // Fix: Added missing toggleColumnVisibility function to handle column visibility toggling.
   const toggleColumnVisibility = (colIdx: number) => {
     setHiddenColumns(prev => {
       const next = new Set(prev);
-      if (next.has(colIdx)) {
-        next.delete(colIdx);
-      } else {
-        next.add(colIdx);
-      }
+      if (next.has(colIdx)) next.delete(colIdx);
+      else next.add(colIdx);
       return next;
     });
   };
@@ -198,7 +225,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
       XLSX.utils.book_append_sheet(wb, ws, activeSheet);
       XLSX.writeFile(wb, `${activeSheet}.${type}`, { bookType: type });
     }
-    setIsExportMenuOpen(false);
+    setIsExportOpen(false);
   };
 
   const handleResizeStart = (e: React.MouseEvent, index: number) => {
@@ -275,14 +302,14 @@ export const SpreadsheetViewer: React.FC<Props> = ({
           <input 
             type="text" 
             placeholder="Search cells..." 
-            className="w-full pl-8 pr-8 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 bg-transparent text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-violet-500 shadow-sm transition-all" 
+            className={`w-full pl-8 pr-8 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 bg-transparent text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-violet-500 shadow-sm transition-all ${searchTerm !== debouncedSearchTerm ? 'opacity-50' : ''}`} 
             value={searchTerm} 
             onChange={(e) => setSearchTerm(e.target.value)} 
           />
           <div className="absolute left-2.5 top-2 text-zinc-400"><IconSearch /></div>
-          {searchTerm && (
+          {(searchTerm || debouncedSearchTerm) && (
             <button 
-              onClick={() => setSearchTerm('')}
+              onClick={() => { setSearchTerm(''); setDebouncedSearchTerm(''); }}
               className="absolute right-2.5 top-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
               title="Clear Search"
             >
@@ -303,7 +330,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
           <div className="relative">
             <button 
               title="Filter and Slice Dataset"
-              onClick={() => { setIsSlicerOpen(!isSlicerOpen); setIsColumnManagerOpen(false); setIsExportMenuOpen(false); }}
+              onClick={() => { setIsSlicerOpen(!isSlicerOpen); setIsColumnManagerOpen(false); setIsExportOpen(false); }}
               className={`p-1.5 rounded-lg transition-all border ${slicer.mode !== 'all' ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-900/30 dark:border-amber-800' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400'}`}
             >
               <IconSlicer />
@@ -342,7 +369,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
           <div className="relative">
             <button 
               title="Show / Hide Columns"
-              onClick={() => { setIsColumnManagerOpen(!isColumnManagerOpen); setIsSlicerOpen(false); setIsExportMenuOpen(false); }}
+              onClick={() => { setIsColumnManagerOpen(!isColumnManagerOpen); setIsSlicerOpen(false); setIsExportOpen(false); }}
               className={`p-1.5 rounded-lg transition-all border ${hiddenColumns.size > 0 ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/30 dark:border-rose-800' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400'}`}
             >
               <IconColumns />
@@ -372,6 +399,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
             title="Clear all filters and sorts"
             onClick={() => {
               setSearchTerm('');
+              setDebouncedSearchTerm('');
               setSortConfig({ key: -1, direction: null });
               setSlicer({ mode: 'all', value: 100, endValue: 200 });
               setHiddenColumns(new Set());
@@ -383,10 +411,10 @@ export const SpreadsheetViewer: React.FC<Props> = ({
         </div>
 
         <div className="relative ml-auto shrink-0">
-          <button title="Download current view" onClick={() => { setIsExportMenuOpen(!isExportMenuOpen); setIsSlicerOpen(false); setIsColumnManagerOpen(false); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-violet-600 text-white shadow-lg hover:bg-violet-700 transition-all active:scale-95 shadow-violet-500/20">
+          <button title="Download current view" onClick={() => { setIsExportOpen(!isExportOpen); setIsSlicerOpen(false); setIsColumnManagerOpen(false); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-violet-600 text-white shadow-lg hover:bg-violet-700 transition-all active:scale-95 shadow-violet-500/20">
             <IconExport /> Export
           </button>
-          {isExportMenuOpen && (
+          {isExportOpen && (
             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl py-1.5 z-[100] animate-in slide-in-from-top-2 duration-200">
               <button onClick={() => handleExport('xlsx')} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">Excel (.xlsx)</button>
               <button onClick={() => handleExport('csv')} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">CSV File</button>
@@ -433,7 +461,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
                   <td colSpan={data.headers.length + 1} className="py-32 text-center">
                      <div className="flex flex-col items-center gap-4">
                        <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">No records found</p>
-                       <button onClick={() => setSearchTerm('')} className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all">Clear Filters</button>
+                       <button onClick={() => { setSearchTerm(''); setDebouncedSearchTerm(''); }} className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all">Clear Filters</button>
                      </div>
                   </td>
                 </tr>

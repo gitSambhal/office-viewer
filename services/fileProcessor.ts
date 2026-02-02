@@ -10,9 +10,6 @@ export class FileProcessor {
     'docx': 'docx',
     'doc': 'docx',
     'pdf': 'pdf',
-    'pptx': 'pptx',
-    'ppt': 'pptx',
-    'ppsx': 'pptx',
     'txt': 'txt',
     'md': 'md',
     'png': 'image',
@@ -37,7 +34,7 @@ export class FileProcessor {
         return { type, data: this.processExcel(buffer) };
       }
       
-      if (type === 'docx' || type === 'pdf' || type === 'rtf' || type === 'pptx') {
+      if (type === 'docx' || type === 'pdf' || type === 'rtf') {
         const buffer = await file.arrayBuffer();
         return { type, data: buffer };
       }
@@ -64,7 +61,6 @@ export class FileProcessor {
   }
 
   private static processExcel(buffer: ArrayBuffer) {
-    // 'dense' mode uses a more memory-efficient array of arrays structure internally for SheetJS
     const workbook = XLSX.read(new Uint8Array(buffer), { 
       type: 'array',
       dense: true,
@@ -77,8 +73,6 @@ export class FileProcessor {
     
     workbook.SheetNames.forEach((name: string) => {
       const worksheet = workbook.Sheets[name];
-      // header: 1 produces an array of arrays, which is the most memory efficient output
-      // we use it directly to avoid the overhead of object enumeration
       const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
         header: 1, 
         defval: '',
