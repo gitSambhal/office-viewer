@@ -1,13 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suhail Viewer - Professional PDF, XLS, DOC, RTF, Markdown & Image Local Suite</title>
-    <meta name="description" content="View PDF, Excel (XLSX/XLS), Word (DOCX/DOC), RTF, Markdown and Images locally. Secure, offline-first workstation with Zen Mode and multi-tab support.">
+    <title>Suhail Viewer - Professional PDF, XLS, DOC, RTF & Image Local Suite</title>
+    <meta name="description" content="High-performance local viewer for PDF, Excel (XLSX), Word (DOCX), RTF, and Markdown. Secure, offline-first workstation with Zen Mode.">
     <meta name="theme-color" content="#7c3aed">
     <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/281/281760.png">
+    <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/281/281760.png">
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script>
         tailwind.config = {
@@ -26,7 +27,7 @@
           }
         }
     </script>
-    <!-- Core Engine Dependencies (JSZip MUST be first for docx-preview) -->
+    <!-- Core Engine Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     
@@ -42,16 +43,20 @@
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
     <style>
-        body { margin: 0; padding: 0; overflow: hidden; }
+        body { margin: 0; padding: 0; overflow: hidden; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         #root { height: 100vh; width: 100vw; }
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #e4e4e7; border-radius: 10px; }
         .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
         .zen-mode .hide-in-zen { display: none !important; }
+        
+        /* High-Performance Canvas & PDF Overrides */
         .textLayer { opacity: 1; mix-blend-mode: multiply; }
         .dark .textLayer { mix-blend-mode: screen; filter: invert(1); }
-        * { transition-property: background-color, border-color, color, fill, stroke; transition-duration: 200ms; }
+        
+        /* Transition Management */
+        * { transition-property: background-color, border-color, color, fill, stroke; transition-duration: 150ms; }
         
         @media print {
             header, aside, .hide-in-print, nav, .dropzone-overlay, .tab-bar-container { display: none !important; }
@@ -75,13 +80,20 @@
             display: flex;
         }
         
-        /* docx-preview style overrides */
+        /* docx-preview professional layout */
         .docx-wrapper {
             background: transparent !important;
             padding: 0 !important;
         }
         .docx-inner {
             box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15) !important;
+            margin-bottom: 2rem !important;
+        }
+
+        /* Swipeable Tab Bar for mobile */
+        .tab-bar-container {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 <script type="importmap">
@@ -99,7 +111,8 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => console.error('SW registration failed:', err));
+          navigator.serviceWorker.register('sw.js', { scope: './' })
+            .catch(err => console.warn('SW registration failed:', err));
         });
       }
     </script>

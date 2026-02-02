@@ -1,8 +1,6 @@
-
 import { FileType, SheetData } from '../types';
 
 declare const XLSX: any;
-declare const mammoth: any;
 
 export class FileProcessor {
   private static EXTENSION_MAP: Record<string, FileType> = {
@@ -34,18 +32,7 @@ export class FileProcessor {
       return { type, data: this.processExcel(buffer) };
     }
     
-    if (type === 'docx') {
-      // Return raw buffer for high-fidelity rendering in the component
-      const buffer = await file.arrayBuffer();
-      return { type, data: buffer };
-    }
-    
-    if (type === 'pdf') {
-      const buffer = await file.arrayBuffer();
-      return { type, data: buffer };
-    }
-
-    if (type === 'rtf') {
+    if (type === 'docx' || type === 'pdf' || type === 'rtf') {
       const buffer = await file.arrayBuffer();
       return { type, data: buffer };
     }
