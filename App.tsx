@@ -69,6 +69,8 @@ const App: React.FC = () => {
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
 
   useEffect(() => {
@@ -95,10 +97,16 @@ const App: React.FC = () => {
 
   const handleFiles = useCallback(async (files: FileList | File[] | null) => {
     if (!files || files.length === 0) return;
+    setIsProcessing(true);
+    setErrorMessage(null);
     const newTabs: Tab[] = [];
+    
+    // Process files in sequence to avoid parallel memory spikes
     for (let i = 0; i < files.length; i++) {
       try {
         const file = files[i];
+        // Short delay to allow UI to breathe
+        await new Promise(resolve => setTimeout(resolve, 50));
         const result = await FileProcessor.process(file);
         if (result.type !== 'unknown') {
           newTabs.push({
@@ -113,10 +121,12 @@ const App: React.FC = () => {
             columnSettings: {}
           });
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error("Error processing file:", files[i].name, err);
+        setErrorMessage(`Could not open "${files[i].name}". The file might be too large for browser memory.`);
       }
     }
+    
     if (newTabs.length > 0) {
       setState(prev => ({ 
         ...prev, 
@@ -125,6 +135,7 @@ const App: React.FC = () => {
         isSidebarOpen: prev.tabs.length === 0 ? true : prev.isSidebarOpen
       }));
     }
+    setIsProcessing(false);
   }, []);
 
   useEffect(() => {
@@ -220,6 +231,28 @@ const App: React.FC = () => {
              </div>
           </div>
         </div>
+
+        {isProcessing && (
+          <div className="fixed inset-0 bg-white/60 dark:bg-zinc-950/60 backdrop-blur-md z-[100] flex flex-col items-center justify-center animate-in fade-in duration-300">
+             <div className="bg-white dark:bg-zinc-900 p-12 rounded-[3rem] shadow-2xl border border-zinc-200 dark:border-zinc-800 flex flex-col items-center text-center max-w-sm">
+                <div className="w-16 h-16 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mb-8"></div>
+                <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase tracking-tight mb-2">Ingesting Data</h3>
+                <p className="text-zinc-500 dark:text-zinc-400 text-xs font-bold uppercase tracking-widest leading-relaxed">Parsing local records. Large files may take a few seconds.</p>
+             </div>
+          </div>
+        )}
+
+        {errorMessage && (
+           <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[110] animate-in slide-in-from-top-4 duration-300">
+              <div className="bg-rose-600 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 max-w-lg border-2 border-rose-500">
+                 <svg className="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                 <p className="text-xs font-black uppercase tracking-tight leading-snug">{errorMessage}</p>
+                 <button onClick={() => setErrorMessage(null)} className="p-1 hover:bg-rose-700 rounded-lg transition-colors">
+                    <IconX />
+                 </button>
+              </div>
+           </div>
+        )}
 
         <header className="hide-in-zen flex items-center justify-between px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 select-none z-30 shadow-sm shrink-0">
           <div className="flex items-center gap-6">
