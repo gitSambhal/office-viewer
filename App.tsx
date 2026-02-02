@@ -16,7 +16,6 @@ const IconDark = () => <svg className="w-5 h-5" fill="none" stroke="currentColor
 const IconLight = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707" /></svg>;
 const IconFullscreen = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>;
 
-// Helper to format bytes
 const formatBytes = (bytes: number, decimals = 2) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
@@ -26,7 +25,6 @@ const formatBytes = (bytes: number, decimals = 2) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
 };
 
-// File Type Specific Icons for Tabs
 const getFileIcon = (type: FileType) => {
   switch (type) {
     case 'xlsx': return <div className="w-4 h-4 text-emerald-600"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div>;
@@ -48,6 +46,19 @@ const App: React.FC = () => {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
+
+  // Requirement: Hide popups on pressing Esc
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setContextMenu(null);
+        // If zenMode is on, we could also use Esc to exit it? 
+        // For now, let's just clear popups as requested.
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) document.documentElement.requestFullscreen();
@@ -83,7 +94,7 @@ const App: React.FC = () => {
         ...prev, 
         tabs: [...prev.tabs, ...newTabs], 
         activeTabId: newTabs[newTabs.length - 1].id,
-        isSidebarOpen: true // Auto open sidebar when files are added
+        isSidebarOpen: true
       }));
     }
   }, []);
@@ -122,6 +133,12 @@ const App: React.FC = () => {
 
   const closeTab = (id: string) => {
     setState(prev => {
+      const tabToClose = prev.tabs.find(t => t.id === id);
+      // Clean up memory if possible (e.g. revoking URLs)
+      if (tabToClose?.type === 'image' && typeof tabToClose.data === 'string' && tabToClose.data.startsWith('blob:')) {
+        URL.revokeObjectURL(tabToClose.data);
+      }
+      
       const nextTabs = prev.tabs.filter(t => t.id !== id);
       const nextId = prev.activeTabId === id ? (nextTabs.length ? nextTabs[nextTabs.length - 1].id : null) : prev.activeTabId;
       return { ...prev, tabs: nextTabs, activeTabId: nextId };
@@ -132,7 +149,6 @@ const App: React.FC = () => {
 
   const activeTab = state.tabs.find(t => t.id === state.activeTabId);
 
-  // Requirement: Display appropriate metadata in the sidebar
   const activeMetadata = useMemo(() => {
     if (!activeTab) return null;
     const meta: { label: string; value: string | number }[] = [
@@ -142,7 +158,6 @@ const App: React.FC = () => {
       { label: 'Last Modified', value: new Date(activeTab.lastModified).toLocaleString() }
     ];
 
-    // File-type specific required metadata
     if (activeTab.type === 'xlsx') {
       const sheets = activeTab.data || {};
       meta.push({ label: 'Total Sheets', value: Object.keys(sheets).length });
@@ -181,22 +196,22 @@ const App: React.FC = () => {
 
       <header className="hide-in-zen flex items-center justify-between px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 select-none z-30 shadow-sm">
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2.5 group cursor-pointer" onClick={() => setState(s => ({ ...s, activeTabId: null }))}>
+          <div title="Return to Home" className="flex items-center gap-2.5 group cursor-pointer" onClick={() => setState(s => ({ ...s, activeTabId: null }))}>
             <div className="w-9 h-9 bg-violet-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-violet-500/20 group-hover:scale-110 transition-transform italic">S</div>
             <h1 className="font-black text-zinc-800 dark:text-white hidden sm:block tracking-tighter text-lg">Suhail <span className="text-violet-600 dark:text-violet-400">Viewer</span></h1>
           </div>
           <nav className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1 gap-1">
             <button 
-              title="Toggle Sidebar (Details)" 
+              title="Toggle Sidebar (Document Metadata)" 
               onClick={() => setState(s => ({ ...s, isSidebarOpen: !s.isSidebarOpen }))} 
               className={`p-2 rounded-lg transition-all ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600 dark:text-violet-400' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
             </button>
-            <button title="Switch Theme" onClick={() => setState(s => ({ ...s, darkMode: !s.darkMode }))} className="p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all text-zinc-500">
+            <button title="Switch Dark/Light Theme" onClick={() => setState(s => ({ ...s, darkMode: !s.darkMode }))} className="p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all text-zinc-500">
               {state.darkMode ? <IconLight /> : <IconDark />}
             </button>
-            <button title="Focus Mode" onClick={() => setState(s => ({ ...s, zenMode: !s.zenMode }))} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${state.zenMode ? 'text-violet-600 bg-white dark:bg-zinc-700 shadow-md' : 'text-zinc-500'}`}>
+            <button title="Zen Mode (Distraction Free)" onClick={() => setState(s => ({ ...s, zenMode: !s.zenMode }))} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${state.zenMode ? 'text-violet-600 bg-white dark:bg-zinc-700 shadow-md' : 'text-zinc-500'}`}>
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
             </button>
             <button title="Toggle Fullscreen" onClick={toggleFullscreen} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${isFullscreen ? 'text-violet-600' : 'text-zinc-500'}`}>
@@ -204,8 +219,8 @@ const App: React.FC = () => {
             </button>
           </nav>
         </div>
-        <label title="Open files from your computer" className="cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-700 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-violet-500/10 active:scale-95">
-          Read / View Documents
+        <label title="Select files to view (XLSX, DOCX, PDF, etc.)" className="cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-700 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-violet-500/10 active:scale-95">
+          Launch Document Studio
           <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
         </label>
       </header>
@@ -214,7 +229,7 @@ const App: React.FC = () => {
         {state.tabs.map(tab => (
           <div 
             key={tab.id} 
-            title={tab.name}
+            title={`File: ${tab.name}`}
             onClick={() => setState(s => ({ ...s, activeTabId: tab.id }))} 
             onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, tabId: tab.id }); }} 
             className={`flex items-center gap-2.5 px-5 py-3 border-r border-zinc-200 dark:border-zinc-800 cursor-pointer min-w-[160px] max-w-[280px] select-none group transition-all relative ${state.activeTabId === tab.id ? 'bg-zinc-50 dark:bg-zinc-950 shadow-inner' : 'hover:bg-zinc-50/50'}`}
@@ -239,7 +254,6 @@ const App: React.FC = () => {
           </button>
         )}
 
-        {/* Show sidebar ONLY when necessary (tab is active) */}
         {activeTab && (
           <aside className={`hide-in-zen w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 shadow-2xl z-40 ${state.isSidebarOpen ? 'translate-x-0' : '-translate-x-full absolute h-full'}`}>
             <div className="p-6 space-y-8 h-full overflow-y-auto custom-scrollbar">
@@ -259,7 +273,7 @@ const App: React.FC = () => {
                       </div>
                     ))}
                     <div className="pt-6 border-t border-zinc-100 dark:border-zinc-800">
-                      <p className="text-[9px] text-zinc-400 font-black uppercase tracking-widest leading-relaxed">Privacy Mode: Active (Local Only)</p>
+                      <p className="text-[9px] text-zinc-400 font-black uppercase tracking-widest leading-relaxed">Processing: Offline & Local</p>
                     </div>
                   </div>
                 ) : null}
@@ -304,9 +318,9 @@ const App: React.FC = () => {
                    </p>
                    
                    <div className="flex items-center justify-center gap-6 mb-20">
-                    <label title="Select documents to start viewing" className="group relative inline-flex items-center gap-4 cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-[0.1em] shadow-2xl shadow-violet-500/20 transition-all hover:scale-[1.05] active:scale-95">
+                    <label title="Open the professional document workspace" className="group relative inline-flex items-center gap-4 cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-[0.1em] shadow-2xl shadow-violet-500/20 transition-all hover:scale-[1.05] active:scale-95">
                         <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-                        Read / View Documents
+                        Launch Document Studio
                         <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
                     </label>
                    </div>

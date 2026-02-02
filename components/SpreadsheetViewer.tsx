@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { SheetData } from '../types';
 
 declare const XLSX: any;
@@ -10,6 +10,9 @@ const IconExport = () => <svg className="w-4 h-4" fill="none" stroke="currentCol
 const IconSort = () => <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>;
 const IconType = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h10M10 7v10m4-10v10M7 17h10" /></svg>;
 const IconSlicer = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>;
+
+const ROW_HEIGHT = 44; // px
+const OVER_SCAN = 10; // extra rows for smoother scrolling
 
 interface SlicerSettings {
   mode: 'all' | 'first' | 'last' | 'range';
@@ -41,7 +44,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   onResizeColumn,
 }) => {
   const data = sheets[activeSheet] || { headers: [], rows: [] };
-  const prevRowsRef = useRef<any[][]>(data.rows);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const [sortConfig, setSortConfig] = useState<{ key: number; direction: 'asc' | 'desc' | null }>({ key: -1, direction: null });
   const [searchTerm, setSearchTerm] = useState('');
@@ -54,7 +57,24 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   const [slicer, setSlicer] = useState<SlicerSettings>({ mode: 'all', value: 100, endValue: 200 });
   const [cellHistory, setCellHistory] = useState<Record<string, CellChange>>({});
   
+  // Virtualization state
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
+
   const resizeRef = useRef<{ colIdx: number, startX: number, startWidth: number } | null>(null);
+
+  useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setEditingCell(null);
+        setIsExportMenuOpen(false);
+        setIsSlicerOpen(false);
+        setIsColumnManagerOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, []);
 
   useEffect(() => {
     setSortConfig({ key: -1, direction: null });
@@ -65,25 +85,27 @@ export const SpreadsheetViewer: React.FC<Props> = ({
     setIsExportMenuOpen(false);
     setIsSlicerOpen(false);
     setIsColumnManagerOpen(false);
+    // Reset scroll when switching sheets
+    if (scrollContainerRef.current) scrollContainerRef.current.scrollTop = 0;
   }, [activeSheet]);
 
+  // Observer for container height to maintain virtualization accuracy
   useEffect(() => {
-    if (prevRowsRef.current !== data.rows) {
-      const newHistory: Record<string, CellChange> = { ...cellHistory };
-      data.rows.forEach((row, rIdx) => {
-        const prevRow = prevRowsRef.current[rIdx];
-        if (prevRow) {
-          row.forEach((cell, cIdx) => {
-            if (cell !== prevRow[cIdx]) {
-              newHistory[`${rIdx}_${cIdx}`] = { oldValue: prevRow[cIdx], newValue: cell, timestamp: Date.now() };
-            }
-          });
-        }
-      });
-      setCellHistory(newHistory);
-      prevRowsRef.current = data.rows;
-    }
-  }, [data.rows]);
+    const el = scrollContainerRef.current;
+    if (!el) return;
+    const observer = new ResizeObserver(entries => {
+      for (let entry of entries) {
+        setContainerHeight(entry.contentRect.height);
+      }
+    });
+    observer.observe(el);
+    setContainerHeight(el.clientHeight);
+    return () => observer.disconnect();
+  }, []);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  };
 
   const filteredData = useMemo(() => {
     let processed = data.rows.map((row, index) => ({ row, originalIndex: index }));
@@ -127,6 +149,24 @@ export const SpreadsheetViewer: React.FC<Props> = ({
 
     return processed;
   }, [data.rows, searchTerm, sortConfig, slicer]);
+
+  // Virtualization window calculations
+  const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVER_SCAN);
+  const endIndex = Math.min(filteredData.length, Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + OVER_SCAN);
+  const visibleRows = filteredData.slice(startIndex, endIndex);
+
+  // Fix: Added missing toggleColumnVisibility function to handle column visibility toggling.
+  const toggleColumnVisibility = (colIdx: number) => {
+    setHiddenColumns(prev => {
+      const next = new Set(prev);
+      if (next.has(colIdx)) {
+        next.delete(colIdx);
+      } else {
+        next.add(colIdx);
+      }
+      return next;
+    });
+  };
 
   const handleToggleSort = (colIdx: number) => {
     setSortConfig(prev => {
@@ -179,13 +219,6 @@ export const SpreadsheetViewer: React.FC<Props> = ({
     document.addEventListener('mouseup', handleMouseUp);
   };
 
-  const toggleColumnVisibility = (idx: number) => {
-    const next = new Set(hiddenColumns);
-    if (next.has(idx)) next.delete(idx);
-    else next.add(idx);
-    setHiddenColumns(next);
-  };
-
   const renderCell = (value: any, originalRowIndex: number, cIdx: number) => {
     const isEditing = editingCell?.r === originalRowIndex && editingCell?.c === cIdx;
     const history = cellHistory[`${originalRowIndex}_${cIdx}`];
@@ -205,7 +238,10 @@ export const SpreadsheetViewer: React.FC<Props> = ({
             }
             setEditingCell(null);
           }}
-          onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) e.currentTarget.blur(); }}
+          onKeyDown={(e) => { 
+            if (e.key === 'Enter' && !e.shiftKey) e.currentTarget.blur();
+            if (e.key === 'Escape') { e.stopPropagation(); setEditingCell(null); }
+          }}
         />
       );
     }
@@ -350,44 +386,52 @@ export const SpreadsheetViewer: React.FC<Props> = ({
         </div>
       </div>
 
-      <div className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950 relative custom-scrollbar">
-        <table className="w-full border-collapse table-fixed">
-          <thead className="sticky top-0 z-20 shadow-sm">
-            <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-              <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] text-zinc-400 font-black uppercase py-2">#</th>
-              {data.headers.map((header, i) => !hiddenColumns.has(i) && (
-                <th key={i} style={{ width: columnWidths[i] || 150 }} className={`relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group transition-colors uppercase select-none ${sortConfig.key === i ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/20' : 'text-zinc-500'}`}>
-                  <div className="flex items-center justify-between h-full" title={`Sort by ${header || 'Column'}`} onClick={() => handleToggleSort(i)}>
-                    <span className="truncate pr-4">{header || `Col ${i+1}`}</span>
-                    <div className={`${sortConfig.key === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}><IconSort /></div>
-                  </div>
-                  <div onMouseDown={(e) => handleResizeStart(e, i)} title="Drag to resize column" className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 transition-colors z-30" />
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody className="bg-white dark:bg-zinc-950">
-            {filteredData.length > 0 ? (
-              filteredData.map(({ row, originalIndex }) => (
-                <tr key={originalIndex} className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors">
-                  <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">{originalIndex + 1}</td>
-                  {row.map((cell, cIdx) => !hiddenColumns.has(cIdx) && (
-                    <td key={cIdx} className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top">{renderCell(cell, originalIndex, cIdx)}</td>
-                  ))}
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={data.headers.length + 1} className="py-32 text-center">
-                   <div className="flex flex-col items-center gap-4">
-                     <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Empty Result Set</p>
-                     <button onClick={() => setSearchTerm('')} className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all">Clear Filters</button>
-                   </div>
-                </td>
+      <div 
+        ref={scrollContainerRef} 
+        className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950 relative custom-scrollbar"
+        onScroll={handleScroll}
+      >
+        <div style={{ height: filteredData.length * ROW_HEIGHT, position: 'relative' }}>
+          <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0">
+            <thead className="sticky top-0 z-20 shadow-sm">
+              <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+                <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] text-zinc-400 font-black uppercase py-2">#</th>
+                {data.headers.map((header, i) => !hiddenColumns.has(i) && (
+                  <th key={i} style={{ width: columnWidths[i] || 150 }} className={`relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group transition-colors uppercase select-none ${sortConfig.key === i ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/20' : 'text-zinc-500'}`}>
+                    <div className="flex items-center justify-between h-full" title={`Sort by ${header || 'Column'}`} onClick={() => handleToggleSort(i)}>
+                      <span className="truncate pr-4">{header || `Col ${i+1}`}</span>
+                      <div className={`${sortConfig.key === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}><IconSort /></div>
+                    </div>
+                    <div onMouseDown={(e) => handleResizeStart(e, i)} title="Drag to resize column" className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 transition-colors z-30" />
+                  </th>
+                ))}
               </tr>
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="bg-white dark:bg-zinc-950">
+              <tr style={{ height: startIndex * ROW_HEIGHT }} aria-hidden="true" />
+              {visibleRows.length > 0 ? (
+                visibleRows.map(({ row, originalIndex }) => (
+                  <tr key={originalIndex} className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors" style={{ height: ROW_HEIGHT }}>
+                    <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">{originalIndex + 1}</td>
+                    {row.map((cell, cIdx) => !hiddenColumns.has(cIdx) && (
+                      <td key={cIdx} className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top">{renderCell(cell, originalIndex, cIdx)}</td>
+                    ))}
+                  </tr>
+                ))
+              ) : filteredData.length === 0 && (
+                <tr>
+                  <td colSpan={data.headers.length + 1} className="py-32 text-center">
+                     <div className="flex flex-col items-center gap-4">
+                       <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">No records found</p>
+                       <button onClick={() => setSearchTerm('')} className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all">Clear Filters</button>
+                     </div>
+                  </td>
+                </tr>
+              )}
+              <tr style={{ height: Math.max(0, (filteredData.length - endIndex) * ROW_HEIGHT) }} aria-hidden="true" />
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center p-1.5 overflow-x-auto no-scrollbar z-20 shrink-0">
