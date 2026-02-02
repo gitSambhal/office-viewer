@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suhail Viewer - Professional PDF, XLS, DOC, RTF & Image Local Suite</title>
-    <meta name="description" content="High-performance local viewer for PDF, Excel (XLSX), Word (DOCX), RTF, and Markdown. Secure, offline-first workstation with Zen Mode.">
+    <title>Suhail Viewer - Professional Document Local Workstation</title>
+    <meta name="description" content="High-performance local viewer for PDF, Excel, Word, PowerPoint, RTF, and Markdown. Secure, offline-first workstation with Zen Mode.">
     <meta name="theme-color" content="#7c3aed">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/281/281760.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/281/281760.png">
+    
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script>
         tailwind.config = {
@@ -16,17 +17,14 @@
           theme: {
             extend: {
               colors: {
-                zinc: {
-                  950: '#09090b',
-                },
-                violet: {
-                  600: '#7c3aed',
-                }
+                zinc: { 950: '#09090b' },
+                violet: { 600: '#7c3aed' }
               }
             }
           }
         }
     </script>
+    
     <!-- Core Engine Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
@@ -40,6 +38,13 @@
     <!-- PDF & Text Parsers -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <!-- PowerPoint (pptxjs) dependencies -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/meshesha/pptxjs@master/dist/pptxjs.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.17/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.6/nv.d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/meshesha/pptxjs@master/dist/pptxjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/meshesha/pptxjs@master/dist/filereader.js"></script>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf_viewer.min.css">
     <style>
@@ -61,7 +66,6 @@
         @media print {
             header, aside, .hide-in-print, nav, .dropzone-overlay, .tab-bar-container { display: none !important; }
             main, #root, body { height: auto !important; overflow: visible !important; width: 100% !important; background: white !important; }
-            .docx-preview-container, .pdf-container, .spreadsheet-container { padding: 0 !important; margin: 0 !important; box-shadow: none !important; border: none !important; }
         }
 
         .dropzone-overlay {
@@ -80,20 +84,18 @@
             display: flex;
         }
         
-        /* docx-preview professional layout */
-        .docx-wrapper {
-            background: transparent !important;
-            padding: 0 !important;
-        }
-        .docx-inner {
-            box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15) !important;
-            margin-bottom: 2rem !important;
-        }
-
-        /* Swipeable Tab Bar for mobile */
-        .tab-bar-container {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        .docx-wrapper { background: transparent !important; padding: 0 !important; }
+        .docx-inner { box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15) !important; margin-bottom: 2rem !important; }
+        .tab-bar-container { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Custom styles for PPTX container compatibility */
+        .pptx-wrapper section { margin-bottom: 2rem; background: white; border-radius: 0.5rem; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+        .dark .pptx-wrapper section { background: #1f2937; }
+        
+        #initial-loader {
+            position: fixed; inset: 0; background: #09090b; color: white;
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000;
+            font-family: sans-serif;
         }
     </style>
 <script type="importmap">
@@ -107,8 +109,26 @@
 </script>
 </head>
 <body class="bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
+    <div id="initial-loader">
+        <div style="width: 48px; height: 48px; border: 4px solid #7c3aed; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
+        <div style="font-weight: 900; letter-spacing: -0.05em; font-size: 24px;">SUHAIL <span style="color: #7c3aed;">VIEWER</span></div>
+        <div style="font-size: 10px; font-weight: bold; margin-top: 8px; opacity: 0.5; text-transform: uppercase; letter-spacing: 0.2em;">Initializing workstation...</div>
+        <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
+    </div>
+
     <div id="root"></div>
+
     <script>
+      // Clean up loader once React mounts
+      const observer = new MutationObserver((mutations) => {
+        if (document.getElementById('root')?.children.length > 0) {
+          const loader = document.getElementById('initial-loader');
+          if (loader) loader.style.display = 'none';
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.getElementById('root'), { childList: true });
+
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('sw.js', { scope: './' })

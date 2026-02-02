@@ -1,4 +1,4 @@
-export type FileType = 'xlsx' | 'docx' | 'pdf' | 'txt' | 'md' | 'image' | 'rtf' | 'unknown';
+export type FileType = 'xlsx' | 'docx' | 'pdf' | 'pptx' | 'txt' | 'md' | 'image' | 'rtf' | 'unknown';
 
 export interface SheetData {
   headers: string[];

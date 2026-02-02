@@ -8,7 +8,11 @@ export class FileProcessor {
     'xls': 'xlsx',
     'csv': 'xlsx',
     'docx': 'docx',
+    'doc': 'docx',
     'pdf': 'pdf',
+    'pptx': 'pptx',
+    'ppt': 'pptx',
+    'ppsx': 'pptx',
     'txt': 'txt',
     'md': 'md',
     'png': 'image',
@@ -32,7 +36,7 @@ export class FileProcessor {
       return { type, data: this.processExcel(buffer) };
     }
     
-    if (type === 'docx' || type === 'pdf' || type === 'rtf') {
+    if (type === 'docx' || type === 'pdf' || type === 'rtf' || type === 'pptx') {
       const buffer = await file.arrayBuffer();
       return { type, data: buffer };
     }
