@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppState, Tab, FileType } from './types';
 import { FileProcessor } from './services/fileProcessor';
@@ -71,6 +72,18 @@ const App: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
 
+  // Sync dark mode class with root element
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (state.darkMode) {
+      root.classList.add('dark');
+      localStorage.setItem('suhail_theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('suhail_theme', 'light');
+    }
+  }, [state.darkMode]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -88,8 +101,10 @@ const App: React.FC = () => {
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
+      setIsFullscreen(true);
     } else {
       document.exitFullscreen().catch(() => {});
+      setIsFullscreen(false);
     }
   }, []);
 
