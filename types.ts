@@ -11,6 +11,7 @@ export interface Tab {
   name: string;
   type: FileType;
   lastModified: number;
+  size: number;
   data: any; 
   activeSheet?: string;
   active: boolean;

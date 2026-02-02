@@ -1,6 +1,6 @@
 {
-  "name": "OmniDocs - Offline Pro",
-  "description": "A high-performance, privacy-first desktop-class web application for interacting with local Office and document files. Features multi-tab support, virtualized tables, and advanced data querying.",
+  "name": "Suhail Office Viewer - Ultimate Local Document Suite",
+  "description": "A high-performance, privacy-first workstation for viewing local Office files. Supports DOCX, XLSX, PDF, RTF, and Markdown with multi-tab management, live spreadsheet updates, and high-fidelity rendering.",
   "requestFramePermissions": [
     "camera"
   ]
