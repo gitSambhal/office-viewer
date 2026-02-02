@@ -56,11 +56,9 @@
         .dark ::-webkit-scrollbar-thumb { background: #3f3f46; }
         .zen-mode .hide-in-zen { display: none !important; }
         
-        /* High-Performance Canvas & PDF Overrides */
         .textLayer { opacity: 1; mix-blend-mode: multiply; }
         .dark .textLayer { mix-blend-mode: screen; filter: invert(1); }
         
-        /* Transition Management */
         * { transition-property: background-color, border-color, color, fill, stroke; transition-duration: 150ms; }
         
         @media print {
@@ -88,7 +86,6 @@
         .docx-inner { box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.15) !important; margin-bottom: 2rem !important; }
         .tab-bar-container { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* Custom styles for PPTX container compatibility */
         .pptx-wrapper section { margin-bottom: 2rem; background: white; border-radius: 0.5rem; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
         .dark .pptx-wrapper section { background: #1f2937; }
         
@@ -101,7 +98,9 @@
 <script type="importmap">
 {
   "imports": {
-    "react": "https://esm.sh/react@^19.2.4",
+    "react": "https://esm.sh/react@19.0.0",
+    "react-dom": "https://esm.sh/react-dom@19.0.0",
+    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
     "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
     "react/": "https://esm.sh/react@^19.2.4/"
   }
@@ -118,6 +117,9 @@
 
     <div id="root"></div>
 
+    <!-- Application Entry Point -->
+    <script type="module" src="index.tsx"></script>
+
     <script>
       // Clean up loader once React mounts
       const observer = new MutationObserver((mutations) => {
@@ -129,10 +131,14 @@
       });
       observer.observe(document.getElementById('root'), { childList: true });
 
+      // Improved Service Worker registration logic
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('sw.js', { scope: './' })
-            .catch(err => console.warn('SW registration failed:', err));
+          navigator.serviceWorker.register('./sw.js')
+            .then(reg => console.log('ServiceWorker registered'))
+            .catch(err => {
+               console.warn('ServiceWorker registration skipped (common in some environments):', err.message);
+            });
         });
       }
     </script>

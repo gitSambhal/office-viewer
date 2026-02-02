@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 
 declare const pdfjsLib: any;
@@ -82,7 +81,6 @@ export const PdfViewer: React.FC<Props> = ({ data }) => {
         textLayer.className = 'textLayer absolute top-0 left-0';
         textLayer.style.width = `${viewport.width}px`;
         textLayer.style.height = `${viewport.height}px`;
-        // FIX: The --scale-factor CSS variable must be set for the text layer to align correctly.
         textLayer.style.setProperty('--scale-factor', scale.toString());
 
         pageContent.appendChild(canvas);
@@ -223,6 +221,7 @@ export const PdfViewer: React.FC<Props> = ({ data }) => {
                 <input 
                   type="password" 
                   autoFocus
+                  autoComplete="current-password"
                   placeholder="Password"
                   className={`w-full p-4 bg-slate-50 dark:bg-slate-800 border-2 ${error ? 'border-rose-500' : 'border-slate-100 dark:border-slate-700'} rounded-2xl outline-none focus:ring-4 ring-indigo-500/20 text-sm font-bold text-center transition-all`}
                   value={password}
