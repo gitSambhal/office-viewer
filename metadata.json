@@ -1,0 +1,7 @@
+{
+  "name": "OmniDocs - Offline Pro",
+  "description": "A high-performance, privacy-first desktop-class web application for interacting with local Office and document files. Features multi-tab support, virtualized tables, and advanced data querying.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
