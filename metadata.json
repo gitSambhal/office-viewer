@@ -1,5 +1,5 @@
 {
-  "name": "Suhail Viewer - PDF, Excel (XLS), Word (DOC), RTF, Markdown & Image Viewer",
-  "description": "Professional offline workstation for PDF, XLSX, DOCX, RTF, Markdown, and Images. Features: Zen Mode, Fullscreen, PWA Installable, Multi-Tab Manager, and Secure Local-Only Processing.",
+  "name": "Suhail Viewer - PDF, Excel (XLS/XLSX), Word (DOC/DOCX), Access (MDB/ACCDB), RTF, Markdown & Image Viewer",
+  "description": "Professional offline document viewer for PDF, Excel, Word, Access databases, RTF, Markdown, and Images. Features: Zen Mode, Fullscreen, PWA Installable, Multi-Tab Manager, and Secure Local-Only Processing.",
   "requestFramePermissions": []
 }
