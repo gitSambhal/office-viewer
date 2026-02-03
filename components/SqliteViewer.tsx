@@ -283,14 +283,6 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
   if (error) return <div className="p-4 text-red-500">{error}</div>;
   if (!db || !activeTableName || !currentTableData) return <div className="p-4">Loading database...</div>;
   
-  // Show loading state if data is empty but table exists
-  if (currentTableData.rows.length === 0) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950">
-        <p className="text-zinc-400 text-sm">No data in this table</p>
-      </div>
-    );
-  }
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full bg-zinc-50 dark:bg-zinc-950">
@@ -432,8 +424,8 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
       </div>
 
       <div ref={scrollContainerRef} className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950 relative custom-scrollbar" onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}>
-        <div style={{ height: Math.max(filteredData.length * ROW_HEIGHT, containerHeight), position: 'relative', minHeight: containerHeight }}>
-          <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0" style={{ minHeight: containerHeight }}>
+        <div style={{ height: Math.max(filteredData.length * ROW_HEIGHT, containerHeight), position: 'relative' }}>
+          <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0">
              <thead className="sticky top-0 z-20 shadow-sm">
                 <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
                     <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] font-black uppercase py-2">#</th>
@@ -448,7 +440,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
                     ))}
                 </tr>
             </thead>
-            <tbody className="bg-white dark:bg-zinc-950" style={{ minHeight: containerHeight }}>
+            <tbody className="bg-white dark:bg-zinc-950">
                <tr style={{ height: startIndex * ROW_HEIGHT }} aria-hidden="true" />
                 {effectiveVisibleRows.length > 0 ? (
                   effectiveVisibleRows.map((rowData, rowIndex) => {
