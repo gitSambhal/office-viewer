@@ -73,6 +73,9 @@ const App: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
+  const [tabSearchTerm, setTabSearchTerm] = useState('');
+  const [showScrollArrows, setShowScrollArrows] = useState(false);
+  const tabBarRef = React.useRef<HTMLDivElement>(null);
 
   // Sync dark mode class with root element
   useEffect(() => {
@@ -99,6 +102,29 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  useEffect(() => {
+    const checkScroll = () => {
+      if (tabBarRef.current) {
+        setShowScrollArrows(tabBarRef.current.scrollWidth > tabBarRef.current.clientWidth);
+      }
+    };
+    checkScroll();
+    window.addEventListener('resize', checkScroll);
+    return () => window.removeEventListener('resize', checkScroll);
+  }, [state.tabs]);
+
+  const handleScrollTabs = (direction: 'left' | 'right') => {
+    if (tabBarRef.current) {
+      tabBarRef.current.scrollBy({ left: direction === 'left' ? -200 : 200, behavior: 'smooth' });
+    }
+  };
+  
+  const filteredTabs = useMemo(() => {
+    if (!tabSearchTerm) return state.tabs;
+    return state.tabs.filter(tab => tab.name.toLowerCase().includes(tabSearchTerm.toLowerCase()));
+  }, [state.tabs, tabSearchTerm]);
+
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -288,20 +314,32 @@ const App: React.FC = () => {
           </label>
         </header>
 
-        <div className="flex flex-nowrap bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto scrollbar-none z-20 tab-bar-container hide-in-zen shrink-0">
-          {state.tabs.map(tab => (
-            <div 
-              key={tab.id} 
-              onClick={() => setState(s => ({ ...s, activeTabId: tab.id }))} 
-              onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, tabId: tab.id }); }} 
-              className={`flex items-center gap-2.5 px-5 py-3 border-r border-zinc-200 dark:border-zinc-800 cursor-pointer min-w-[140px] max-w-[280px] select-none group transition-all relative ${state.activeTabId === tab.id ? 'bg-zinc-50 dark:bg-zinc-950 shadow-inner' : 'hover:bg-zinc-50/50'}`}
-            >
-              {state.activeTabId === tab.id && <div className="absolute top-0 left-0 right-0 h-0.5 bg-violet-600" />}
-              {getFileIcon(tab.type)}
-              <span className={`text-[11px] truncate font-black uppercase tracking-tight flex-1 ${state.activeTabId === tab.id ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400'}`}>{tab.name}</span>
-              <button title="Close Tab" onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }} className="opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 p-1 rounded-lg transition-all text-zinc-400"><IconX /></button>
-            </div>
-          ))}
+        <div className="flex items-center bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 z-20 hide-in-zen">
+          {showScrollArrows && <button onClick={() => handleScrollTabs('left')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg></button>}
+          <div ref={tabBarRef} className="flex-1 flex flex-nowrap overflow-x-auto scrollbar-none">
+            {filteredTabs.map(tab => (
+              <div 
+                key={tab.id} 
+                onClick={() => setState(s => ({ ...s, activeTabId: tab.id }))} 
+                onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, tabId: tab.id }); }} 
+                className={`flex flex-shrink-0 items-center gap-2.5 px-5 py-3 border-r border-zinc-200 dark:border-zinc-800 cursor-pointer min-w-[140px] max-w-[280px] select-none group transition-all relative ${state.activeTabId === tab.id ? 'bg-zinc-50 dark:bg-zinc-950 shadow-inner' : 'hover:bg-zinc-50/50'}`}
+              >
+                {state.activeTabId === tab.id && <div className="absolute top-0 left-0 right-0 h-0.5 bg-violet-600" />}
+                {getFileIcon(tab.type)}
+                <span className={`text-[11px] truncate font-black uppercase tracking-tight flex-1 ${state.activeTabId === tab.id ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400'}`}>{tab.name}</span>
+                <button title="Close Tab" onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }} className="opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 p-1 rounded-lg transition-all text-zinc-400"><IconX /></button>
+              </div>
+            ))}
+          </div>
+          {showScrollArrows && <button onClick={() => handleScrollTabs('right')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg></button>}
+          <div className="p-2 border-l border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
+            <input type="text" placeholder="Search tabs..." value={tabSearchTerm} onChange={(e) => setTabSearchTerm(e.target.value)} className="px-2 py-1 text-xs border rounded-md bg-transparent" />
+            {tabSearchTerm && (
+              <button onClick={() => setTabSearchTerm('')} className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            )}
+          </div>
         </div>
 
         <main className="flex-1 flex overflow-hidden relative">
