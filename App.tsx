@@ -349,14 +349,16 @@ const App: React.FC = () => {
             ))}
           </div>
           {showScrollArrows && <button onClick={() => handleScrollTabs('right')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg></button>}
-          <div className="p-2 border-l border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
-            <input type="text" placeholder="Search tabs..." value={tabSearchTerm} onChange={(e) => setTabSearchTerm(e.target.value)} className="px-2 py-1 text-xs border rounded-md bg-transparent" />
-            {tabSearchTerm && (
-              <button onClick={() => setTabSearchTerm('')} className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
-              </button>
-            )}
-          </div>
+          {state.tabs.length > 0 && (
+            <div className="p-2 border-l border-zinc-200 dark:border-zinc-800 flex items-center gap-2">
+              <input type="text" placeholder="Search tabs..." value={tabSearchTerm} onChange={(e) => setTabSearchTerm(e.target.value)} className="px-2 py-1 text-xs border rounded-md bg-transparent" />
+              {tabSearchTerm && (
+                <button onClick={() => setTabSearchTerm('')} className="p-1 rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400">
+                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <main className="flex-1 flex overflow-hidden relative">
