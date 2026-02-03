@@ -9,6 +9,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "buffer": "^6.0.3",
+    "lucide-react": "^0.563.0",
+    "mdb-reader": "^2.2.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "regenerator-runtime": "^0.14.1"
@@ -19,6 +22,7 @@
     "@vitejs/plugin-react": "^5.0.0",
     "core-js": "^3.48.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vite-plugin-node-polyfills": "^0.25.0"
   }
 }

@@ -2,6 +2,7 @@ import path from 'path';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import legacy from '@vitejs/plugin-legacy';
+import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
@@ -12,6 +13,14 @@ export default defineConfig(({ mode }) => {
       },
       plugins: [
         react(),
+        nodePolyfills({
+          // To exclude specific polyfills, add them to this list.
+          exclude: [],
+          // Whether to polyfill `global`.
+          global: true,
+          // Whether to polyfill `process`.
+          process: true,
+        }),
         legacy({
           targets: ['defaults', 'IE 11'],
           additionalLegacyPolyfills: ['regenerator-runtime/runtime'],
@@ -20,7 +29,10 @@ export default defineConfig(({ mode }) => {
       ],
       define: {
         'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY)
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
+        'process.version': JSON.stringify('1.0.0'),
+        'process.env': {},
+        'global': 'window',
       },
       resolve: {
         alias: {
@@ -29,7 +41,16 @@ export default defineConfig(({ mode }) => {
       },
       build: {
         outDir: 'dist',
-        sourcemap: false
+        sourcemap: false,
+        rollupOptions: {
+          output: {
+            manualChunks: (id) => {
+              if (id.includes('node_modules')) {
+                return 'vendor';
+              }
+            }
+          }
+        }
       }
     };
 });
