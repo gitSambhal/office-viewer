@@ -4,6 +4,8 @@ import react from '@vitejs/plugin-react';
 import legacy from '@vitejs/plugin-legacy';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
+import { viteStaticCopy } from 'vite-plugin-static-copy';
+
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
     return {
@@ -25,6 +27,14 @@ export default defineConfig(({ mode }) => {
           targets: ['defaults', 'IE 11'],
           additionalLegacyPolyfills: ['regenerator-runtime/runtime'],
           modernPolyfills: true
+        }),
+        viteStaticCopy({
+          targets: [
+            {
+              src: 'node_modules/sql.js/dist/sql-wasm.wasm',
+              dest: '.'
+            }
+          ]
         })
       ],
       define: {
