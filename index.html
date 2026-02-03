@@ -10,6 +10,9 @@
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/281/281760.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/281/281760.png">
     
+    <!-- IE Compatibility -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
     <script>
         tailwind.config = {
@@ -84,6 +87,68 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10000;
             font-family: sans-serif;
         }
+        
+        /* IE Warning Styles */
+        #ie-warning {
+            position: fixed;
+            inset: 0;
+            z-index: 10001;
+            background: white;
+            color: black;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+        
+        #ie-warning.hidden {
+            display: none;
+        }
+        
+        #ie-warning h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            color: #dc2626;
+        }
+        
+        #ie-warning p {
+            font-size: 1.25rem;
+            line-height: 1.6;
+            margin-bottom: 2rem;
+            max-width: 600px;
+        }
+        
+        #ie-warning .browser-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        #ie-warning .browser-item {
+            padding: 0.75rem 1.5rem;
+            background: #f3f4f6;
+            border-radius: 0.5rem;
+            font-weight: bold;
+        }
+        
+        #ie-warning .dismiss {
+            padding: 0.75rem 2rem;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            font-size: 1.125rem;
+            cursor: pointer;
+        }
+        
+        #ie-warning .dismiss:hover {
+            background: #2563eb;
+        }
     </style>
 <script type="importmap">
 {
@@ -98,6 +163,21 @@
 </script>
 </head>
 <body class="bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
+    <!-- IE Warning -->
+    <div id="ie-warning">
+        <h1>Internet Explorer Not Supported</h1>
+        <p>This application requires a modern web browser. Internet Explorer is no longer supported and may cause performance issues or failures.</p>
+        <div class="browser-list">
+            <div class="browser-item">Chrome</div>
+            <div class="browser-item">Firefox</div>
+            <div class="browser-item">Safari</div>
+            <div class="browser-item">Edge</div>
+        </div>
+        <button class="dismiss" onclick="document.getElementById('ie-warning').classList.add('hidden');">
+            Continue Anyway
+        </button>
+    </div>
+    
     <div id="initial-loader">
         <div style="width: 48px; height: 48px; border: 4px solid #7c3aed; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px;"></div>
         <div style="font-weight: 900; letter-spacing: -0.05em; font-size: 24px;">SUHAIL <span style="color: #7c3aed;">VIEWER</span></div>
@@ -106,6 +186,31 @@
     </div>
 
     <div id="root"></div>
+
+    <!-- IE Detection -->
+    <script>
+        (function() {
+            var isIE = false;
+            try {
+                isIE = navigator.userAgent.indexOf('MSIE') !== -1 || !!document.documentMode;
+            } catch (e) {
+                // Fallback to feature detection if userAgent fails
+                isIE = !!(document.all && !window.atob);
+            }
+            
+            if (isIE) {
+                console.warn('Internet Explorer detected; some features may not work correctly');
+            } else {
+                document.getElementById('ie-warning').classList.add('hidden');
+            }
+        })();
+    </script>
+
+    <!-- IE11 Polyfills -->
+    <!--[if IE 11]>
+        <script src="https://cdn.jsdelivr.net/npm/core-js@3.28.0/minified.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/regenerator-runtime@0.13.11/runtime.min.js"></script>
+    <![endif]-->
 
     <!-- Application Entry Point -->
     <script type="module" src="index.tsx"></script>
