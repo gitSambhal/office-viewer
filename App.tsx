@@ -175,6 +175,26 @@ const App: React.FC = () => {
 
   const closeAllTabs = () => setState(prev => ({ ...prev, tabs: [], activeTabId: null }));
 
+  const closeTabsToLeft = (tabId: string) => {
+    setState(prev => {
+      const tabIndex = prev.tabs.findIndex(t => t.id === tabId);
+      if (tabIndex === -1) return prev;
+      const tabsToKeep = prev.tabs.slice(tabIndex);
+      const newActiveTabId = tabsToKeep.some(t => t.id === prev.activeTabId) ? prev.activeTabId : (tabsToKeep.length > 0 ? tabsToKeep[0].id : null);
+      return { ...prev, tabs: tabsToKeep, activeTabId: newActiveTabId };
+    });
+  };
+
+  const closeTabsToRight = (tabId: string) => {
+    setState(prev => {
+      const tabIndex = prev.tabs.findIndex(t => t.id === tabId);
+      if (tabIndex === -1) return prev;
+      const tabsToKeep = prev.tabs.slice(0, tabIndex + 1);
+      const newActiveTabId = tabsToKeep.some(t => t.id === prev.activeTabId) ? prev.activeTabId : (tabsToKeep.length > 0 ? tabsToKeep[tabsToKeep.length - 1].id : null);
+      return { ...prev, tabs: tabsToKeep, activeTabId: newActiveTabId };
+    });
+  };
+
   const activeTab = state.tabs.find(t => t.id === state.activeTabId);
 
   const activeMetadata = useMemo(() => {
@@ -268,7 +288,7 @@ const App: React.FC = () => {
           </label>
         </header>
 
-        <div className="flex bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto scrollbar-none z-20 tab-bar-container hide-in-zen shrink-0">
+        <div className="flex flex-nowrap bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 overflow-x-auto scrollbar-none z-20 tab-bar-container hide-in-zen shrink-0">
           {state.tabs.map(tab => (
             <div 
               key={tab.id} 
@@ -423,6 +443,8 @@ const App: React.FC = () => {
             onClose={() => setContextMenu(null)}
             items={[
               { label: 'Close This Tab', onClick: () => closeTab(contextMenu.tabId) },
+              { label: 'Close Tabs to the Left', onClick: () => closeTabsToLeft(contextMenu.tabId) },
+              { label: 'Close Tabs to the Right', onClick: () => closeTabsToRight(contextMenu.tabId) },
               { label: 'Close Other Tabs', onClick: () => setState(s => ({ ...s, tabs: s.tabs.filter(t => t.id === contextMenu.tabId) })) },
               { divider: true },
               { label: 'Close All Tabs', onClick: closeAllTabs }
