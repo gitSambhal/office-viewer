@@ -121,9 +121,19 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
       }
     });
     observer.observe(el);
-    setContainerHeight(el.clientHeight); // Initial height
+    // Set initial height with a fallback
+    const initialHeight = el.clientHeight || el.parentElement?.clientHeight || 400;
+    setContainerHeight(initialHeight);
     return () => observer.disconnect();
   }, []);
+
+  // Update container height when data changes
+  useEffect(() => {
+    const el = scrollContainerRef.current;
+    if (el) {
+      setContainerHeight(el.clientHeight);
+    }
+  }, [currentTableData]);
 
   const filteredData = useMemo(() => {
     if (!currentTableData) return [];
@@ -189,6 +199,11 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
   const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVER_SCAN);
   const endIndex = Math.min(filteredData.length, Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + OVER_SCAN);
   const visibleRows = filteredData.slice(startIndex, endIndex);
+  
+  // Ensure we always show at least some rows if data exists
+  const effectiveVisibleRows = visibleRows.length === 0 && filteredData.length > 0 
+    ? filteredData.slice(0, Math.min(filteredData.length, Math.ceil(containerHeight / ROW_HEIGHT) + OVER_SCAN))
+    : visibleRows;
 
   const handleResizeStart = (e: React.MouseEvent, colIndex: number) => {
     e.preventDefault();
@@ -267,6 +282,15 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
 
   if (error) return <div className="p-4 text-red-500">{error}</div>;
   if (!db || !activeTableName || !currentTableData) return <div className="p-4">Loading database...</div>;
+  
+  // Show loading state if data is empty but table exists
+  if (currentTableData.rows.length === 0) {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <p className="text-zinc-400 text-sm">No data in this table</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full bg-zinc-50 dark:bg-zinc-950">
@@ -275,12 +299,20 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
           <input 
             type="text" 
             placeholder={`Search ${currentTableData.name}...`}
-            className="w-full pl-8 pr-8 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 bg-transparent text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-violet-500" 
+            className={`w-full pl-8 pr-8 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 bg-transparent text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-violet-500 shadow-sm transition-all ${searchTerm !== debouncedSearchTerm ? 'opacity-50' : ''}`} 
             value={searchTerm} 
             onChange={(e) => setSearchTerm(e.target.value)} 
           />
            <div className="absolute left-2.5 top-2 text-zinc-400"><IconSearch /></div>
-          {searchTerm && <button onClick={() => setSearchTerm('')} className="absolute right-2.5 top-2 text-zinc-400"><IconClear /></button>}
+          {(searchTerm || debouncedSearchTerm) && (
+            <button 
+              onClick={() => { setSearchTerm(''); setDebouncedSearchTerm(''); }}
+              className="absolute right-2.5 top-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
+              title="Clear Search"
+            >
+              <IconClear />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
@@ -399,38 +431,49 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
         </div>
       </div>
 
-      <div ref={scrollContainerRef} className="flex-1 overflow-auto relative" onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}>
-        <div style={{ height: filteredData.length * ROW_HEIGHT, position: 'relative' }}>
-          <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0">
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950 relative custom-scrollbar" onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}>
+        <div style={{ height: Math.max(filteredData.length * ROW_HEIGHT, containerHeight), position: 'relative', minHeight: containerHeight }}>
+          <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0" style={{ minHeight: containerHeight }}>
              <thead className="sticky top-0 z-20 shadow-sm">
                 <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
                     <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] font-black uppercase py-2">#</th>
                     {currentTableData.columns.map((col, i) => !hiddenColumns.has(i) && (
-                      <th key={i} style={{ width: columnWidths[i] || 150 }} className="relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group uppercase select-none">
-                        <div className="flex items-center justify-between h-full" onClick={() => handleToggleSort(col)}>
+                      <th key={i} style={{ width: columnWidths[i] || 150 }} className={`relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group transition-colors uppercase select-none ${sortConfig.key === col ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/20' : 'text-zinc-500'}`}>
+                        <div className="flex items-center justify-between h-full" title={`Sort by ${col || 'Column'}`} onClick={() => handleToggleSort(col)}>
                            <span className="truncate pr-4">{col}</span>
                            <div className={`${sortConfig.key === col ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}><IconSort /></div>
                         </div>
-                        <div onMouseDown={(e) => handleResizeStart(e, i)} className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 z-30" />
+                        <div onMouseDown={(e) => handleResizeStart(e, i)} title="Drag to resize column" className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 transition-colors z-30" />
                       </th>
                     ))}
                 </tr>
             </thead>
-            <tbody className="bg-white dark:bg-zinc-950">
-               <tr style={{ height: startIndex * ROW_HEIGHT }} />
-                {visibleRows.map((rowData, rowIndex) => {
-                  return (
-                    <tr key={startIndex + rowIndex} className="group border-b border-zinc-100 dark:border-zinc-900" style={{ height: ROW_HEIGHT }}>
-                      <td className="text-center text-[10px] text-zinc-400 font-mono border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">{startIndex + rowIndex + 1}</td>
-                      {rowData.row.map((cell, cellIndex) => !hiddenColumns.has(cellIndex) && (
-                         <td key={cellIndex} className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top">
-                             {renderCell(cell)}
-                         </td>
-                      ))}
-                    </tr>
-                  );
-                })}
-              <tr style={{ height: (filteredData.length - endIndex) * ROW_HEIGHT }} />
+            <tbody className="bg-white dark:bg-zinc-950" style={{ minHeight: containerHeight }}>
+               <tr style={{ height: startIndex * ROW_HEIGHT }} aria-hidden="true" />
+                {effectiveVisibleRows.length > 0 ? (
+                  effectiveVisibleRows.map((rowData, rowIndex) => {
+                    return (
+                      <tr key={startIndex + rowIndex} className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors" style={{ height: ROW_HEIGHT }}>
+                        <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">{startIndex + rowIndex + 1}</td>
+                        {rowData.row.map((cell, cellIndex) => !hiddenColumns.has(cellIndex) && (
+                           <td key={cellIndex} className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top">
+                               {renderCell(cell)}
+                           </td>
+                        ))}
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td colSpan={currentTableData.columns.length + 1} className="py-32 text-center">
+                       <div className="flex flex-col items-center gap-4">
+                         <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">No records found</p>
+                         <button onClick={() => { setSearchTerm(''); setDebouncedSearchTerm(''); }} className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all">Clear Filters</button>
+                       </div>
+                    </td>
+                  </tr>
+                )}
+              <tr style={{ height: (filteredData.length - endIndex) * ROW_HEIGHT }} aria-hidden="true" />
             </tbody>
           </table>
         </div>
@@ -438,11 +481,11 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
       <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center p-1.5 z-20 overflow-x-auto no-scrollbar">
         <div className="flex gap-1 px-1">
           {tableNames.map(name => (
-            <button key={name} onClick={() => setActiveTableName(name)} className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border whitespace-nowrap ${activeTableName === name ? 'bg-violet-600 text-white border-violet-600 shadow-md scale-105' : 'text-zinc-500 border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}>{name}</button>
+            <button key={name} title={`Switch to ${name}`} onClick={() => setActiveTableName(name)} className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border whitespace-nowrap ${activeTableName === name ? 'bg-violet-600 text-white border-violet-600 shadow-md scale-105' : 'text-zinc-500 border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}>{name}</button>
           ))}
         </div>
          <div className="ml-auto flex items-center gap-4 px-4 border-l border-zinc-200 dark:border-zinc-800">
-           <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">{filteredData.length} Records</span>
+           <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">{filteredData.length} <span className="text-[8px] opacity-60">Records</span></span>
         </div>
       </div>
     </div>
