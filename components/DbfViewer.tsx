@@ -24,9 +24,10 @@ interface DbfViewerProps {
   onStateChange?: (state: TabStateChange) => void;
   isTypeAwareEnabled?: boolean;
   registerCloseActionPopups?: (callback: () => void) => void;
+  globalSearchTerm?: string;
 }
 
-const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData, onStateChange, isTypeAwareEnabled: propTypeAware, registerCloseActionPopups }) => {
+const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData, onStateChange, isTypeAwareEnabled: propTypeAware, registerCloseActionPopups, globalSearchTerm }) => {
   const [tableData] = useState<TableData | null>(initialData);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -92,11 +93,16 @@ const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData, onStateCh
     let rows = tableData.rows;
     let indices = Array.from({ length: rows.length }, (_, i) => i);
 
-    // 1. Search Filtering
-    if (debouncedSearchTerm) {
-      const term = debouncedSearchTerm.toLowerCase();
+    // Combine local search and global search
+    const searchTerms = [];
+    if (debouncedSearchTerm) searchTerms.push(debouncedSearchTerm.toLowerCase());
+    if (globalSearchTerm) searchTerms.push(globalSearchTerm.toLowerCase());
+    
+    if (searchTerms.length > 0) {
       indices = indices.filter(i => {
-        return rows[i].some(cell => String(cell ?? '').toLowerCase().includes(term));
+        return rows[i].some(cell => 
+          searchTerms.some(term => String(cell ?? '').toLowerCase().includes(term))
+        );
       });
     }
 
@@ -145,7 +151,7 @@ const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData, onStateCh
     }
 
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
-  }, [tableData, debouncedSearchTerm, sortConfig, slicer]);
+  }, [tableData, debouncedSearchTerm, sortConfig, slicer, globalSearchTerm]);
 
   // Report state changes to parent
   useEffect(() => {

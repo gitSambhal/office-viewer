@@ -37,6 +37,7 @@ export interface AppState {
   zenMode: boolean;
   isSidebarOpen: boolean;
   isTypeAwareEnabled: boolean;
+  globalSearchTerm: string;
 }
 
 export interface TableData {

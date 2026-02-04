@@ -25,9 +25,10 @@ interface SqliteViewerProps {
   onStateChange?: (state: TabStateChange & { tableCount?: number }) => void;
   isTypeAwareEnabled?: boolean;
   registerCloseActionPopups?: (callback: () => void) => void;
+  globalSearchTerm?: string;
 }
 
-const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isTypeAwareEnabled: propTypeAware, registerCloseActionPopups }) => {
+const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isTypeAwareEnabled: propTypeAware, registerCloseActionPopups, globalSearchTerm }) => {
   const [db, setDb] = useState<Database | null>(null);
   const [tableNames, setTableNames] = useState<string[]>([]);
   const [activeTableName, setActiveTableName] = useState<string | null>(null);
@@ -154,11 +155,16 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
     let rows = currentTableData.rows;
     let indices = Array.from({ length: rows.length }, (_, i) => i);
 
-    // 1. Search Filtering
-    if (debouncedSearchTerm) {
-      const term = debouncedSearchTerm.toLowerCase();
+    // Combine local search and global search
+    const searchTerms = [];
+    if (debouncedSearchTerm) searchTerms.push(debouncedSearchTerm.toLowerCase());
+    if (globalSearchTerm) searchTerms.push(globalSearchTerm.toLowerCase());
+    
+    if (searchTerms.length > 0) {
       indices = indices.filter(i => {
-        return rows[i].some(cell => String(cell ?? '').toLowerCase().includes(term));
+        return rows[i].some(cell => 
+          searchTerms.some(term => String(cell ?? '').toLowerCase().includes(term))
+        );
       });
     }
 
@@ -198,7 +204,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
     }
 
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
-  }, [currentTableData, debouncedSearchTerm, sortConfig, slicer]);
+  }, [currentTableData, debouncedSearchTerm, sortConfig, slicer, globalSearchTerm]);
 
   // Report state changes to parent
   useEffect(() => {

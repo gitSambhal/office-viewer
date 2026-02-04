@@ -26,9 +26,10 @@ interface MdbViewerProps {
   onStateChange?: (state: TabStateChange & { tableCount?: number }) => void;
   isTypeAwareEnabled?: boolean;
   registerCloseActionPopups?: (callback: () => void) => void;
+  globalSearchTerm?: string;
 }
 
-const MdbViewer: React.FC<MdbViewerProps> = ({ file, onStateChange, isTypeAwareEnabled: propTypeAware, registerCloseActionPopups }) => {
+const MdbViewer: React.FC<MdbViewerProps> = ({ file, onStateChange, isTypeAwareEnabled: propTypeAware, registerCloseActionPopups, globalSearchTerm }) => {
   const [tables, setTables] = useState<TableData[]>([]);
   const [activeTableId, setActiveTableId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -134,10 +135,16 @@ const MdbViewer: React.FC<MdbViewerProps> = ({ file, onStateChange, isTypeAwareE
     let rows = activeTable.rows;
     let indices = Array.from({ length: rows.length }, (_, i) => i);
 
-    if (debouncedSearchTerm) {
-      const term = debouncedSearchTerm.toLowerCase();
+    // Combine local search and global search
+    const searchTerms = [];
+    if (debouncedSearchTerm) searchTerms.push(debouncedSearchTerm.toLowerCase());
+    if (globalSearchTerm) searchTerms.push(globalSearchTerm.toLowerCase());
+    
+    if (searchTerms.length > 0) {
       indices = indices.filter(i => {
-        return rows[i].some(cell => String(cell ?? '').toLowerCase().includes(term));
+        return rows[i].some(cell => 
+          searchTerms.some(term => String(cell ?? '').toLowerCase().includes(term))
+        );
       });
     }
 
@@ -171,7 +178,7 @@ const MdbViewer: React.FC<MdbViewerProps> = ({ file, onStateChange, isTypeAwareE
     }
 
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
-  }, [activeTable, debouncedSearchTerm, sortConfig, slicer]);
+  }, [activeTable, debouncedSearchTerm, sortConfig, slicer, globalSearchTerm]);
 
   // Report state changes to parent
   useEffect(() => {

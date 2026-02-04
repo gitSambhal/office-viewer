@@ -41,6 +41,7 @@ interface Props {
   onStateChange?: (state: TabStateChange) => void;
   isTypeAwareEnabled?: boolean;
   registerCloseActionPopups?: (callback: () => void) => void;
+  globalSearchTerm?: string;
 }
 
 export const SpreadsheetViewer: React.FC<Props> = ({ 
@@ -53,6 +54,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   onStateChange,
   isTypeAwareEnabled: propTypeAware,
   registerCloseActionPopups,
+  globalSearchTerm,
 }) => {
   const data = sheets[activeSheet] || { headers: [], rows: [] };
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -128,12 +130,15 @@ export const SpreadsheetViewer: React.FC<Props> = ({
     const rowCount = rows.length;
     let indices: number[] = [];
 
+    // Combine local search and global search
+    const effectiveSearchTerm = globalSearchTerm || debouncedSearchTerm;
+
     // 1. Initial Filtering (Fast loop)
-    if (!debouncedSearchTerm) {
+    if (!effectiveSearchTerm) {
       // If no search, start with all indices
       indices = Array.from({ length: rowCount }, (_, i) => i);
     } else {
-      const term = debouncedSearchTerm.toLowerCase();
+      const term = effectiveSearchTerm.toLowerCase();
       // Optimized for-loop for large arrays
       for (let i = 0; i < rowCount; i++) {
         const row = rows[i];
@@ -189,7 +194,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
 
     // 4. Map to object structure for view
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
-  }, [data.rows, debouncedSearchTerm, sortConfig, slicer]);
+  }, [data.rows, debouncedSearchTerm, globalSearchTerm, sortConfig, slicer]);
 
   // Report state changes to parent
   useEffect(() => {
