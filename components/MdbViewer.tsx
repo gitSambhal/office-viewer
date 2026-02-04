@@ -49,7 +49,7 @@ const MdbViewer: React.FC<MdbViewerProps> = ({ file, onStateChange, isTypeAwareE
   const [containerHeight, setContainerHeight] = useState(0);
 
   const resizeRef = useRef<{ colIdx: number, startX: number, startWidth: number } | null>(null);
-  const prevStateRef = useRef<{ sortConfig: typeof sortConfig, searchTerm: string, filteredCount: number, visibleColumns: number, tableCount: number, activeTable: string | null } | null>(null);
+  const onStateChangeRef = useRef(onStateChange);
 
   useEffect(() => {
     if (file) {
@@ -180,12 +180,17 @@ const MdbViewer: React.FC<MdbViewerProps> = ({ file, onStateChange, isTypeAwareE
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
   }, [activeTable, debouncedSearchTerm, sortConfig, slicer, globalSearchTerm]);
 
+  // Keep ref updated with latest callback
+  useEffect(() => {
+    onStateChangeRef.current = onStateChange;
+  }, [onStateChange]);
+
   // Report state changes to parent
   useEffect(() => {
-    if (onStateChange && activeTable) {
+    if (onStateChangeRef.current && activeTable) {
       const sortKey = sortConfig.key !== -1 ? activeTable.columns[sortConfig.key] || String(sortConfig.key) : '';
       const visibleColCount = activeTable.columns.filter((_, i) => !hiddenColumns.has(i)).length;
-      const currentState = {
+      onStateChangeRef.current({
         sortConfig: sortKey ? { key: sortKey, direction: sortConfig.direction } : null,
         searchTerm,
         filteredCount: filteredData.length,
@@ -193,23 +198,9 @@ const MdbViewer: React.FC<MdbViewerProps> = ({ file, onStateChange, isTypeAwareE
         visibleColumns: visibleColCount,
         tableCount: tables.length,
         activeTable: activeTableId
-      };
-      
-      // Only call onStateChange if values actually changed
-      const prev = prevStateRef.current;
-      if (!prev || 
-          JSON.stringify(prev.sortConfig) !== JSON.stringify(currentState.sortConfig) ||
-          prev.searchTerm !== currentState.searchTerm ||
-          prev.filteredCount !== currentState.filteredCount ||
-          prev.totalRows !== currentState.totalRows ||
-          prev.visibleColumns !== currentState.visibleColumns ||
-          prev.tableCount !== currentState.tableCount ||
-          prev.activeTable !== currentState.activeTable) {
-        onStateChange(currentState);
-        prevStateRef.current = currentState;
-      }
+      });
     }
-  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, onStateChange, activeTable, tables.length, activeTableId]);
+  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, activeTable, tables.length, activeTableId]);
 
   const handleToggleSort = (colIdx: number) => {
     setSortConfig(prev => {

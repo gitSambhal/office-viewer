@@ -70,6 +70,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   const [containerHeight, setContainerHeight] = useState(0);
 
   const resizeRef = useRef<{ colIdx: number, startX: number, startWidth: number } | null>(null);
+  const onStateChangeRef = useRef(onStateChange);
 
   // Debounce search term to prevent hanging during typing
   useEffect(() => {
@@ -191,12 +192,17 @@ export const SpreadsheetViewer: React.FC<Props> = ({
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
   }, [data.rows, debouncedSearchTerm, globalSearchTerm, sortConfig, slicer]);
 
+  // Keep ref updated with latest callback
+  useEffect(() => {
+    onStateChangeRef.current = onStateChange;
+  }, [onStateChange]);
+
   // Report state changes to parent
   useEffect(() => {
-    if (onStateChange) {
+    if (onStateChangeRef.current) {
       const sortKey = sortConfig.key !== -1 ? (data.headers[sortConfig.key] || String(sortConfig.key)) : '';
       const visibleColCount = data.headers.filter((_, i) => !hiddenColumns.has(i)).length;
-      onStateChange({
+      onStateChangeRef.current({
         sortConfig: sortKey ? { key: sortKey, direction: sortConfig.direction } : null,
         searchTerm: searchTerm,
         filteredCount: filteredData.length,
@@ -204,7 +210,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
         visibleColumns: visibleColCount,
       });
     }
-  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, onStateChange, data.headers, data.rows.length]);
+  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, data.headers, data.rows.length]);
 
   const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVER_SCAN);
   const endIndex = Math.min(filteredData.length, Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + OVER_SCAN);

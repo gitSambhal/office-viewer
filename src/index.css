@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-zinc-950: #09090b;
   --color-violet-600: #7c3aed;

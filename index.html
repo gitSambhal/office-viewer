@@ -152,6 +152,19 @@
 </script>
 </head>
 <body class="bg-zinc-50 text-zinc-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors duration-300">
+    <!-- Theme initialization script - runs before React to prevent flash -->
+    <script>
+      (function() {
+        try {
+          var theme = localStorage.getItem('suhail_theme');
+          if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+          } else {
+            document.documentElement.classList.remove('dark');
+          }
+        } catch (e) {}
+      })();
+    </script>
     <!-- IE Warning -->
     <div id="ie-warning">
         <h1>Internet Explorer Not Supported</h1>

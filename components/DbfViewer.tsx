@@ -45,6 +45,7 @@ const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData, onStateCh
   const [containerHeight, setContainerHeight] = useState(0);
 
   const resizeRef = useRef<{ colIdx: number; startX: number; startWidth: number } | null>(null);
+  const onStateChangeRef = useRef(onStateChange);
 
   // Debounce search term
   useEffect(() => {
@@ -153,11 +154,16 @@ const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData, onStateCh
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
   }, [tableData, debouncedSearchTerm, sortConfig, slicer, globalSearchTerm]);
 
+  // Keep ref updated with latest callback
+  useEffect(() => {
+    onStateChangeRef.current = onStateChange;
+  }, [onStateChange]);
+
   // Report state changes to parent
   useEffect(() => {
-    if (onStateChange) {
+    if (onStateChangeRef.current) {
       const visibleColCount = tableData ? tableData.columns.filter((_, i) => !hiddenColumns.has(i)).length : 0;
-      onStateChange({
+      onStateChangeRef.current({
         sortConfig: sortConfig.key ? sortConfig : null,
         searchTerm,
         filteredCount: filteredData.length,
@@ -165,7 +171,7 @@ const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData, onStateCh
         visibleColumns: visibleColCount
       });
     }
-  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, onStateChange, tableData]);
+  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, tableData]);
 
   const handleToggleSort = (columnKey: string) => {
     setSortConfig(prev => {

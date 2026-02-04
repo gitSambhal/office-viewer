@@ -50,7 +50,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
   const [containerHeight, setContainerHeight] = useState(0);
 
   const resizeRef = useRef<{ colIdx: number, startX: number, startWidth: number } | null>(null);
-  const prevStateRef = useRef<{ sortConfig: typeof sortConfig, searchTerm: string, filteredCount: number, visibleColumns: number, tableCount: number, activeTable: string | null } | null>(null);
+  const onStateChangeRef = useRef(onStateChange);
 
   // Initialize sql.js and load the database
   useEffect(() => {
@@ -206,11 +206,16 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
   }, [currentTableData, debouncedSearchTerm, sortConfig, slicer, globalSearchTerm]);
 
+  // Keep ref updated with latest callback
+  useEffect(() => {
+    onStateChangeRef.current = onStateChange;
+  }, [onStateChange]);
+
   // Report state changes to parent
   useEffect(() => {
-    if (onStateChange && currentTableData) {
+    if (onStateChangeRef.current && currentTableData) {
       const visibleColCount = currentTableData.columns.filter((_, i) => !hiddenColumns.has(i)).length;
-      const currentState = {
+      onStateChangeRef.current({
         sortConfig: sortConfig.key ? sortConfig : null,
         searchTerm,
         filteredCount: filteredData.length,
@@ -218,23 +223,9 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
         visibleColumns: visibleColCount,
         tableCount: tableNames.length,
         activeTable: activeTableName
-      };
-      
-      // Only call onStateChange if values actually changed
-      const prev = prevStateRef.current;
-      if (!prev || 
-          JSON.stringify(prev.sortConfig) !== JSON.stringify(currentState.sortConfig) ||
-          prev.searchTerm !== currentState.searchTerm ||
-          prev.filteredCount !== currentState.filteredCount ||
-          prev.totalRows !== currentState.totalRows ||
-          prev.visibleColumns !== currentState.visibleColumns ||
-          prev.tableCount !== currentState.tableCount ||
-          prev.activeTable !== currentState.activeTable) {
-        onStateChange(currentState);
-        prevStateRef.current = currentState;
-      }
+      });
     }
-  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, onStateChange, currentTableData, tableNames.length, activeTableName]);
+  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, currentTableData, tableNames.length, activeTableName]);
 
   const handleToggleSort = (columnKey: string) => {
     setSortConfig(prev => {
