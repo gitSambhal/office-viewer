@@ -343,29 +343,21 @@ const App: React.FC = () => {
     
     // Table data counts with UI cues
     if (activeTab.type === 'xlsx' || activeTab.type === 'dbf' || activeTab.type === 'sqlite' || activeTab.type === 'mdb') {
-      const totalRows = activeTab.totalRows || 0;
-      const filteredRows = activeTab.filteredCount !== null ? activeTab.filteredCount : totalRows;
+      const filteredRows = activeTab.filteredCount !== null ? activeTab.filteredCount : (activeTab.totalRows || 0);
       const visibleColumns = activeTab.visibleColumns || 0;
-      
-      // Show total rows count
-      meta.push({ 
-        label: 'Total Rows', 
-        value: totalRows,
-        icon: 'table'
-      });
       
       // Show filtered rows count
       meta.push({ 
         label: 'Rows', 
         value: filteredRows,
-        icon: filteredRows < totalRows ? 'filter' : 'table'
+        icon: filteredRows < (activeTab.totalRows || 0) ? 'filter' : 'table'
       });
       
       // Show filtered count badge when rows are filtered
-      if (filteredRows < totalRows) {
+      if (filteredRows < (activeTab.totalRows || 0)) {
         meta.push({
           label: 'Filtered',
-          value: `${totalRows - filteredRows} hidden`,
+          value: `${(activeTab.totalRows || 0) - filteredRows} hidden`,
           color: 'amber',
           icon: 'filter'
         });
@@ -609,6 +601,23 @@ const App: React.FC = () => {
                     onResizeColumn={(sheetName, colIdx, width) => {
                       setState(prev => ({ ...prev, tabs: prev.tabs.map(t => t.id === activeTab.id ? { ...t, columnSettings: { ...t.columnSettings, [sheetName]: { ...t.columnSettings?.[sheetName], [colIdx]: width } } } : t)}));
                     }}
+                    onStateChange={(state) => {
+                      setState(prev => ({
+                        ...prev,
+                        tabs: prev.tabs.map(t => 
+                          t.id === activeTab.id 
+                            ? { 
+                                ...t, 
+                                sortConfig: state.sortConfig,
+                                searchTerm: state.searchTerm,
+                                filteredCount: state.filteredCount,
+                                totalRows: state.totalRows ?? t.totalRows,
+                                visibleColumns: state.visibleColumns
+                              } 
+                            : t
+                        )
+                      }));
+                    }}
                   />
                 )}
                 {activeTab.type === 'pdf' && <PdfViewer key={activeTab.id} data={activeTab.data} />}
@@ -630,6 +639,7 @@ const App: React.FC = () => {
                               sortConfig: state.sortConfig,
                               searchTerm: state.searchTerm,
                               filteredCount: state.filteredCount,
+                              totalRows: state.totalRows ?? t.totalRows,
                               visibleColumns: state.visibleColumns,
                               tableCount: state.tableCount,
                               activeTable: state.activeTable
@@ -652,6 +662,7 @@ const App: React.FC = () => {
                               sortConfig: state.sortConfig,
                               searchTerm: state.searchTerm,
                               filteredCount: state.filteredCount,
+                              totalRows: state.totalRows ?? t.totalRows,
                               visibleColumns: state.visibleColumns,
                               tableCount: state.tableCount,
                               activeTable: state.activeTable
@@ -674,6 +685,7 @@ const App: React.FC = () => {
                               sortConfig: state.sortConfig,
                               searchTerm: state.searchTerm,
                               filteredCount: state.filteredCount,
+                              totalRows: state.totalRows ?? t.totalRows,
                               visibleColumns: state.visibleColumns
                             } 
                           : t

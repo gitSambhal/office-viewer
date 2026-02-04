@@ -170,6 +170,7 @@ const MdbViewer: React.FC<MdbViewerProps> = ({ file, onStateChange }) => {
         sortConfig: sortKey ? { key: sortKey, direction: sortConfig.direction } : null,
         searchTerm,
         filteredCount: filteredData.length,
+        totalRows: activeTable.rows.length,
         visibleColumns: visibleColCount,
         tableCount: tables.length,
         activeTable: activeTableId
@@ -181,6 +182,7 @@ const MdbViewer: React.FC<MdbViewerProps> = ({ file, onStateChange }) => {
           JSON.stringify(prev.sortConfig) !== JSON.stringify(currentState.sortConfig) ||
           prev.searchTerm !== currentState.searchTerm ||
           prev.filteredCount !== currentState.filteredCount ||
+          prev.totalRows !== currentState.totalRows ||
           prev.visibleColumns !== currentState.visibleColumns ||
           prev.tableCount !== currentState.tableCount ||
           prev.activeTable !== currentState.activeTable) {

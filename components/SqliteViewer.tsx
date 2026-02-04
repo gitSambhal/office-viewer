@@ -196,6 +196,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange }) => {
         sortConfig: sortConfig.key ? sortConfig : null,
         searchTerm,
         filteredCount: filteredData.length,
+        totalRows: currentTableData.rows.length,
         visibleColumns: visibleColCount,
         tableCount: tableNames.length,
         activeTable: activeTableName
@@ -207,6 +208,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange }) => {
           JSON.stringify(prev.sortConfig) !== JSON.stringify(currentState.sortConfig) ||
           prev.searchTerm !== currentState.searchTerm ||
           prev.filteredCount !== currentState.filteredCount ||
+          prev.totalRows !== currentState.totalRows ||
           prev.visibleColumns !== currentState.visibleColumns ||
           prev.tableCount !== currentState.tableCount ||
           prev.activeTable !== currentState.activeTable) {

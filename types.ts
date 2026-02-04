@@ -4,6 +4,7 @@ export interface TabStateChange {
   sortConfig: { key: string; direction: 'asc' | 'desc' | null } | null;
   searchTerm: string;
   filteredCount: number | null;
+  totalRows: number | null;
   visibleColumns: number | null;
   tableCount?: number;
   activeTable?: string;

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { SheetData } from '../types';
+import { TabStateChange } from '../types';
 
 declare const XLSX: any;
 
@@ -26,6 +26,11 @@ interface CellChange {
   timestamp: number;
 }
 
+interface SheetData {
+  headers: string[];
+  rows: any[][];
+}
+
 interface Props {
   sheets: { [name: string]: SheetData };
   activeSheet: string;
@@ -33,6 +38,7 @@ interface Props {
   onUpdate?: (sheetName: string, newRows: any[][]) => void;
   columnWidths: { [colIndex: number]: number };
   onResizeColumn: (sheetName: string, colIndex: number, width: number) => void;
+  onStateChange?: (state: TabStateChange) => void;
 }
 
 export const SpreadsheetViewer: React.FC<Props> = ({ 
@@ -42,6 +48,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   onUpdate,
   columnWidths,
   onResizeColumn,
+  onStateChange,
 }) => {
   const data = sheets[activeSheet] || { headers: [], rows: [] };
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -182,6 +189,21 @@ export const SpreadsheetViewer: React.FC<Props> = ({
     // 4. Map to object structure for view
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
   }, [data.rows, debouncedSearchTerm, sortConfig, slicer]);
+
+  // Report state changes to parent
+  useEffect(() => {
+    if (onStateChange) {
+      const sortKey = sortConfig.key !== -1 ? (data.headers[sortConfig.key] || String(sortConfig.key)) : '';
+      const visibleColCount = data.headers.filter((_, i) => !hiddenColumns.has(i)).length;
+      onStateChange({
+        sortConfig: sortKey ? { key: sortKey, direction: sortConfig.direction } : null,
+        searchTerm: searchTerm,
+        filteredCount: filteredData.length,
+        totalRows: data.rows.length,
+        visibleColumns: visibleColCount,
+      });
+    }
+  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, onStateChange, data.headers, data.rows.length]);
 
   const startIndex = Math.max(0, Math.floor(scrollTop / ROW_HEIGHT) - OVER_SCAN);
   const endIndex = Math.min(filteredData.length, Math.ceil((scrollTop + containerHeight) / ROW_HEIGHT) + OVER_SCAN);

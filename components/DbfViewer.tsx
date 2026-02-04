@@ -143,6 +143,7 @@ const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData, onStateCh
         sortConfig: sortConfig.key ? sortConfig : null,
         searchTerm,
         filteredCount: filteredData.length,
+        totalRows: tableData?.rows.length ?? 0,
         visibleColumns: visibleColCount
       });
     }
