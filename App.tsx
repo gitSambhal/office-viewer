@@ -69,8 +69,12 @@ const getFileIcon = (type: FileType) => {
 const App: React.FC = () => {
   const [state, setState] = useState<AppState>(() => {
     let darkMode = false;
-    try { darkMode = localStorage.getItem('suhail_theme') === 'dark'; } catch (e) {}
-    return { tabs: [], activeTabId: null, darkMode, zenMode: false, isSidebarOpen: true };
+    let isTypeAwareEnabled = true;
+    try { 
+      darkMode = localStorage.getItem('suhail_theme') === 'dark'; 
+      isTypeAwareEnabled = localStorage.getItem('suhail_type_aware') !== 'false';
+    } catch (e) {}
+    return { tabs: [], activeTabId: null, darkMode, zenMode: false, isSidebarOpen: true, isTypeAwareEnabled };
   });
 
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -81,6 +85,12 @@ const App: React.FC = () => {
   const [tabSearchTerm, setTabSearchTerm] = useState('');
   const [showScrollArrows, setShowScrollArrows] = useState(false);
   const tabBarRef = React.useRef<HTMLDivElement>(null);
+
+  // Callback to close action popups (used by child components)
+  const closeActionPopupsRef = React.useRef<(() => void) | null>(null);
+  const registerCloseActionPopups = React.useCallback((callback: () => void) => {
+    closeActionPopupsRef.current = callback;
+  }, []);
 
   // Sync dark mode class with root element
   useEffect(() => {
@@ -99,6 +109,9 @@ const App: React.FC = () => {
       if (e.key === 'Escape') {
         setContextMenu(null);
         setState(prev => prev.zenMode ? { ...prev, zenMode: false } : prev);
+        if (closeActionPopupsRef.current) {
+          closeActionPopupsRef.current();
+        }
       }
       if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
         e.preventDefault(); toggleFullscreen();
@@ -484,6 +497,19 @@ const App: React.FC = () => {
               <button title="Sidebar" onClick={() => setState(s => ({ ...s, isSidebarOpen: !s.isSidebarOpen }))} className={`p-2 rounded-lg transition-all ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
               </button>
+              <button 
+                title="Toggle Visual Type Highlighting"
+                onClick={() => {
+                  setState(prev => {
+                    const newValue = !prev.isTypeAwareEnabled;
+                    localStorage.setItem('suhail_type_aware', String(newValue));
+                    return { ...prev, isTypeAwareEnabled: newValue };
+                  });
+                }} 
+                className={`p-2 rounded-lg transition-all border ${state.isTypeAwareEnabled ? 'bg-violet-50 border-violet-200 text-violet-600 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-400' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:bg-white/50'}`}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h10M10 7v10m4-10v10M7 17h10" /></svg>
+              </button>
               <button title="Toggle Theme" onClick={() => setState(s => ({ ...s, darkMode: !s.darkMode }))} className="p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all text-zinc-500">
                 {state.darkMode ? <IconLight /> : <IconDark />}
               </button>
@@ -601,6 +627,8 @@ const App: React.FC = () => {
                     onResizeColumn={(sheetName, colIdx, width) => {
                       setState(prev => ({ ...prev, tabs: prev.tabs.map(t => t.id === activeTab.id ? { ...t, columnSettings: { ...t.columnSettings, [sheetName]: { ...t.columnSettings?.[sheetName], [colIdx]: width } } } : t)}));
                     }}
+                    isTypeAwareEnabled={state.isTypeAwareEnabled}
+                    registerCloseActionPopups={registerCloseActionPopups}
                     onStateChange={(state) => {
                       setState(prev => ({
                         ...prev,
@@ -629,6 +657,8 @@ const App: React.FC = () => {
                 {activeTab.type === 'mdb' && <MdbViewer 
                   key={activeTab.id} 
                   file={activeTab.data} 
+                  isTypeAwareEnabled={state.isTypeAwareEnabled}
+                  registerCloseActionPopups={registerCloseActionPopups}
                   onStateChange={(state) => {
                     setState(prev => ({
                       ...prev,
@@ -652,6 +682,8 @@ const App: React.FC = () => {
                 {activeTab.type === 'sqlite' && <SqliteViewer 
                   key={activeTab.id} 
                   file={activeTab.data} 
+                  isTypeAwareEnabled={state.isTypeAwareEnabled}
+                  registerCloseActionPopups={registerCloseActionPopups}
                   onStateChange={(state) => {
                     setState(prev => ({
                       ...prev,
@@ -675,6 +707,8 @@ const App: React.FC = () => {
                 {activeTab.type === 'dbf' && <DbfViewer 
                   key={activeTab.id} 
                   tableData={activeTab.data as TableData} 
+                  isTypeAwareEnabled={state.isTypeAwareEnabled}
+                  registerCloseActionPopups={registerCloseActionPopups}
                   onStateChange={(state) => {
                     setState(prev => ({
                       ...prev,

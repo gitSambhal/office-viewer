@@ -39,6 +39,8 @@ interface Props {
   columnWidths: { [colIndex: number]: number };
   onResizeColumn: (sheetName: string, colIndex: number, width: number) => void;
   onStateChange?: (state: TabStateChange) => void;
+  isTypeAwareEnabled?: boolean;
+  registerCloseActionPopups?: (callback: () => void) => void;
 }
 
 export const SpreadsheetViewer: React.FC<Props> = ({ 
@@ -49,6 +51,8 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   columnWidths,
   onResizeColumn,
   onStateChange,
+  isTypeAwareEnabled: propTypeAware,
+  registerCloseActionPopups,
 }) => {
   const data = sheets[activeSheet] || { headers: [], rows: [] };
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -57,7 +61,6 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [editingCell, setEditingCell] = useState<{ r: number, c: number } | null>(null);
-  const [isTypeAwareEnabled, setIsTypeAwareEnabled] = useState(true);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isSlicerOpen, setIsSlicerOpen] = useState(false);
   const [isColumnManagerOpen, setIsColumnManagerOpen] = useState(false);
@@ -79,18 +82,16 @@ export const SpreadsheetViewer: React.FC<Props> = ({
     return () => clearTimeout(handler);
   }, [searchTerm]);
 
+  // Register close action popups callback for ESC key
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setEditingCell(null);
-        setIsExportOpen(false);
+    if (registerCloseActionPopups) {
+      registerCloseActionPopups(() => {
         setIsSlicerOpen(false);
         setIsColumnManagerOpen(false);
-      }
-    };
-    window.addEventListener('keydown', handleEsc);
-    return () => window.removeEventListener('keydown', handleEsc);
-  }, []);
+        setIsExportOpen(false);
+      });
+    }
+  }, [registerCloseActionPopups]);
 
   useEffect(() => {
     setSortConfig({ key: -1, direction: null });
@@ -297,8 +298,8 @@ export const SpreadsheetViewer: React.FC<Props> = ({
     }
 
     const isNull = value === null || value === undefined || String(value).trim() === '';
-    const isNumber = isTypeAwareEnabled && !isNull && (typeof value === 'number' || (!isNaN(Number(value)) && value !== ''));
-    const isBoolean = isTypeAwareEnabled && !isNull && (typeof value === 'boolean' || String(value).toLowerCase() === 'true' || String(value).toLowerCase() === 'false');
+    const isNumber = (propTypeAware ?? true) && !isNull && (typeof value === 'number' || (!isNaN(Number(value)) && value !== ''));
+    const isBoolean = (propTypeAware ?? true) && !isNull && (typeof value === 'boolean' || String(value).toLowerCase() === 'true' || String(value).toLowerCase() === 'false');
 
     return (
       <div 
@@ -341,14 +342,6 @@ export const SpreadsheetViewer: React.FC<Props> = ({
         </div>
         
         <div className="flex items-center gap-1 shrink-0">
-          <button 
-            title="Toggle Visual Type Highlighting"
-            onClick={() => setIsTypeAwareEnabled(!isTypeAwareEnabled)} 
-            className={`p-1.5 rounded-lg transition-all border ${isTypeAwareEnabled ? 'bg-violet-50 border-violet-200 text-violet-600 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-400' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400'}`}
-          >
-            <IconType />
-          </button>
-
           <div className="relative">
             <button 
               title="Filter and Slice Dataset"

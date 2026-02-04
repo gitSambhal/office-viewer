@@ -23,20 +23,21 @@ interface SlicerSettings {
 interface SqliteViewerProps {
   file: File;
   onStateChange?: (state: TabStateChange & { tableCount?: number }) => void;
+  isTypeAwareEnabled?: boolean;
+  registerCloseActionPopups?: (callback: () => void) => void;
 }
 
-const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange }) => {
+const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isTypeAwareEnabled: propTypeAware, registerCloseActionPopups }) => {
   const [db, setDb] = useState<Database | null>(null);
-  const [tableNames, setTableNames] = useState<string[]>([]); // Renamed from 'tables' to 'tableNames' for clarity
-  const [activeTableName, setActiveTableName] = useState<string | null>(null); // Renamed from 'activeTable'
-  const [currentTableData, setCurrentTableData] = useState<TableData | null>(null); // Renamed from 'tableData'
+  const [tableNames, setTableNames] = useState<string[]>([]);
+  const [activeTableName, setActiveTableName] = useState<string | null>(null);
+  const [currentTableData, setCurrentTableData] = useState<TableData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: '', direction: null });
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
-  const [isTypeAwareEnabled, setIsTypeAwareEnabled] = useState(true);
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isSlicerOpen, setIsSlicerOpen] = useState(false);
   const [isColumnManagerOpen, setIsColumnManagerOpen] = useState(false);
@@ -136,6 +137,17 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange }) => {
       setContainerHeight(el.clientHeight);
     }
   }, [currentTableData]);
+
+  // Register close action popups callback for ESC key
+  useEffect(() => {
+    if (registerCloseActionPopups) {
+      registerCloseActionPopups(() => {
+        setIsSlicerOpen(false);
+        setIsColumnManagerOpen(false);
+        setIsExportOpen(false);
+      });
+    }
+  }, [registerCloseActionPopups]);
 
   const filteredData = useMemo(() => {
     if (!currentTableData) return [];
@@ -296,8 +308,8 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange }) => {
 
   const renderCell = (value: any) => {
     const isNull = value === null || value === undefined || String(value).trim() === '';
-    const isNumber = isTypeAwareEnabled && !isNull && (typeof value === 'number' || (!isNaN(Number(value)) && value !== ''));
-    const isBoolean = isTypeAwareEnabled && !isNull && (typeof value === 'boolean' || String(value).toLowerCase() === 'true' || String(value).toLowerCase() === 'false');
+    const isNumber = (propTypeAware ?? true) && !isNull && (typeof value === 'number' || (!isNaN(Number(value)) && value !== ''));
+    const isBoolean = (propTypeAware ?? true) && !isNull && (typeof value === 'boolean' || String(value).toLowerCase() === 'true' || String(value).toLowerCase() === 'false');
 
     return (
       <div className={`px-3 py-2 text-zinc-800 dark:text-zinc-100 whitespace-nowrap overflow-hidden text-ellipsis text-sm ${isNumber ? 'justify-end font-mono font-bold text-violet-600 dark:text-violet-400' : ''} ${isBoolean ? 'justify-center' : ''} ${isNull ? 'italic text-zinc-300 dark:text-zinc-700' : ''}`}>
@@ -340,14 +352,6 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange }) => {
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <button 
-            title="Toggle Visual Type Highlighting"
-            onClick={() => setIsTypeAwareEnabled(!isTypeAwareEnabled)} 
-            className={`p-1.5 rounded-lg transition-all border ${isTypeAwareEnabled ? 'bg-violet-50 border-violet-200 text-violet-600 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-400' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400'}`}
-          >
-            <IconType />
-          </button>
-          
           <div className="relative">
             <button 
               title="Filter and Slice Dataset"

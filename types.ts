@@ -36,6 +36,7 @@ export interface AppState {
   darkMode: boolean;
   zenMode: boolean;
   isSidebarOpen: boolean;
+  isTypeAwareEnabled: boolean;
 }
 
 export interface TableData {
