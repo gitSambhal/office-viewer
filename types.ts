@@ -1,5 +1,14 @@
 export type FileType = 'xlsx' | 'docx' | 'pdf' | 'image' | 'rtf' | 'txt' | 'md' | 'mdb' | 'accdb' | 'sqlite' | 'dbf' | 'unknown';
 
+export interface TabStateChange {
+  sortConfig: { key: string; direction: 'asc' | 'desc' | null } | null;
+  searchTerm: string;
+  filteredCount: number | null;
+  visibleColumns: number | null;
+  tableCount?: number;
+  activeTable?: string;
+}
+
 export interface Tab {
   id: string;
   name: string;
@@ -8,8 +17,16 @@ export interface Tab {
   size: number;
   data: any;
   activeSheet?: string;
+  activeTable?: string;
   active: boolean;
   columnSettings: { [key: string]: { [key: number]: number } };
+  // State tracking for UI cues
+  sortConfig: { key: string; direction: 'asc' | 'desc' | null } | null;
+  searchTerm: string;
+  filteredCount: number | null;
+  totalRows: number | null;
+  visibleColumns: number | null;
+  tableCount: number | null;
 }
 
 export interface AppState {
@@ -43,6 +60,15 @@ export interface SortConfig {
 
 export interface ColumnWidths {
   [key: string]: number;
+}
+
+export interface TabState {
+  sortConfig: SortConfig | null;
+  searchTerm: string;
+  filteredCount: number;
+  visibleColumns: number;
+  isFiltered: boolean;
+  isSorted: boolean;
 }
 
 export interface DBFField {

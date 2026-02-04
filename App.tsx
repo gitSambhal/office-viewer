@@ -169,7 +169,13 @@ const App: React.FC = () => {
             size: file.size,
             data: tableData,
             active: false,
-            columnSettings: {}
+            columnSettings: {},
+            sortConfig: null,
+            searchTerm: '',
+            filteredCount: tableData.rows.length,
+            totalRows: tableData.rows.length,
+            visibleColumns: tableData.columns.length,
+            tableCount: null
           });
           continue;
         }
@@ -183,7 +189,14 @@ const App: React.FC = () => {
             size: file.size,
             data: file,
             active: false,
-            columnSettings: {}
+            columnSettings: {},
+            sortConfig: null,
+            searchTerm: '',
+            filteredCount: null,
+            totalRows: null,
+            visibleColumns: null,
+            tableCount: null,
+            activeTable: null
           });
           continue;
         }
@@ -197,7 +210,14 @@ const App: React.FC = () => {
             size: file.size,
             data: file,
             active: false,
-            columnSettings: {}
+            columnSettings: {},
+            sortConfig: null,
+            searchTerm: '',
+            filteredCount: null,
+            totalRows: null,
+            visibleColumns: null,
+            tableCount: null,
+            activeTable: null
           });
           continue;
         }
@@ -205,6 +225,9 @@ const App: React.FC = () => {
         await new Promise(resolve => setTimeout(resolve, 50));
         const result = await FileProcessor.process(file);
         if (result.type !== 'unknown') {
+          const sheets = result.type === 'xlsx' ? result.data : {};
+          const firstSheetRows = result.type === 'xlsx' && Object.keys(sheets).length > 0 ? sheets[Object.keys(sheets)[0]]?.rows?.length || 0 : 0;
+          const firstSheetCols = result.type === 'xlsx' && Object.keys(sheets).length > 0 ? Object.keys(sheets[Object.keys(sheets)[0]]?.rows?.[0] || {}).length : 0;
           newTabs.push({
             id: Math.random().toString(36).substr(2, 9),
             name: file.name,
@@ -214,7 +237,13 @@ const App: React.FC = () => {
             data: result.data,
             activeSheet: result.type === 'xlsx' ? Object.keys(result.data)[0] : undefined,
             active: false,
-            columnSettings: {}
+            columnSettings: {},
+            sortConfig: null,
+            searchTerm: '',
+            filteredCount: firstSheetRows,
+            totalRows: firstSheetRows,
+            visibleColumns: firstSheetCols,
+            tableCount: null
           });
         }
       } catch (err: any) {
@@ -268,24 +297,148 @@ const App: React.FC = () => {
 
   const activeMetadata = useMemo(() => {
     if (!activeTab) return null;
-    const meta: { label: string; value: string | number }[] = [
-      { label: 'File Name', value: activeTab.name },
-      { label: 'Format Type', value: activeTab.type.toUpperCase() },
-      { label: 'File Size', value: formatBytes(activeTab.size) },
-      { label: 'Last Modified', value: new Date(activeTab.lastModified).toLocaleString() }
+    
+    const meta: { label: string; value: string | number; icon?: string; color?: string; badge?: boolean }[] = [
+      { label: 'File Name', value: activeTab.name }
     ];
+    
+    // Format type badge
+    meta.push({ 
+      label: 'Format', 
+      value: activeTab.type.toUpperCase(),
+      badge: true,
+      color: activeTab.type === 'xlsx' ? 'emerald' : 
+            activeTab.type === 'docx' ? 'blue' : 
+            activeTab.type === 'pdf' ? 'rose' : 
+            activeTab.type === 'dbf' ? 'orange' :
+            activeTab.type === 'sqlite' ? 'sky' :
+            activeTab.type === 'mdb' ? 'teal' : 'zinc'
+    });
+    
+    meta.push({ label: 'Size', value: formatBytes(activeTab.size) });
+    meta.push({ label: 'Modified', value: new Date(activeTab.lastModified).toLocaleDateString() });
+    
+    // Data-specific metadata
     if (activeTab.type === 'xlsx') {
       const sheets = activeTab.data || {};
-      meta.push({ label: 'Total Sheets', value: Object.keys(sheets).length });
+      meta.push({ label: 'Sheets', value: Object.keys(sheets).length });
       if (activeTab.activeSheet && sheets[activeTab.activeSheet]) {
-        meta.push({ label: 'Row Count', value: sheets[activeTab.activeSheet].rows?.length || 0 });
+        meta.push({ label: 'Active Sheet', value: activeTab.activeSheet });
       }
-    } else if (activeTab.type === 'txt' || activeTab.type === 'md') {
-      const content = String(activeTab.data || '');
-      meta.push({ label: 'Word Count', value: content.trim() ? content.trim().split(/\s+/).length : 0 });
     }
+    
+    // Table count and active table for SQLite and MDB
+    if ((activeTab.type === 'sqlite' || activeTab.type === 'mdb') && activeTab.tableCount !== null) {
+      meta.push({ 
+        label: 'Tables', 
+        value: activeTab.tableCount,
+        icon: 'table'
+      });
+    }
+    
+    // Active table name for SQLite and MDB
+    if ((activeTab.type === 'sqlite' || activeTab.type === 'mdb') && activeTab.activeTable) {
+      meta.push({ label: 'Active Table', value: activeTab.activeTable });
+    }
+    
+    // Table data counts with UI cues
+    if (activeTab.type === 'xlsx' || activeTab.type === 'dbf' || activeTab.type === 'sqlite' || activeTab.type === 'mdb') {
+      const totalRows = activeTab.totalRows || 0;
+      const filteredRows = activeTab.filteredCount !== null ? activeTab.filteredCount : totalRows;
+      const visibleColumns = activeTab.visibleColumns || 0;
+      
+      // Show total rows count
+      meta.push({ 
+        label: 'Total Rows', 
+        value: totalRows,
+        icon: 'table'
+      });
+      
+      // Show filtered rows count
+      meta.push({ 
+        label: 'Rows', 
+        value: filteredRows,
+        icon: filteredRows < totalRows ? 'filter' : 'table'
+      });
+      
+      // Show filtered count badge when rows are filtered
+      if (filteredRows < totalRows) {
+        meta.push({
+          label: 'Filtered',
+          value: `${totalRows - filteredRows} hidden`,
+          color: 'amber',
+          icon: 'filter'
+        });
+      }
+      
+      meta.push({ 
+        label: 'Columns', 
+        value: visibleColumns,
+        icon: 'columns'
+      });
+      
+      // Sort state
+      if (activeTab.sortConfig?.key) {
+        const sortDir = activeTab.sortConfig.direction === 'asc' ? '↑' : '↓';
+        meta.push({
+          label: 'Sorted',
+          value: `${activeTab.sortConfig.key} ${sortDir}`,
+          color: 'violet',
+          icon: 'sort'
+        });
+      }
+      
+      // Search/Filter state
+      if (activeTab.searchTerm) {
+        meta.push({
+          label: 'Search',
+          value: `"${activeTab.searchTerm}"`,
+          color: 'amber',
+          icon: 'search'
+        });
+      }
+    }
+    
+    if (activeTab.type === 'txt' || activeTab.type === 'md') {
+      const content = String(activeTab.data || '');
+      meta.push({ label: 'Words', value: content.trim() ? content.trim().split(/\s+/).length : 0 });
+      meta.push({ label: 'Chars', value: content.length });
+    }
+    
     return meta;
   }, [activeTab]);
+
+  // Helper icons for metadata
+  const getMetaIcon = (icon: string) => {
+    switch (icon) {
+      case 'filter':
+        return <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>;
+      case 'sort':
+        return <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>;
+      case 'search':
+        return <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
+      case 'table':
+        return <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>;
+      case 'columns':
+        return <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" /></svg>;
+      default:
+        return null;
+    }
+  };
+
+  const getColorClass = (color: string | undefined) => {
+    switch (color) {
+      case 'emerald': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+      case 'blue': return 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'rose': return 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400';
+      case 'amber': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+      case 'violet': return 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400';
+      case 'orange': return 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400';
+      case 'sky': return 'bg-sky-100 text-sky-700 dark:bg-sky-900/30 dark:text-sky-400';
+      case 'teal': return 'bg-teal-100 text-teal-700 dark:bg-teal-900/30 dark:text-teal-400';
+      default: return 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300';
+    }
+  };
 
   return (
     <ErrorBoundary>
@@ -409,11 +562,24 @@ const App: React.FC = () => {
                     </button>
                   </div>
                   {activeMetadata && (
-                    <div className="space-y-6">
+                    <div className="space-y-5">
                       {activeMetadata.map((m, i) => (
                         <div key={i} className="group animate-in fade-in slide-in-from-left duration-300">
-                          <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-1 group-hover:text-violet-500 transition-colors">{m.label}</div>
-                          <div className="text-[12px] font-bold text-zinc-700 dark:text-zinc-200 break-words leading-snug">{m.value}</div>
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            {m.icon && (
+                              <span className={`p-1 rounded-md ${getColorClass(m.color)}`}>
+                                {getMetaIcon(m.icon)}
+                              </span>
+                            )}
+                            <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 group-hover:text-violet-500 transition-colors">{m.label}</div>
+                          </div>
+                          {m.badge ? (
+                            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${getColorClass(m.color)}`}>
+                              {m.value}
+                            </span>
+                          ) : (
+                            <div className="text-[12px] font-bold text-zinc-700 dark:text-zinc-200 break-words leading-snug pl-1">{m.value}</div>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -451,9 +617,70 @@ const App: React.FC = () => {
                 {activeTab.type === 'txt' && <TextViewer key={activeTab.id} content={activeTab.data} isMarkdown={false} />}
                 {activeTab.type === 'md' && <TextViewer key={activeTab.id} content={activeTab.data} isMarkdown={true} />}
                 {activeTab.type === 'image' && <ImageViewer key={activeTab.id} src={activeTab.data} />}
-                {activeTab.type === 'mdb' && <MdbViewer key={activeTab.id} file={activeTab.data} />}
-                {activeTab.type === 'sqlite' && <SqliteViewer key={activeTab.id} file={activeTab.data} />}
-                {activeTab.type === 'dbf' && <DbfViewer key={activeTab.id} tableData={activeTab.data as TableData} />}
+                {activeTab.type === 'mdb' && <MdbViewer 
+                  key={activeTab.id} 
+                  file={activeTab.data} 
+                  onStateChange={(state) => {
+                    setState(prev => ({
+                      ...prev,
+                      tabs: prev.tabs.map(t => 
+                        t.id === activeTab.id 
+                          ? { 
+                              ...t, 
+                              sortConfig: state.sortConfig,
+                              searchTerm: state.searchTerm,
+                              filteredCount: state.filteredCount,
+                              visibleColumns: state.visibleColumns,
+                              tableCount: state.tableCount,
+                              activeTable: state.activeTable
+                            } 
+                          : t
+                      )
+                    }));
+                  }}
+                />}
+                {activeTab.type === 'sqlite' && <SqliteViewer 
+                  key={activeTab.id} 
+                  file={activeTab.data} 
+                  onStateChange={(state) => {
+                    setState(prev => ({
+                      ...prev,
+                      tabs: prev.tabs.map(t => 
+                        t.id === activeTab.id 
+                          ? { 
+                              ...t, 
+                              sortConfig: state.sortConfig,
+                              searchTerm: state.searchTerm,
+                              filteredCount: state.filteredCount,
+                              visibleColumns: state.visibleColumns,
+                              tableCount: state.tableCount,
+                              activeTable: state.activeTable
+                            } 
+                          : t
+                      )
+                    }));
+                  }}
+                />}
+                {activeTab.type === 'dbf' && <DbfViewer 
+                  key={activeTab.id} 
+                  tableData={activeTab.data as TableData} 
+                  onStateChange={(state) => {
+                    setState(prev => ({
+                      ...prev,
+                      tabs: prev.tabs.map(t => 
+                        t.id === activeTab.id 
+                          ? { 
+                              ...t, 
+                              sortConfig: state.sortConfig,
+                              searchTerm: state.searchTerm,
+                              filteredCount: state.filteredCount,
+                              visibleColumns: state.visibleColumns
+                            } 
+                          : t
+                      )
+                    }));
+                  }}
+                />}
               </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-start p-12 text-center overflow-y-auto custom-scrollbar bg-zinc-50 dark:bg-zinc-950 animate-in fade-in duration-500">

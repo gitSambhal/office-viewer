@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { TableData } from '../types';
+import { TableData, TabStateChange } from '../types';
 
 // Icons
 const IconSearch = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
@@ -21,9 +21,10 @@ interface SlicerSettings {
 
 interface DbfViewerProps {
   tableData: TableData;
+  onStateChange?: (state: TabStateChange) => void;
 }
 
-const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData }) => {
+const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData, onStateChange }) => {
   const [tableData] = useState<TableData | null>(initialData);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
@@ -133,6 +134,19 @@ const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData }) => {
 
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
   }, [tableData, debouncedSearchTerm, sortConfig, slicer]);
+
+  // Report state changes to parent
+  useEffect(() => {
+    if (onStateChange) {
+      const visibleColCount = tableData ? tableData.columns.filter((_, i) => !hiddenColumns.has(i)).length : 0;
+      onStateChange({
+        sortConfig: sortConfig.key ? sortConfig : null,
+        searchTerm,
+        filteredCount: filteredData.length,
+        visibleColumns: visibleColCount
+      });
+    }
+  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, onStateChange, tableData]);
 
   const handleToggleSort = (columnKey: string) => {
     setSortConfig(prev => {

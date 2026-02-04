@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { Buffer } from 'buffer';
 import MDBReader from 'mdb-reader';
-import { TableData, SortConfig, ColumnWidths } from '../types';
+import { TableData, SortConfig, ColumnWidths, TabStateChange } from '../types';
 import { ChevronDown, ChevronUp, ArrowUpDown, Search, FileSpreadsheet } from 'lucide-react';
 
 const IconSearch = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
@@ -23,9 +23,10 @@ interface SlicerSettings {
 
 interface MdbViewerProps {
   file: File;
+  onStateChange?: (state: TabStateChange & { tableCount?: number }) => void;
 }
 
-const MdbViewer: React.FC<MdbViewerProps> = ({ file }) => {
+const MdbViewer: React.FC<MdbViewerProps> = ({ file, onStateChange }) => {
   const [tables, setTables] = useState<TableData[]>([]);
   const [activeTableId, setActiveTableId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +47,7 @@ const MdbViewer: React.FC<MdbViewerProps> = ({ file }) => {
   const [containerHeight, setContainerHeight] = useState(0);
 
   const resizeRef = useRef<{ colIdx: number, startX: number, startWidth: number } | null>(null);
+  const prevStateRef = useRef<{ sortConfig: typeof sortConfig, searchTerm: string, filteredCount: number, visibleColumns: number, tableCount: number, activeTable: string | null } | null>(null);
 
   useEffect(() => {
     if (file) {
@@ -158,6 +160,35 @@ const MdbViewer: React.FC<MdbViewerProps> = ({ file }) => {
 
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
   }, [activeTable, debouncedSearchTerm, sortConfig, slicer]);
+
+  // Report state changes to parent
+  useEffect(() => {
+    if (onStateChange && activeTable) {
+      const sortKey = sortConfig.key !== -1 ? activeTable.columns[sortConfig.key] || String(sortConfig.key) : '';
+      const visibleColCount = activeTable.columns.filter((_, i) => !hiddenColumns.has(i)).length;
+      const currentState = {
+        sortConfig: sortKey ? { key: sortKey, direction: sortConfig.direction } : null,
+        searchTerm,
+        filteredCount: filteredData.length,
+        visibleColumns: visibleColCount,
+        tableCount: tables.length,
+        activeTable: activeTableId
+      };
+      
+      // Only call onStateChange if values actually changed
+      const prev = prevStateRef.current;
+      if (!prev || 
+          JSON.stringify(prev.sortConfig) !== JSON.stringify(currentState.sortConfig) ||
+          prev.searchTerm !== currentState.searchTerm ||
+          prev.filteredCount !== currentState.filteredCount ||
+          prev.visibleColumns !== currentState.visibleColumns ||
+          prev.tableCount !== currentState.tableCount ||
+          prev.activeTable !== currentState.activeTable) {
+        onStateChange(currentState);
+        prevStateRef.current = currentState;
+      }
+    }
+  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, onStateChange, activeTable, tables.length, activeTableId]);
 
   const handleToggleSort = (colIdx: number) => {
     setSortConfig(prev => {

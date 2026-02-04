@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import initSqlJs, { Database } from 'sql.js';
-import { TableData, SortConfig, ColumnWidths } from '../types';
+import { TableData, SortConfig, ColumnWidths, TabStateChange } from '../types';
 import { ChevronDown, ChevronUp, ArrowUpDown, Search, FileSpreadsheet } from 'lucide-react';
 
 const IconSearch = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
@@ -22,9 +22,10 @@ interface SlicerSettings {
 
 interface SqliteViewerProps {
   file: File;
+  onStateChange?: (state: TabStateChange & { tableCount?: number }) => void;
 }
 
-const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
+const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange }) => {
   const [db, setDb] = useState<Database | null>(null);
   const [tableNames, setTableNames] = useState<string[]>([]); // Renamed from 'tables' to 'tableNames' for clarity
   const [activeTableName, setActiveTableName] = useState<string | null>(null); // Renamed from 'activeTable'
@@ -47,6 +48,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
   const [containerHeight, setContainerHeight] = useState(0);
 
   const resizeRef = useRef<{ colIdx: number, startX: number, startWidth: number } | null>(null);
+  const prevStateRef = useRef<{ sortConfig: typeof sortConfig, searchTerm: string, filteredCount: number, visibleColumns: number, tableCount: number, activeTable: string | null } | null>(null);
 
   // Initialize sql.js and load the database
   useEffect(() => {
@@ -185,6 +187,34 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file }) => {
 
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
   }, [currentTableData, debouncedSearchTerm, sortConfig, slicer]);
+
+  // Report state changes to parent
+  useEffect(() => {
+    if (onStateChange && currentTableData) {
+      const visibleColCount = currentTableData.columns.filter((_, i) => !hiddenColumns.has(i)).length;
+      const currentState = {
+        sortConfig: sortConfig.key ? sortConfig : null,
+        searchTerm,
+        filteredCount: filteredData.length,
+        visibleColumns: visibleColCount,
+        tableCount: tableNames.length,
+        activeTable: activeTableName
+      };
+      
+      // Only call onStateChange if values actually changed
+      const prev = prevStateRef.current;
+      if (!prev || 
+          JSON.stringify(prev.sortConfig) !== JSON.stringify(currentState.sortConfig) ||
+          prev.searchTerm !== currentState.searchTerm ||
+          prev.filteredCount !== currentState.filteredCount ||
+          prev.visibleColumns !== currentState.visibleColumns ||
+          prev.tableCount !== currentState.tableCount ||
+          prev.activeTable !== currentState.activeTable) {
+        onStateChange(currentState);
+        prevStateRef.current = currentState;
+      }
+    }
+  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, onStateChange, currentTableData, tableNames.length, activeTableName]);
 
   const handleToggleSort = (columnKey: string) => {
     setSortConfig(prev => {
