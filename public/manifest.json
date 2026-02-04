@@ -1,0 +1,78 @@
+{
+  "name": "Suhail Office Viewer",
+  "short_name": "Suhail Viewer",
+  "description": "High-performance private document workstation for PDF, Excel, Word, Access, SQLite, DBF, RTF, Markdown & Images.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7c3aed",
+  "scope": "/",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/281/281760.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/281/281760.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "productivity",
+    "utilities",
+    "business"
+  ],
+  "file_handlers": [
+    {
+      "action": "/",
+      "accept": {
+        "application/pdf": [".pdf"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "application/vnd.ms-excel": [".xls", ".csv"],
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+        "application/msword": [".doc"],
+        "text/plain": [".txt"],
+        "text/markdown": [".md"],
+        "application/rtf": [".rtf"],
+        "image/png": [".png"],
+        "image/jpeg": [".jpg", ".jpeg"],
+        "image/gif": [".gif"],
+        "image/webp": [".webp"],
+        "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
+        "application/x-msaccess": [".mdb", ".accdb"],
+        "application/x-sqlite3": [".sqlite", ".db", ".db3"],
+        "application/x-dbf": [".dbf"]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "files": [
+        {
+          "name": "files",
+          "accept": [
+            ".pdf", 
+            ".xlsx", ".xls", ".csv",
+            ".docx", ".doc",
+            ".txt", ".md",
+            ".rtf",
+            ".png", ".jpg", ".jpeg", ".gif", ".webp",
+            ".mdb", ".accdb",
+            ".sqlite", ".db", ".db3",
+            ".dbf"
+          ]
+        }
+      ]
+    }
+  },
+  "related_applications": [],
+  "prefer_related_applications": false
+}

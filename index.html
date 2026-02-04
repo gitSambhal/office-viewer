@@ -2,31 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Suhail Viewer">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Suhail Viewer - Professional Document & Database Viewer for PDF, Excel, Word, Access, SQLite, RTF, Markdown & Images</title>
     <meta name="description" content="High-performance local viewer for PDF, Excel (XLS/XLSX), Word (DOC/DOCX), Access databases (MDB/ACCDB), SQLite databases (DB/SQLite3), RTF, Markdown, and Images. Secure, offline-first workstation with Zen Mode and multi-tab support.">
     <meta name="theme-color" content="#7c3aed">
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/281/281760.png">
     <link rel="apple-touch-icon" href="https://cdn-icons-png.flaticon.com/512/281/281760.png">
     
     <!-- IE Compatibility -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    
-    <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-    <script>
-        tailwind.config = {
-          darkMode: 'class',
-          theme: {
-            extend: {
-              colors: {
-                zinc: { 950: '#09090b' },
-                violet: { 600: '#7c3aed' }
-              }
-            }
-          }
-        }
-    </script>
     
     <!-- Core Engine Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -228,10 +217,10 @@
 
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('./sw.js')
-            .then(reg => console.log('ServiceWorker registered'))
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('ServiceWorker registered:', reg.scope))
             .catch(err => {
-               console.warn('ServiceWorker registration skipped (common in some environments):', err.message);
+               console.warn('ServiceWorker registration skipped:', err.message);
             });
         });
       }

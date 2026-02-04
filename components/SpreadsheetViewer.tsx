@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
-import { TabStateChange } from '../types';
+import { SheetData, TabStateChange } from '../types';
 
 declare const XLSX: any;
 
@@ -24,11 +24,6 @@ interface CellChange {
   oldValue: any;
   newValue: any;
   timestamp: number;
-}
-
-interface SheetData {
-  headers: string[];
-  rows: any[][];
 }
 
 interface Props {

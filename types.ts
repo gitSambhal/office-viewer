@@ -1,5 +1,10 @@
 export type FileType = 'xlsx' | 'docx' | 'pdf' | 'image' | 'rtf' | 'txt' | 'md' | 'mdb' | 'accdb' | 'sqlite' | 'dbf' | 'unknown';
 
+export interface SheetData {
+  headers: string[];
+  rows: any[][];
+}
+
 export interface TabStateChange {
   sortConfig: { key: string; direction: 'asc' | 'desc' | null } | null;
   searchTerm: string;
