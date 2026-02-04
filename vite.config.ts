@@ -16,12 +16,11 @@ export default defineConfig(({ mode }) => {
       plugins: [
         react(),
         nodePolyfills({
-          // To exclude specific polyfills, add them to this list.
           exclude: [],
-          // Whether to polyfill `global`.
-          global: true,
-          // Whether to polyfill `process`.
-          process: true,
+          globals: {
+            global: true,
+            process: true,
+          },
         }),
         legacy({
           targets: ['defaults', 'IE 11'],
@@ -37,12 +36,13 @@ export default defineConfig(({ mode }) => {
           ]
         })
       ],
+      worker: {
+        format: 'es'
+      },
       define: {
-        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY),
-        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY),
         'process.version': JSON.stringify('1.0.0'),
         'process.env': {},
-        'global': 'window',
+        // 'global': 'window',
       },
       resolve: {
         alias: {

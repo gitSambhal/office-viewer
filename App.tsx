@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { AppState, Tab, FileType } from './types';
+import { AppState, Tab, FileType, TableData } from './types';
 import { FileProcessor } from './services/fileProcessor';
 import { SpreadsheetViewer } from './components/SpreadsheetViewer';
 import { ContextMenu } from './components/ContextMenu';
@@ -11,23 +11,25 @@ import { ImageViewer } from './components/ImageViewer';
 import { RtfViewer } from './components/RtfViewer';
 import MdbViewer from './components/MdbViewer';
 import SqliteViewer from './components/SqliteViewer';
+import DbfViewer from './components/DbfViewer';
+import { DBFParser } from './services/dbfParser';
 
 // Simple Error Boundary
-class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean; error: Error | null }> {
+class ErrorBoundary extends React.Component<any, any> {
   constructor(props: any) {
     super(props);
     this.state = { hasError: false, error: null };
   }
   static getDerivedStateFromError(error: Error) { return { hasError: true, error }; }
   render() {
-    if (this.state.hasError) {
+    if (this.state?.hasError) {
       return (
         <div className="h-screen w-screen flex flex-col items-center justify-center bg-zinc-950 text-white p-12 text-center">
           <div className="w-16 h-16 bg-rose-600 rounded-2xl flex items-center justify-center mb-6 shadow-2xl">
             <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
           </div>
           <h1 className="text-2xl font-black mb-2 uppercase tracking-tighter">Application Crash</h1>
-          <p className="text-zinc-500 max-w-md text-sm mb-8">{this.state.error?.message || 'An unexpected error occurred during initialization.'}</p>
+          <p className="text-zinc-500 max-w-md text-sm mb-8">{this.state?.error?.message || 'An unexpected error occurred during initialization.'}</p>
           <button onClick={() => window.location.reload()} className="px-8 py-3 bg-white text-black rounded-xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-zinc-200 transition-all">Reload Workstation</button>
         </div>
       );
@@ -59,6 +61,7 @@ const getFileIcon = (type: FileType) => {
     case 'rtf': return <div className="w-4 h-4 text-amber-500"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM17 19H7v-2h10v2zm0-4H7v-2h10v2z"/></svg></div>;
     case 'mdb': return <div className="w-4 h-4 text-teal-600"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M2 5.52v12.96C2 19.88 3.12 21 4.5 21h15c1.38 0 2.5-1.12 2.5-2.52V5.52C22 4.12 20.88 3 19.5 3H4.5C3.12 3 2 4.12 2 5.52zM12 11H9v2h3v2H9v2H7V9h5v2zm4-2h-2v6h-2v-6h-2V9h6v2z"/></svg></div>;
     case 'sqlite': return <div className="w-4 h-4 text-sky-600"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-8h2v5h-2v-5zm0-3h2v2h-2V9z"/></svg></div>;
+    case 'dbf': return <div className="w-4 h-4 text-orange-600"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg></div>;
     default: return <div className="w-4 h-4 text-zinc-400"><svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg></div>;
   }
 };
@@ -147,6 +150,30 @@ const App: React.FC = () => {
     for (let i = 0; i < files.length; i++) {
       try {
         const file = files[i];
+        
+        // Pre-process DBF files with cached parsing
+        if (file.name.toLowerCase().endsWith('.dbf')) {
+          const buffer = await file.arrayBuffer();
+          const dbfData = await DBFParser.parse(buffer, file.name);
+          const tableData: TableData = {
+            id: dbfData.id,
+            name: file.name.replace(/.[^/.]+$/, ''),
+            columns: dbfData.header.fields.map(f => f.name),
+            rows: dbfData.rows.map((r: Record<string, any>) => dbfData.header.fields.map((f: any) => r[f.name]))
+          };
+          newTabs.push({
+            id: Math.random().toString(36).substr(2, 9),
+            name: file.name,
+            type: 'dbf',
+            lastModified: file.lastModified,
+            size: file.size,
+            data: tableData,
+            active: false,
+            columnSettings: {}
+          });
+          continue;
+        }
+
         if (file.name.toLowerCase().endsWith('.mdb') || file.name.toLowerCase().endsWith('.accdb')) {
           newTabs.push({
             id: Math.random().toString(36).substr(2, 9),
@@ -154,7 +181,7 @@ const App: React.FC = () => {
             type: 'mdb',
             lastModified: file.lastModified,
             size: file.size,
-            data: file, // Pass the file object itself for MdbViewer
+            data: file,
             active: false,
             columnSettings: {}
           });
@@ -174,7 +201,6 @@ const App: React.FC = () => {
           });
           continue;
         }
-
 
         await new Promise(resolve => setTimeout(resolve, 50));
         const result = await FileProcessor.process(file);
@@ -327,7 +353,7 @@ const App: React.FC = () => {
           <label className="cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-violet-500/10 active:scale-95 flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
             Open Documents
-            <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3" />
+            <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
           </label>
         </header>
 
@@ -427,6 +453,7 @@ const App: React.FC = () => {
                 {activeTab.type === 'image' && <ImageViewer key={activeTab.id} src={activeTab.data} />}
                 {activeTab.type === 'mdb' && <MdbViewer key={activeTab.id} file={activeTab.data} />}
                 {activeTab.type === 'sqlite' && <SqliteViewer key={activeTab.id} file={activeTab.data} />}
+                {activeTab.type === 'dbf' && <DbfViewer key={activeTab.id} tableData={activeTab.data as TableData} />}
               </div>
             ) : (
               <div className="flex-1 flex flex-col items-center justify-start p-12 text-center overflow-y-auto custom-scrollbar bg-zinc-50 dark:bg-zinc-950 animate-in fade-in duration-500">
@@ -447,6 +474,7 @@ const App: React.FC = () => {
                          { name: 'Excel', icon: getFileIcon('xlsx'), color: 'bg-emerald-50 dark:bg-emerald-900/10' },
                          { name: 'Access DB', icon: getFileIcon('mdb'), color: 'bg-teal-50 dark:bg-teal-900/10' },
                          { name: 'SQLite', icon: getFileIcon('sqlite'), color: 'bg-sky-50 dark:bg-sky-900/10' },
+                          { name: 'DBF', icon: getFileIcon('dbf'), color: 'bg-orange-50 dark:bg-orange-900/10' },
                          { name: 'Images', icon: getFileIcon('image'), color: 'bg-violet-50 dark:bg-violet-900/10' }
                        ].map((fmt) => (
                          <span key={fmt.name} className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl ${fmt.color} border border-zinc-200 dark:border-zinc-800 transition-all hover:scale-105`}>
@@ -460,7 +488,7 @@ const App: React.FC = () => {
                       <label className="group relative inline-flex items-center gap-4 cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-[0.1em] shadow-2xl shadow-violet-500/20 transition-all hover:scale-[1.05] active:scale-95">
                           <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
                           Open Local Files
-                          <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3" />
+                          <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
                       </label>
                       
                       <div className="flex items-center gap-2 py-4 px-6 bg-white dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-800 shadow-sm animate-in fade-in duration-1000">

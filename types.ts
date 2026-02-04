@@ -1,4 +1,4 @@
-export type FileType = 'xlsx' | 'docx' | 'pdf' | 'image' | 'rtf' | 'txt' | 'md' | 'mdb' | 'accdb' | 'sqlite' | 'unknown';
+export type FileType = 'xlsx' | 'docx' | 'pdf' | 'image' | 'rtf' | 'txt' | 'md' | 'mdb' | 'accdb' | 'sqlite' | 'dbf' | 'unknown';
 
 export interface Tab {
   id: string;
@@ -43,4 +43,31 @@ export interface SortConfig {
 
 export interface ColumnWidths {
   [key: string]: number;
+}
+
+export interface DBFField {
+  name: string;
+  type: string;
+  length: number;
+  decimalCount: number;
+}
+
+export interface DBFHeader {
+  version: number;
+  lastUpdate: Date;
+  numberOfRecords: number;
+  headerLength: number;
+  recordLength: number;
+  fields: DBFField[];
+}
+
+export type DBFRow = Record<string, any>;
+
+export interface DBFData {
+  id: string;
+  header: DBFHeader;
+  rows: DBFRow[];
+  fileName: string;
+  hiddenColumns: string[];
+  changes?: Record<number, Record<string, { oldValue: any; newValue: any; updatedAt: number }>>;
 }
