@@ -751,10 +751,10 @@ const App: React.FC = () => {
   };
 
   // Preview content components
-  const PreviewPdfContent = () => (
-    <div className="relative z-10 h-64">
-      <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 sm:p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
-        <div className="flex items-center justify-between mb-4">
+   const PreviewPdfContent = () => (
+    <div className="relative z-10 h-48 sm:h-64">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg p-3 sm:p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
+        <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="w-4 h-4 text-rose-600">
               <svg fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>
@@ -763,20 +763,20 @@ const App: React.FC = () => {
           </div>
           <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">Page 1 of 3</div>
         </div>
-        <div className="space-y-3">
-          <div className="w-full h-6 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-          <div className="w-1/2 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-          <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-3"></div>
-          <div className="space-y-2">
-            <div className="w-full h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-            <div className="w-5/6 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-            <div className="w-4/6 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-            <div className="w-full h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+        <div className="space-y-2 sm:space-y-3">
+          <div className="w-full h-4 sm:h-6 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+          <div className="w-1/2 h-3 sm:h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+          <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-2 sm:my-3"></div>
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="w-full h-3 sm:h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+            <div className="w-5/6 h-3 sm:h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+            <div className="w-4/6 h-3 sm:h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+            <div className="w-full h-3 sm:h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
           </div>
-          <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-3"></div>
-          <div className="space-y-2">
-            <div className="w-3/4 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
-            <div className="w-5/6 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+          <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-2 sm:my-3"></div>
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="w-3/4 h-3 sm:h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+            <div className="w-5/6 h-3 sm:h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
           </div>
         </div>
       </div>
@@ -784,44 +784,44 @@ const App: React.FC = () => {
   );
 
   const PreviewSpreadsheetContent = () => (
-    <div className="relative z-10 h-64">
-      <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
-        <div className="flex items-center gap-2 mb-4">
+    <div className="relative z-10 h-48 sm:h-64">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg p-3 sm:p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
+        <div className="flex items-center gap-2 mb-3">
           <div className="w-4 h-4 text-emerald-600">
             <svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
           </div>
           <span className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100">budget.xlsx</span>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
           <div className="flex gap-1">
-            <div className="w-8 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
-            <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
-            <div className="w-20 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
-            <div className="w-16 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="w-6 sm:w-8 h-4 sm:h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="flex-1 h-4 sm:h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="w-16 sm:w-20 h-4 sm:h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="w-12 sm:w-16 h-4 sm:h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
           </div>
           <div className="flex gap-1">
-            <div className="w-8 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
-            <div className="flex-1 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
-            <div className="w-20 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
-            <div className="w-16 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-6 sm:w-8 h-4 sm:h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="flex-1 h-4 sm:h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-16 sm:w-20 h-4 sm:h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-12 sm:w-16 h-4 sm:h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
           </div>
           <div className="flex gap-1">
-            <div className="w-8 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
-            <div className="flex-1 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
-            <div className="w-20 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
-            <div className="w-16 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-6 sm:w-8 h-4 sm:h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="flex-1 h-4 sm:h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-16 sm:w-20 h-4 sm:h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="w-12 sm:w-16 h-4 sm:h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
           </div>
           <div className="flex gap-1">
-            <div className="w-8 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
-            <div className="flex-1 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
-            <div className="w-20 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
-            <div className="w-16 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="w-6 sm:w-8 h-4 sm:h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="flex-1 h-4 sm:h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-16 sm:w-20 h-4 sm:h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-12 sm:w-16 h-4 sm:h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
           </div>
           <div className="flex gap-1">
-            <div className="w-8 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
-            <div className="flex-1 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
-            <div className="w-20 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
-            <div className="w-16 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-6 sm:w-8 h-4 sm:h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="flex-1 h-4 sm:h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-16 sm:w-20 h-4 sm:h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-12 sm:w-16 h-4 sm:h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
           </div>
         </div>
       </div>
@@ -829,52 +829,52 @@ const App: React.FC = () => {
   );
 
   const PreviewMarkdownContent = () => (
-    <div className="relative z-10 h-64">
-      <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
-        <div className="flex items-center gap-2 mb-4">
+    <div className="relative z-10 h-48 sm:h-64">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg p-3 sm:p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
+        <div className="flex items-center gap-2 mb-3">
           <div className="w-4 h-4 text-zinc-500">
             <svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
           </div>
           <span className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100">notes.md</span>
         </div>
-        <div className="space-y-2">
-          <div className="w-1/3 h-4 bg-zinc-300 dark:bg-zinc-700 rounded"></div>
-          <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
-          <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
-          <div className="w-2/3 h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
-          <div className="w-1/3 h-4 bg-zinc-300 dark:bg-zinc-700 rounded mt-3"></div>
-          <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
-          <div className="w-5/6 h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+        <div className="space-y-1.5 sm:space-y-2">
+          <div className="w-1/3 h-3 sm:h-4 bg-zinc-300 dark:bg-zinc-700 rounded"></div>
+          <div className="w-full h-2 sm:h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          <div className="w-full h-2 sm:h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          <div className="w-2/3 h-2 sm:h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          <div className="w-1/3 h-3 sm:h-4 bg-zinc-300 dark:bg-zinc-700 rounded mt-2 sm:mt-3"></div>
+          <div className="w-full h-2 sm:h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          <div className="w-5/6 h-2 sm:h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
         </div>
       </div>
     </div>
   );
 
   const PreviewSqliteContent = () => (
-    <div className="relative z-10 h-64">
-      <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
-        <div className="flex items-center gap-2 mb-4">
+    <div className="relative z-10 h-48 sm:h-64">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg p-3 sm:p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
+        <div className="flex items-center gap-2 mb-3">
           <div className="w-4 h-4 text-sky-600">
             <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-8h2v5h-2v-5zm0-3h2v2h-2V9z"/></svg>
           </div>
           <span className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100">database.sqlite</span>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-sky-500"></div>
-            <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="flex-1 h-4 sm:h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-sky-500"></div>
-            <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="flex-1 h-4 sm:h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-sky-500"></div>
-            <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="flex-1 h-4 sm:h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded-full bg-sky-500"></div>
-            <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="flex-1 h-4 sm:h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
           </div>
         </div>
       </div>
@@ -1141,24 +1141,24 @@ const App: React.FC = () => {
             </div>
           )}
           
-          <div className="flex items-center gap-2">
-            {(state.tabs.length > 0 || scrolledPastMainCTA) && (
-              <>
-                <label className="group relative inline-flex items-center gap-3 cursor-pointer bg-zinc-950 hover:bg-zinc-800 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
-                  <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-                  Open Files
-                  <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
-                </label>
-                <button 
-                  onClick={() => setShowUrlModal(true)}
-                  className="group relative inline-flex items-center gap-3 cursor-pointer bg-transparent hover:bg-violet-50 dark:hover:bg-violet-900/20 text-violet-700 dark:text-violet-300 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-[0.1em] border-2 border-violet-300 dark:border-violet-700 hover:border-violet-400 dark:hover:border-violet-600 transition-all hover:scale-[1.02] active:scale-95"
-                >
-                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-                  Open from URL
-                </button>
-              </>
-            )}
-          </div>
+           <div className="flex items-center gap-2">
+             {(state.tabs.length > 0 || scrolledPastMainCTA) && (
+               <>
+                 <label className="group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer bg-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700 text-white dark:text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
+                   <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
+                   <span className="hidden xs:inline">Open Files</span>
+                   <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
+                 </label>
+                 <button 
+                   onClick={() => setShowUrlModal(true)}
+                   className="group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer bg-transparent hover:bg-violet-50 dark:hover:bg-violet-900/20 text-violet-700 dark:text-violet-300 px-2 sm:px-4 py-2 sm:py-2 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] border-2 border-violet-300 dark:border-violet-700 hover:border-violet-400 dark:hover:border-violet-600 transition-all hover:scale-[1.02] active:scale-95"
+                 >
+                   <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                   <span className="hidden xs:inline">Open from URL</span>
+                 </button>
+               </>
+             )}
+           </div>
         </header>
 
         <div className="flex items-center bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 z-20">
@@ -1417,7 +1417,7 @@ const App: React.FC = () => {
 
                         {/* CTA Buttons */}
                         <div ref={mainCTARef} id="main-cta-section" className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
-                          <label className="group relative inline-flex items-center gap-3 cursor-pointer bg-zinc-950 hover:bg-zinc-800 text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
+                           <label className="group relative inline-flex items-center gap-3 cursor-pointer bg-violet-600 hover:bg-violet-700 text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
                               <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
                               Open Files
                               <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
@@ -1451,71 +1451,71 @@ const App: React.FC = () => {
                         </button> 
                         </div>
                         
-                        {/* App Preview with Tabs and Content */}
-                        <div className="flex justify-center">
-                        <div className="relative max-w-4xl">
-                         <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-pink-500/10 rounded-[3rem] blur-3xl opacity-50"></div>
-                         <div className="relative bg-white dark:bg-zinc-900 rounded-[2rem] p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 shadow-2xl transform -rotate-1 hover:rotate-0 transition-transform duration-500">
-                           {/* Background Gradient */}
-                           <div className="absolute inset-0 bg-gradient-to-br from-violet-50 dark:from-violet-900/20 to-blue-50 dark:to-blue-900/20 opacity-50"></div>
-                           
-                             {/* Preview Content */}
-                           <div className="relative z-10">
-                             {/* Header Preview */}
-                             <div className="flex items-center justify-between mb-6">
-                               <div className="flex items-center gap-2">
-                                 <div className="w-6 h-6 bg-violet-600 rounded-lg flex items-center justify-center text-white text-xs font-black italic">S</div>
-                                 <span className="text-sm sm:text-base font-black text-zinc-900 dark:text-white">Suhail Viewer</span>
-                               </div>
-                               <div className="flex gap-2">
-                                 <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-500"></div>
-                                 <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-yellow-500"></div>
-                                 <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-green-500"></div>
-                               </div>
-                             </div>
-                             
-                             {/* Tabs Preview */}
-                             <div className="flex items-center mb-6 overflow-x-auto pb-2 scrollbar-none">
-                               {[
-                                 { name: 'report.pdf', type: 'pdf' as FileType, index: 0 },
-                                 { name: 'budget.xlsx', type: 'xlsx' as FileType, index: 1 },
-                                 { name: 'notes.md', type: 'md' as FileType, index: 2 },
-                                 { name: 'database.sqlite', type: 'sqlite' as FileType, index: 3 }
-                               ].map((tab) => (
-                                 <div 
-                                   key={tab.index}
-                                   onClick={() => setPreviewActiveTab(tab.index)}
-                                   className={`flex items-center gap-2 px-4 py-2 rounded-lg mr-2 whitespace-nowrap transition-all cursor-pointer ${
-                                     previewActiveTab === tab.index 
-                                         ? 'bg-violet-600 text-white shadow-lg' 
-                                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
-                                   }`}
-                                 >
-                                   {getFileIcon(tab.type)}
-                                   <span className="text-xs sm:text-sm font-black uppercase tracking-tight truncate max-w-[120px] sm:max-w-[160px]">{tab.name}</span>
-                                   {previewActiveTab === tab.index && (
-                                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                                   )}
+                         {/* App Preview with Tabs and Content */}
+                         <div className="flex justify-center">
+                           <div className="relative w-full max-w-4xl px-4">
+                             <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-pink-500/10 rounded-[3rem] blur-3xl opacity-50"></div>
+                             <div className="relative bg-white dark:bg-zinc-900 rounded-[1.5rem] sm:rounded-[2rem] p-4 sm:p-8 border border-zinc-200 dark:border-zinc-800 shadow-2xl transform -rotate-1 hover:rotate-0 transition-transform duration-500">
+                               {/* Background Gradient */}
+                               <div className="absolute inset-0 bg-gradient-to-br from-violet-50 dark:from-violet-900/20 to-blue-50 dark:to-blue-900/20 opacity-50"></div>
+                               
+                               {/* Preview Content */}
+                               <div className="relative z-10">
+                                 {/* Header Preview */}
+                                 <div className="flex items-center justify-between mb-4 sm:mb-6">
+                                   <div className="flex items-center gap-2">
+                                     <div className="w-6 h-6 bg-violet-600 rounded-lg flex items-center justify-center text-white text-xs font-black italic">S</div>
+                                     <span className="text-sm sm:text-base font-black text-zinc-900 dark:text-white">Suhail Viewer</span>
+                                   </div>
+                                   <div className="flex gap-1.5 sm:gap-2">
+                                     <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-red-500"></div>
+                                     <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-yellow-500"></div>
+                                     <div className="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-green-500"></div>
+                                   </div>
                                  </div>
-                               ))}
-                             </div>
-                             
-                             {/* Active Tab Content Preview */}
-                             <div className="grid grid-cols-1 gap-4">
-                               {previewActiveTab === 0 && <PreviewPdfContent />}
-                               {previewActiveTab === 1 && <PreviewSpreadsheetContent />}
-                               {previewActiveTab === 2 && <PreviewMarkdownContent />}
-                               {previewActiveTab === 3 && <PreviewSqliteContent />}
-                             </div>
-                             
-                             {/* Preview Text */}
-                             <div className="mt-6 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium">
-                               Preview: Open multiple files in tabs and switch instantly
+                                 
+                                 {/* Tabs Preview */}
+                                 <div className="flex items-center mb-4 sm:mb-6 overflow-x-auto pb-2 scrollbar-none">
+                                   {[
+                                     { name: 'report.pdf', type: 'pdf' as FileType, index: 0 },
+                                     { name: 'budget.xlsx', type: 'xlsx' as FileType, index: 1 },
+                                     { name: 'notes.md', type: 'md' as FileType, index: 2 },
+                                     { name: 'database.sqlite', type: 'sqlite' as FileType, index: 3 }
+                                   ].map((tab) => (
+                                     <div 
+                                       key={tab.index}
+                                       onClick={() => setPreviewActiveTab(tab.index)}
+                                       className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg mr-2 whitespace-nowrap transition-all cursor-pointer ${
+                                         previewActiveTab === tab.index 
+                                             ? 'bg-violet-600 text-white shadow-lg' 
+                                             : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                                       }`}
+                                     >
+                                       {getFileIcon(tab.type)}
+                                       <span className="text-xs sm:text-sm font-black uppercase tracking-tight truncate max-w-[100px] sm:max-w-[120px] md:max-w-[160px]">{tab.name}</span>
+                                       {previewActiveTab === tab.index && (
+                                         <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                                       )}
+                                     </div>
+                                   ))}
+                                 </div>
+                                 
+                                 {/* Active Tab Content Preview */}
+                                 <div className="grid grid-cols-1 gap-4">
+                                   {previewActiveTab === 0 && <PreviewPdfContent />}
+                                   {previewActiveTab === 1 && <PreviewSpreadsheetContent />}
+                                   {previewActiveTab === 2 && <PreviewMarkdownContent />}
+                                   {previewActiveTab === 3 && <PreviewSqliteContent />}
+                                 </div>
+                                 
+                                 {/* Preview Text */}
+                                 <div className="mt-4 sm:mt-6 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+                                   Preview: Open multiple files in tabs and switch instantly
+                                 </div>
+                               </div>
                              </div>
                            </div>
                          </div>
-                     </div>
-                     </div>
 
                      {/* Recent Files */}
                      {(() => {
