@@ -93,6 +93,7 @@ const App: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
   const [showScrollArrows, setShowScrollArrows] = useState(false);
+  const [tabSearchTerm, setTabSearchTerm] = useState('');
   const tabBarRef = React.useRef<HTMLDivElement>(null);
 
   // Callback to close action popups (used by child components)
@@ -559,8 +560,31 @@ const App: React.FC = () => {
 
         <div className="flex items-center bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 z-20">
           {showScrollArrows && <button onClick={() => handleScrollTabs('left')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg></button>}
-          <div ref={tabBarRef} className="flex-1 flex flex-nowrap overflow-x-auto scrollbar-none">
-            {state.tabs.map(tab => (
+          <div ref={tabBarRef} className="flex-1 flex flex-nowrap overflow-x-auto scrollbar-none items-center">
+            {/* Tab Search Input */}
+            {state.tabs.length > 0 && (
+              <div className="flex-shrink-0 px-3 border-r border-zinc-200 dark:border-zinc-800">
+                <div className="relative">
+                  <svg className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                  <input 
+                    type="text" 
+                    placeholder="Search tabs..."
+                    value={tabSearchTerm}
+                    onChange={(e) => setTabSearchTerm(e.target.value)}
+                    className="w-32 pl-8 pr-6 py-1.5 bg-zinc-100 dark:bg-zinc-800 border-0 rounded-lg text-xs text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-1 focus:ring-violet-500 transition-all"
+                  />
+                  {tabSearchTerm && (
+                    <button 
+                      onClick={() => setTabSearchTerm('')}
+                      className="absolute right-1.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-400 transition-colors"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
+            {state.tabs.filter(tab => tab.name.toLowerCase().includes(tabSearchTerm.toLowerCase())).map(tab => (
               <div 
                 key={tab.id} 
                 onClick={() => setState(s => ({ ...s, activeTabId: tab.id }))} 
@@ -573,6 +597,11 @@ const App: React.FC = () => {
                 <button title="Close Tab" onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }} className="opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 p-1 rounded-lg transition-all text-zinc-400"><IconX /></button>
               </div>
             ))}
+            {tabSearchTerm && state.tabs.filter(tab => tab.name.toLowerCase().includes(tabSearchTerm.toLowerCase())).length === 0 && (
+              <div className="flex-shrink-0 px-6 py-3 text-xs text-zinc-400 font-medium">
+                No tabs found
+              </div>
+            )}
           </div>
           {showScrollArrows && <button onClick={() => handleScrollTabs('right')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg></button>}
         </div>
