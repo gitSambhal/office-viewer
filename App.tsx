@@ -748,9 +748,9 @@ const App: React.FC = () => {
         <div className="flex items-center bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 z-20">
           {showScrollArrows && <button onClick={() => handleScrollTabs('left')} className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg></button>}
           <div ref={tabBarRef} className="flex-1 flex flex-nowrap overflow-x-auto scrollbar-none items-center">
-            {/* Tab Search Input - hidden on mobile to save space */}
+            {/* Tab Search Input */}
             {state.tabs.length > 0 && (
-              <div className="hidden sm:flex-shrink-0 sm:px-3 border-r border-zinc-200 dark:border-zinc-800">
+              <div className="flex-shrink-0 px-3 border-r border-zinc-200 dark:border-zinc-800">
                 <div className="relative">
                   <svg className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   <input 
