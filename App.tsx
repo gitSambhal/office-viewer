@@ -49,7 +49,7 @@ class ErrorBoundary extends React.Component<{}, ErrorBoundaryState> {
 }
 
 const IconX = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>;
-const IconDark = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9 9 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>;
+const IconDark = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>;
 const IconLight = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707" /></svg>;
 const IconFullscreen = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" /></svg>;
 
@@ -94,6 +94,12 @@ const App: React.FC = () => {
   const [contextMenu, setContextMenu] = useState<{ x: number, y: number, tabId: string } | null>(null);
   const [showScrollArrows, setShowScrollArrows] = useState(false);
   const [tabSearchTerm, setTabSearchTerm] = useState('');
+  const [previewActiveTab, setPreviewActiveTab] = useState(0);
+  const [showUrlModal, setShowUrlModal] = useState(false);
+  const [urlInput, setUrlInput] = useState('');
+  const [isLoadingUrl, setIsLoadingUrl] = useState(false);
+  const [scrolledPastMainCTA, setScrolledPastMainCTA] = useState(false);
+  const mainCTARef = React.useRef<HTMLDivElement>(null);
   const tabBarRef = React.useRef<HTMLDivElement>(null);
   
   // Ref to store handleFiles callback for use in event listeners
@@ -264,6 +270,22 @@ const App: React.FC = () => {
     };
   }, [openDB, retrieveSharedFiles, clearSharedFiles]);
 
+  // Scroll handler for header CTA visibility using IntersectionObserver
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setScrolledPastMainCTA(!entry.isIntersecting);
+      },
+      { threshold: 0 }
+    );
+
+    if (mainCTARef.current) {
+      observer.observe(mainCTARef.current);
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   // Callback to close action popups (used by child components)
   const closeActionPopupsRef = React.useRef<(() => void) | null>(null);
   const registerCloseActionPopups = React.useCallback((callback: () => void) => {
@@ -287,6 +309,7 @@ const App: React.FC = () => {
       if (e.key === 'Escape') {
         setContextMenu(null);
         setState(prev => prev.zenMode ? { ...prev, zenMode: false } : prev);
+        setShowUrlModal(false);
         if (closeActionPopupsRef.current) {
           closeActionPopupsRef.current();
         }
@@ -346,6 +369,30 @@ const App: React.FC = () => {
     setIsProcessing(true);
     setErrorMessage(null);
     const newTabs: Tab[] = [];
+
+    // Track recent files
+    try {
+      const recentFiles = JSON.parse(localStorage.getItem('suhail_recent_files') || '[]');
+      const updatedRecentFiles = [];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        // Check if file already exists in recent files
+        const existingIndex = recentFiles.findIndex((f: any) => f.name === file.name && f.size === file.size);
+        if (existingIndex !== -1) {
+          recentFiles.splice(existingIndex, 1);
+        }
+        updatedRecentFiles.unshift({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          timestamp: Date.now()
+        });
+      }
+      // Keep only last 5 recent files
+      localStorage.setItem('suhail_recent_files', JSON.stringify(updatedRecentFiles.slice(0, 5)));
+    } catch (error) {
+      console.error('Failed to track recent files:', error);
+    }
     
     for (let i = 0; i < files.length; i++) {
       try {
@@ -468,6 +515,72 @@ const App: React.FC = () => {
     handleFilesRef.current = handleFiles;
   }, [handleFiles]);
 
+
+  const handleUrlOpen = useCallback(async () => {
+    if (!urlInput.trim()) return;
+    
+    setIsLoadingUrl(true);
+    try {
+      const response = await fetch(urlInput.trim());
+      if (!response.ok) throw new Error('Failed to fetch file');
+      
+      const contentType = response.headers.get('content-type') || 'application/octet-stream';
+      const blob = await response.blob();
+      
+      // Determine file extension and name from URL or content-type
+      const urlPath = urlInput.split('/').pop() || 'downloaded-file';
+      const extension = urlPath.split('.').pop()?.toLowerCase() || '';
+      
+      // Map extension to file type
+      let fileType: FileType = 'unknown';
+      let extensionForName = '';
+      
+      if (contentType.includes('pdf') || extension === 'pdf') {
+        fileType = 'pdf';
+        extensionForName = '.pdf';
+      } else if (contentType.includes('spreadsheet') || contentType.includes('excel') || ['xlsx', 'xls'].includes(extension)) {
+        fileType = 'xlsx';
+        extensionForName = '.xlsx';
+      } else if (contentType.includes('word') || contentType.includes('document') || ['docx', 'doc'].includes(extension)) {
+        fileType = 'docx';
+        extensionForName = '.docx';
+      } else if (contentType.includes('rtf') || extension === 'rtf') {
+        fileType = 'rtf';
+        extensionForName = '.rtf';
+      } else if (contentType.includes('text') || ['txt', 'md', 'markdown'].includes(extension)) {
+        fileType = extension === 'md' || extension === 'markdown' ? 'md' : 'txt';
+        extensionForName = extension === 'md' ? '.md' : extension === 'markdown' ? '.md' : '.txt';
+      } else if (contentType.includes('image') || ['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(extension)) {
+        fileType = 'image';
+        const extMatch = extension.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+        extensionForName = extMatch ? extMatch[0] : '.png';
+      } else if (['sqlite', 'db'].includes(extension)) {
+        fileType = 'sqlite';
+        extensionForName = '.sqlite';
+      } else if (['mdb', 'accdb'].includes(extension)) {
+        fileType = 'mdb';
+        extensionForName = '.' + extension;
+      } else if (extension === 'dbf') {
+        fileType = 'dbf';
+        extensionForName = '.dbf';
+      } else {
+        extensionForName = '.' + (extension || 'bin');
+      }
+      
+      const fileName = urlPath.includes('.') ? urlPath : `file${extensionForName}`;
+      const file = new File([blob], fileName, { type: blob.type || contentType });
+      
+      await handleFiles([file]);
+      setShowUrlModal(false);
+      setUrlInput('');
+    } catch (error) {
+      console.error('Error opening URL:', error);
+      setErrorMessage('Failed to open file from URL. Please check the URL and try again.');
+    } finally {
+      setIsLoadingUrl(false);
+    }
+  }, [urlInput, handleFiles]);
+
   const closeTab = (id: string) => {
     setState(prev => {
       const nextTabs = prev.tabs.filter(t => t.id !== id);
@@ -507,7 +620,7 @@ const App: React.FC = () => {
       { label: 'File Name', value: activeTab.name }
     ];
     
-    // Format type badge
+    // Format badge
     meta.push({ 
       label: 'Format', 
       value: activeTab.type.toUpperCase(),
@@ -617,7 +730,7 @@ const App: React.FC = () => {
       case 'table':
         return <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>;
       case 'columns':
-        return <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7" /></svg>;
+        return <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>;
       default:
         return null;
     }
@@ -637,18 +750,241 @@ const App: React.FC = () => {
     }
   };
 
+  // Preview content components
+  const PreviewPdfContent = () => (
+    <div className="relative z-10 h-64">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 sm:p-6 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="w-4 h-4 text-rose-600">
+              <svg fill="currentColor" viewBox="0 0 24 24"><path d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"/></svg>
+            </div>
+            <span className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100">report.pdf</span>
+          </div>
+          <div className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">Page 1 of 3</div>
+        </div>
+        <div className="space-y-3">
+          <div className="w-full h-6 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+          <div className="w-1/2 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+          <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-3"></div>
+          <div className="space-y-2">
+            <div className="w-full h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+            <div className="w-5/6 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+            <div className="w-4/6 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+            <div className="w-full h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+          </div>
+          <div className="h-px bg-zinc-200 dark:bg-zinc-800 my-3"></div>
+          <div className="space-y-2">
+            <div className="w-3/4 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+            <div className="w-5/6 h-4 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const PreviewSpreadsheetContent = () => (
+    <div className="relative z-10 h-64">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-4 h-4 text-emerald-600">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
+          </div>
+          <span className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100">budget.xlsx</span>
+        </div>
+        <div className="space-y-2">
+          <div className="flex gap-1">
+            <div className="w-8 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="w-20 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+            <div className="w-16 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          </div>
+          <div className="flex gap-1">
+            <div className="w-8 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="flex-1 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-20 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-16 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+          </div>
+          <div className="flex gap-1">
+            <div className="w-8 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="flex-1 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-20 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="w-16 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+          </div>
+          <div className="flex gap-1">
+            <div className="w-8 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="flex-1 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-20 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-16 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+          </div>
+          <div className="flex gap-1">
+            <div className="w-8 h-6 bg-emerald-50 dark:bg-emerald-900/20 rounded"></div>
+            <div className="flex-1 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-20 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+            <div className="w-16 h-6 bg-zinc-50 dark:bg-zinc-800 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const PreviewMarkdownContent = () => (
+    <div className="relative z-10 h-64">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-4 h-4 text-zinc-500">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13z"/></svg>
+          </div>
+          <span className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100">notes.md</span>
+        </div>
+        <div className="space-y-2">
+          <div className="w-1/3 h-4 bg-zinc-300 dark:bg-zinc-700 rounded"></div>
+          <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          <div className="w-2/3 h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          <div className="w-1/3 h-4 bg-zinc-300 dark:bg-zinc-700 rounded mt-3"></div>
+          <div className="w-full h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          <div className="w-5/6 h-3 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const PreviewSqliteContent = () => (
+    <div className="relative z-10 h-64">
+      <div className="bg-white dark:bg-zinc-900 rounded-lg p-4 shadow-sm border border-zinc-200 dark:border-zinc-800 h-full overflow-hidden">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-4 h-4 text-sky-600">
+            <svg fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-8h2v5h-2v-5zm0-3h2v2h-2V9z"/></svg>
+          </div>
+          <span className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100">database.sqlite</span>
+        </div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-sky-500"></div>
+            <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-sky-500"></div>
+            <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-sky-500"></div>
+            <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-sky-500"></div>
+            <div className="flex-1 h-6 bg-zinc-100 dark:bg-zinc-800 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <ErrorBoundary>
       <div 
         className={`flex flex-col h-full bg-zinc-50 dark:bg-zinc-950 transition-colors overflow-hidden ${state.zenMode ? 'zen-mode' : ''} ${isDragging ? 'dropzone-active' : ''}`}
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
-        onDrop={(e) => { e.preventDefault(); setIsDragging(false); handleFiles(e.dataTransfer.files); }}
+        onDrop={(e) => { 
+          e.preventDefault(); 
+          setIsDragging(false); 
+          
+          // Check if any dropped items are directories
+          const entries = Array.from(e.dataTransfer.items)
+            .map(item => (item as any).webkitGetAsEntry?.());
+          
+          const hasDirectories = entries.some(entry => entry && entry.isDirectory);
+          const hasFiles = entries.some(entry => entry && entry.isFile);
+          
+          if (hasDirectories) {
+            // Handle directory drop
+            const processDirectory = async (entry: any): Promise<File[]> => {
+              const files: File[] = [];
+              const reader = entry.createReader();
+              
+              return new Promise((resolve, reject) => {
+                const readEntries = () => {
+                  reader.readEntries(async (subEntries: any[]) => {
+                    if (subEntries.length === 0) {
+                      resolve(files);
+                      return;
+                    }
+                    
+                    for (const subEntry of subEntries) {
+                      if (subEntry.isDirectory) {
+                        const subFiles = await processDirectory(subEntry);
+                        files.push(...subFiles);
+                      } else if (subEntry.isFile) {
+                        const file = await new Promise<File>((resolveFile, rejectFile) => {
+                          subEntry.file(resolveFile, rejectFile);
+                        });
+                        const supportedTypes = ['.xlsx', '.xls', '.csv', '.docx', '.doc', '.pdf', '.txt', '.md', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.rtf', '.mdb', '.accdb', '.sqlite', '.db', '.db3', '.dbf'];
+                        const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+                        if (supportedTypes.includes(fileExtension)) {
+                          files.push(file);
+                        }
+                      }
+                    }
+                    
+                    readEntries();
+                  }, reject);
+                };
+                
+                readEntries();
+              });
+            };
+            
+            const processAllEntries = async () => {
+              const allFiles: File[] = [];
+              
+              for (const entry of entries) {
+                if (entry) {
+                  if (entry.isDirectory) {
+                    const directoryFiles = await processDirectory(entry);
+                    allFiles.push(...directoryFiles);
+                  } else if (entry.isFile) {
+                    const file = await new Promise<File>((resolveFile, rejectFile) => {
+                      entry.file(resolveFile, rejectFile);
+                    });
+                    allFiles.push(file);
+                  }
+                }
+              }
+              
+              // Filter supported files
+              const supportedFiles = allFiles.filter(file => {
+                const supportedTypes = ['.xlsx', '.xls', '.csv', '.docx', '.doc', '.pdf', '.txt', '.md', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.rtf', '.mdb', '.accdb', '.sqlite', '.db', '.db3', '.dbf'];
+                const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+                return supportedTypes.includes(fileExtension);
+              });
+              
+              if (supportedFiles.length > 0) {
+                // Ask for confirmation
+                const confirmed = window.confirm(`Found ${supportedFiles.length} supported file${supportedFiles.length > 1 ? 's' : ''} in the dropped ${hasDirectories ? 'folder' : 'items'}. Do you want to open them?`);
+                if (confirmed) {
+                  handleFiles(supportedFiles);
+                }
+              } else {
+                setErrorMessage('No supported files found in the dropped folder.');
+              }
+            };
+            
+            processAllEntries().catch(error => {
+              console.error('Error processing directory:', error);
+              setErrorMessage('Failed to process the dropped folder.');
+            });
+          } else if (hasFiles) {
+            // Handle file drop directly
+            handleFiles(e.dataTransfer.files);
+          }
+        }}
       >
         <div className="dropzone-overlay">
           <div className="bg-white dark:bg-zinc-900 p-16 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 animate-in zoom-in duration-300 border-2 border-violet-100 dark:border-violet-900/30">
              <div className="w-32 h-32 bg-violet-600 rounded-[2.5rem] flex items-center justify-center text-white text-6xl font-black shadow-2xl shadow-violet-500/40">
-               <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
              </div>
              <div className="text-center">
                <h2 className="text-4xl font-black tracking-tighter text-zinc-800 dark:text-white mb-2">Drop to Open</h2>
@@ -679,39 +1015,106 @@ const App: React.FC = () => {
            </div>
         )}
 
+        {/* URL Modal */}
+        {showUrlModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-zinc-900 p-6 sm:p-8 rounded-2xl shadow-2xl max-w-lg w-full mx-4 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl font-black text-zinc-900 dark:text-white">Open from URL</h3>
+                <button 
+                  onClick={() => { setShowUrlModal(false); setUrlInput(''); }}
+                  className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-lg transition-colors text-zinc-500"
+                >
+                  <IconX />
+                </button>
+              </div>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-black text-zinc-500 dark:text-zinc-400 uppercase tracking-widest mb-2">
+                    File URL
+                  </label>
+                  <input
+                    type="url"
+                    value={urlInput}
+                    onChange={(e) => setUrlInput(e.target.value)}
+                    placeholder="https://example.com/file.pdf"
+                    className="w-full px-4 py-3 bg-zinc-100 dark:bg-zinc-800 border-0 rounded-xl text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && urlInput.trim()) {
+                        handleUrlOpen();
+                      }
+                    }}
+                  />
+                </div>
+                
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => { setShowUrlModal(false); setUrlInput(''); }}
+                    className="flex-1 px-4 py-3 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl font-black text-xs uppercase tracking-widest transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUrlOpen}
+                    disabled={!urlInput.trim() || isLoadingUrl}
+                    className={`flex-1 px-4 py-3 bg-violet-600 hover:bg-violet-700 text-white rounded-xl font-black text-xs uppercase tracking-widest transition-colors flex items-center justify-center gap-2 ${(!urlInput.trim() || isLoadingUrl) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    {isLoadingUrl ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      'Open File'
+                    )}
+                  </button>
+                </div>
+              </div>
+              
+              <p className="mt-4 text-xs text-zinc-500 dark:text-zinc-400 text-center">
+                Supports PDF, Excel, Word, RTF, Text, Images, SQLite, MDB, and more.
+              </p>
+            </div>
+          </div>
+        )}
+
         <header className="hide-in-zen flex items-center justify-between px-4 py-2 sm:px-6 sm:py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 select-none z-30 shadow-sm shrink-0 gap-2 sm:gap-4">
           <div className="flex items-center gap-3 sm:gap-6">
             <div title="Go to Dashboard" className="flex items-center gap-2.5 group cursor-pointer" onClick={() => setState(s => ({ ...s, activeTabId: null }))}>
               <div className="w-8 h-8 sm:w-9 sm:h-9 bg-violet-600 rounded-xl flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-violet-500/20 group-hover:scale-110 transition-transform italic">S</div>
               <h1 className="font-black text-zinc-800 dark:text-white hidden sm:block tracking-tighter text-lg">Suhail <span className="text-violet-600 dark:text-violet-400">Viewer</span></h1>
             </div>
-            <nav className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg sm:rounded-xl p-1 gap-1">
-              <button title="Sidebar" onClick={() => setState(s => ({ ...s, isSidebarOpen: !s.isSidebarOpen }))} className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}>
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
-              </button>
-              <button 
-                title="Toggle Visual Type Highlighting"
-                onClick={() => {
-                  setState(prev => {
-                    const newValue = !prev.isTypeAwareEnabled;
-                    localStorage.setItem('suhail_type_aware', String(newValue));
-                    return { ...prev, isTypeAwareEnabled: newValue };
-                  });
-                }} 
-                className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all border ${state.isTypeAwareEnabled ? 'bg-violet-50 border-violet-200 text-violet-600 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-400' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:bg-white/50'}`}
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h10M10 7v10m4-10v10M7 17h10" /></svg>
-              </button>
-              <button title="Toggle Theme" onClick={() => setState(s => ({ ...s, darkMode: !s.darkMode }))} className="p-1.5 sm:p-2 rounded-md sm:rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all text-zinc-500">
-                {state.darkMode ? <IconLight /> : <IconDark />}
-              </button>
-              <button title="Zen Mode" onClick={() => setState(s => ({ ...s, zenMode: !s.zenMode }))} className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${state.zenMode ? 'text-violet-600 bg-white dark:bg-zinc-700 shadow-md' : 'text-zinc-500'}`}>
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-              </button>
-              <button title="Fullscreen" onClick={toggleFullscreen} className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${isFullscreen ? 'text-violet-600' : 'text-zinc-500'}`}>
-                <IconFullscreen />
-              </button>
-            </nav>
+            {activeTab && (
+              <nav className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg sm:rounded-xl p-1 gap-1">
+                <button title="Sidebar" onClick={() => setState(s => ({ ...s, isSidebarOpen: !s.isSidebarOpen }))} className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}>
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
+                </button>
+                <button 
+                  title="Toggle Visual Type Highlighting"
+                  onClick={() => {
+                    setState(prev => {
+                      const newValue = !prev.isTypeAwareEnabled;
+                      localStorage.setItem('suhail_type_aware', String(newValue));
+                      return { ...prev, isTypeAwareEnabled: newValue };
+                    });
+                  }} 
+                  className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all border ${state.isTypeAwareEnabled ? 'bg-violet-50 border-violet-200 text-violet-600 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-400' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:bg-white/50'}`}
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h10M10 7v10m4-10v10M7 17h10" /></svg>
+                </button>
+                <button title="Toggle Theme" onClick={() => setState(s => ({ ...s, darkMode: !s.darkMode }))} className="p-1.5 sm:p-2 rounded-md sm:rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all text-zinc-500">
+                  {state.darkMode ? <IconLight /> : <IconDark />}
+                </button>
+                <button title="Zen Mode" onClick={() => setState(s => ({ ...s, zenMode: !s.zenMode }))} className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${state.zenMode ? 'text-violet-600 bg-white dark:bg-zinc-700 shadow-md' : 'text-zinc-500'}`}>
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+                </button>
+                <button title="Fullscreen" onClick={toggleFullscreen} className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${isFullscreen ? 'text-violet-600' : 'text-zinc-500'}`}>
+                  <IconFullscreen />
+                </button>
+              </nav>
+            )}
           </div>
           
           {/* Global Search - hidden on mobile to save space */}
@@ -738,11 +1141,24 @@ const App: React.FC = () => {
             </div>
           )}
           
-          <label className="cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-violet-500/10 active:scale-95 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
-            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
-            <span className="hidden sm:inline">Open Documents</span>
-            <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
-          </label>
+          <div className="flex items-center gap-2">
+            {(state.tabs.length > 0 || scrolledPastMainCTA) && (
+              <>
+                <label className="group relative inline-flex items-center gap-3 cursor-pointer bg-zinc-950 hover:bg-zinc-800 text-white px-6 py-3 rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
+                  <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
+                  Open Files
+                  <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
+                </label>
+                <button 
+                  onClick={() => setShowUrlModal(true)}
+                  className="group relative inline-flex items-center gap-3 cursor-pointer bg-transparent hover:bg-violet-50 dark:hover:bg-violet-900/20 text-violet-700 dark:text-violet-300 px-4 py-2 rounded-xl font-black text-xs uppercase tracking-[0.1em] border-2 border-violet-300 dark:border-violet-700 hover:border-violet-400 dark:hover:border-violet-600 transition-all hover:scale-[1.02] active:scale-95"
+                >
+                  <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                  Open from URL
+                </button>
+              </>
+            )}
+          </div>
         </header>
 
         <div className="flex items-center bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 z-20">
@@ -968,67 +1384,208 @@ const App: React.FC = () => {
                 />}
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-12 text-center overflow-y-auto custom-scrollbar bg-zinc-50 dark:bg-zinc-950 animate-in fade-in duration-500">
+               <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-12 overflow-y-auto custom-scrollbar bg-zinc-50 dark:bg-zinc-950 animate-in fade-in duration-500">
                  <div className="max-w-5xl w-full py-8 sm:py-16">
-                   <div className="mb-12 sm:mb-24">
-                     <div className="w-16 h-16 sm:w-24 sm:h-24 bg-violet-600 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center text-white text-3xl sm:text-5xl font-black shadow-2xl shadow-violet-500/40 mx-auto mb-8 sm:mb-12 italic transition-transform hover:rotate-6">S</div>
-                     <h2 className="text-4xl sm:text-7xl font-black text-zinc-950 dark:text-white mb-4 sm:mb-6 tracking-tighter leading-[1.05]">Document <span className="text-violet-600">Workstation</span></h2>
-                     <p className="text-base sm:text-xl text-zinc-500 dark:text-zinc-400 font-medium mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed">
-                       Securely open and interact with professional documents locally.
-                     </p>
-                     
-                     <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-12 sm:mb-16">
-                       {[
-                         { name: 'PDF', icon: getFileIcon('pdf'), color: 'bg-rose-50 dark:bg-rose-900/10' },
-                         { name: 'Word', icon: getFileIcon('docx'), color: 'bg-blue-50 dark:bg-blue-900/10' },
-                         { name: 'RTF', icon: getFileIcon('rtf'), color: 'bg-amber-50 dark:bg-amber-900/10' },
-                         { name: 'Markdown', icon: getFileIcon('md'), color: 'bg-zinc-100 dark:bg-zinc-800/50' },
-                         { name: 'Excel', icon: getFileIcon('xlsx'), color: 'bg-emerald-50 dark:bg-emerald-900/10' },
-                         { name: 'Access DB', icon: getFileIcon('mdb'), color: 'bg-teal-50 dark:bg-teal-900/10' },
-                         { name: 'SQLite', icon: getFileIcon('sqlite'), color: 'bg-sky-50 dark:bg-sky-900/10' },
-                          { name: 'DBF', icon: getFileIcon('dbf'), color: 'bg-orange-50 dark:bg-orange-900/10' },
-                         { name: 'Images', icon: getFileIcon('image'), color: 'bg-violet-50 dark:bg-violet-900/10' }
-                       ].map((fmt) => (
-                         <span key={fmt.name} className={`flex items-center gap-1.5 px-4 py-2 rounded-xl sm:rounded-2xl sm:px-5 sm:py-2.5 ${fmt.color} border border-zinc-200 dark:border-zinc-800 transition-all hover:scale-105`}>
-                           {fmt.icon}
-                           <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">{fmt.name}</span>
-                         </span>
-                       ))}
+                     <div className="mb-12 sm:mb-24">
+                        {/* Hero Section Heading */}
+                        <div className="text-center mb-12">
+                          <h2 className="text-4xl sm:text-7xl font-black text-zinc-950 dark:text-white mb-4 sm:mb-6 tracking-tighter leading-[1.05]">The Universal File Viewer</h2>
+                          <p className="text-base sm:text-xl text-zinc-500 dark:text-zinc-400 font-medium max-w-2xl mx-auto leading-relaxed">
+                            Open and switch between multiple documents, spreadsheets, and databases instantly. No installations, 100% local.
+                          </p>
+                        </div>
+                        
+                        {/* Chips Preview */}
+                        <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8">
+                          {[
+                            { name: 'PDF', icon: getFileIcon('pdf'), color: 'bg-rose-50 dark:bg-rose-900/10' },
+                            { name: 'Word', icon: getFileIcon('docx'), color: 'bg-blue-50 dark:bg-blue-900/10' },
+                            { name: 'RTF', icon: getFileIcon('rtf'), color: 'bg-amber-50 dark:bg-amber-900/10' },
+                            { name: 'Markdown', icon: getFileIcon('md'), color: 'bg-zinc-100 dark:bg-zinc-800/50' },
+                            { name: 'Excel', icon: getFileIcon('xlsx'), color: 'bg-emerald-50 dark:bg-emerald-900/10' },
+                            { name: 'Access DB', icon: getFileIcon('mdb'), color: 'bg-teal-50 dark:bg-teal-900/10' },
+                            { name: 'SQLite', icon: getFileIcon('sqlite'), color: 'bg-sky-50 dark:bg-sky-900/10' },
+                            { name: 'DBF', icon: getFileIcon('dbf'), color: 'bg-orange-50 dark:bg-orange-900/10' },
+                            { name: 'Images', icon: getFileIcon('image'), color: 'bg-violet-50 dark:bg-violet-900/10' }
+                          ].map((fmt) => (
+                            <span key={fmt.name} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg sm:px-4 sm:py-2 ${fmt.color} border border-zinc-200 dark:border-zinc-800 transition-all hover:scale-105`}>
+                              {fmt.icon}
+                              <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">{fmt.name}</span>
+                            </span>
+                          ))}
+                        </div>
+
+                        {/* CTA Buttons */}
+                        <div ref={mainCTARef} id="main-cta-section" className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+                          <label className="group relative inline-flex items-center gap-3 cursor-pointer bg-zinc-950 hover:bg-zinc-800 text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
+                              <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
+                              Open Files
+                              <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
+                          </label>
+
+                          <button 
+                            onClick={() => setShowUrlModal(true)}
+                            className="group relative inline-flex items-center gap-3 cursor-pointer bg-transparent hover:bg-violet-50 dark:hover:bg-violet-900/20 text-violet-700 dark:text-violet-300 px-6 py-4 rounded-xl font-black text-xs uppercase tracking-[0.1em] border-2 border-violet-300 dark:border-violet-700 hover:border-violet-400 dark:hover:border-violet-600 transition-all hover:scale-[1.02] active:scale-95"
+                          >
+                            <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+                            Open from URL
+                          </button>
+                        </div>
+                       
+                        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+                        <button 
+                          onClick={async () => {
+                            try {
+                              const response = await fetch('https://pdfobject.com/pdf/sample.pdf');
+                              const blob = await response.blob();
+                              const file = new File([blob], 'sample-document.pdf', { type: 'application/pdf' });
+                              handleFiles([file]);
+                            } catch (error) {
+                              console.error('Failed to load sample file:', error);
+                              setErrorMessage('Failed to load sample document. Please try again.');
+                            }
+                          }}
+                          className="text-sm sm:text-base text-violet-600 dark:text-violet-400 font-medium hover:text-violet-700 dark:hover:text-violet-300 transition-colors underline underline-offset-4"
+                        >
+                          No file? Try a sample PDF
+                        </button> 
+                        </div>
+                        
+                        {/* App Preview with Tabs and Content */}
+                        <div className="flex justify-center">
+                        <div className="relative max-w-4xl">
+                         <div className="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-pink-500/10 rounded-[3rem] blur-3xl opacity-50"></div>
+                         <div className="relative bg-white dark:bg-zinc-900 rounded-[2rem] p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 shadow-2xl transform -rotate-1 hover:rotate-0 transition-transform duration-500">
+                           {/* Background Gradient */}
+                           <div className="absolute inset-0 bg-gradient-to-br from-violet-50 dark:from-violet-900/20 to-blue-50 dark:to-blue-900/20 opacity-50"></div>
+                           
+                             {/* Preview Content */}
+                           <div className="relative z-10">
+                             {/* Header Preview */}
+                             <div className="flex items-center justify-between mb-6">
+                               <div className="flex items-center gap-2">
+                                 <div className="w-6 h-6 bg-violet-600 rounded-lg flex items-center justify-center text-white text-xs font-black italic">S</div>
+                                 <span className="text-sm sm:text-base font-black text-zinc-900 dark:text-white">Suhail Viewer</span>
+                               </div>
+                               <div className="flex gap-2">
+                                 <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-500"></div>
+                                 <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-yellow-500"></div>
+                                 <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-green-500"></div>
+                               </div>
+                             </div>
+                             
+                             {/* Tabs Preview */}
+                             <div className="flex items-center mb-6 overflow-x-auto pb-2 scrollbar-none">
+                               {[
+                                 { name: 'report.pdf', type: 'pdf' as FileType, index: 0 },
+                                 { name: 'budget.xlsx', type: 'xlsx' as FileType, index: 1 },
+                                 { name: 'notes.md', type: 'md' as FileType, index: 2 },
+                                 { name: 'database.sqlite', type: 'sqlite' as FileType, index: 3 }
+                               ].map((tab) => (
+                                 <div 
+                                   key={tab.index}
+                                   onClick={() => setPreviewActiveTab(tab.index)}
+                                   className={`flex items-center gap-2 px-4 py-2 rounded-lg mr-2 whitespace-nowrap transition-all cursor-pointer ${
+                                     previewActiveTab === tab.index 
+                                         ? 'bg-violet-600 text-white shadow-lg' 
+                                         : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                                   }`}
+                                 >
+                                   {getFileIcon(tab.type)}
+                                   <span className="text-xs sm:text-sm font-black uppercase tracking-tight truncate max-w-[120px] sm:max-w-[160px]">{tab.name}</span>
+                                   {previewActiveTab === tab.index && (
+                                     <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
+                                   )}
+                                 </div>
+                               ))}
+                             </div>
+                             
+                             {/* Active Tab Content Preview */}
+                             <div className="grid grid-cols-1 gap-4">
+                               {previewActiveTab === 0 && <PreviewPdfContent />}
+                               {previewActiveTab === 1 && <PreviewSpreadsheetContent />}
+                               {previewActiveTab === 2 && <PreviewMarkdownContent />}
+                               {previewActiveTab === 3 && <PreviewSqliteContent />}
+                             </div>
+                             
+                             {/* Preview Text */}
+                             <div className="mt-6 text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium">
+                               Preview: Open multiple files in tabs and switch instantly
+                             </div>
+                           </div>
+                         </div>
+                     </div>
                      </div>
 
-                     <div className="flex flex-col items-center justify-center gap-6 sm:gap-8 mb-12 sm:mb-20">
-                      <label className="group relative inline-flex items-center gap-3 sm:gap-4 cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-6 py-4 sm:px-10 sm:py-5 rounded-[1rem] sm:rounded-[1.5rem] font-black text-xs sm:text-sm uppercase tracking-[0.1em] shadow-2xl shadow-violet-500/20 transition-all hover:scale-[1.05] active:scale-95">
-                          <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-                          Open Local Files
-                          <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
-                      </label>
-                      
-                      <div className="flex items-center gap-2 py-3 px-4 sm:py-4 sm:px-6 bg-white dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-800 shadow-sm animate-in fade-in duration-1000">
-                         <span className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Designed & Crafted by</span>
-                         <a href="https://www.linkedin.com/in/im-suhail-akhtar/" target="_blank" rel="noopener noreferrer" className="text-[10px] sm:text-[11px] font-black text-violet-600 hover:text-violet-500 transition-colors uppercase tracking-widest flex items-center gap-2 group">
-                            Suhail Akhtar
-                            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
-                         </a>
-                      </div>
-                     </div>
+                     {/* Recent Files */}
+                     {(() => {
+                       try {
+                         const recentFiles = JSON.parse(localStorage.getItem('suhail_recent_files') || '[]');
+                         if (recentFiles.length > 0) {
+                           return (
+                             <div className="mb-12 sm:mb-16 mt-8 sm:mt-12">
+                               <h3 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em] mb-4 sm:mb-6 text-center">Recent Files</h3>
+                               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 max-w-3xl mx-auto">
+                                 {recentFiles.map((file: any, index: number) => (
+                                   <div 
+                                     key={index} 
+                                     className="flex items-center gap-3 p-3 sm:p-4 bg-white dark:bg-zinc-900 rounded-xl sm:rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/30 transition-all cursor-pointer group overflow-hidden"
+                                     onClick={() => {
+                                       const fileInput = document.createElement('input');
+                                       fileInput.type = 'file';
+                                       fileInput.accept = '.pdf,.xlsx,.docx,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf';
+                                       fileInput.onchange = (e) => handleFiles((e.target as HTMLInputElement).files);
+                                       fileInput.click();
+                                     }}
+                                   >
+                                     <div className="w-10 h-10 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center text-zinc-500 dark:text-zinc-400 group-hover:bg-violet-100 dark:group-hover:bg-violet-900/20 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-all shrink-0">
+                                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>
+                                     </div>
+                                     <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                                       <div className="text-xs sm:text-sm font-black text-zinc-900 dark:text-zinc-100 truncate" title={file.name}>{file.name}</div>
+                                       <div className="text-[9px] sm:text-[10px] text-zinc-500 dark:text-zinc-400">{file.type}</div>
+                                     </div>
+                                     <div className="text-[9px] sm:text-[10px] text-zinc-400 dark:text-zinc-600">
+                                       {new Date(file.timestamp).toLocaleDateString()}
+                                     </div>
+                                   </div>
+                                 ))}
+                               </div>
+                             </div>
+                           );
+                         }
+                       } catch (error) {
+                         console.error('Failed to load recent files:', error);
+                       }
+                       return null;
+                     })()}
 
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-left">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-left mb-12 sm:mb-16">
                         {[
                           { title: 'Offline-First', desc: 'All files stay on your machine. No server uploads ever.', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
                           { title: 'Multi-Format', desc: 'Unified view for PDF, Spreadsheet, Word, and Documents.', icon: 'M4 6h16M4 12h16m-7 6h7' },
                           { title: 'Zen Focus', desc: 'Distraction-free interface with full-screen and Esc toggle.', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
                           { title: 'Tab Management', desc: 'Open and compare multiple documents simultaneously.', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' }
                         ].map((feature, i) => (
-                          <div key={i} className="p-5 sm:p-8 bg-white dark:bg-zinc-900 rounded-[1.5rem] sm:rounded-[2rem] border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-900/30 transition-all group">
-                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-zinc-50 dark:bg-zinc-800 text-violet-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all shadow-inner">
-                              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={feature.icon} /></svg>
+                          <div key={i} className="p-5 sm:p-8 bg-zinc-50 dark:bg-zinc-900/50 rounded-[1.5rem] sm:rounded-[2rem] border border-zinc-100/50 dark:border-zinc-800/50 shadow-sm hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-900/30 transition-all group">
+                            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-zinc-100 dark:bg-zinc-800 text-violet-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all shadow-inner">
+                              <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={feature.icon} /></svg>
                             </div>
                             <h4 className="text-base sm:text-lg font-black text-zinc-950 dark:text-white mb-2 tracking-tight">{feature.title}</h4>
                             <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">{feature.desc}</p>
                           </div>
                         ))}
                      </div>
-                   </div>
+
+                     {/* Footer Credits */}
+                     <div className="flex items-center justify-center gap-2 py-3 px-4 sm:py-4 sm:px-6 bg-white dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-800 shadow-sm animate-in fade-in duration-1000">
+                        <span className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Designed & Crafted by</span>
+                        <a href="https://www.linkedin.com/in/im-suhail-akhtar/" target="_blank" rel="noopener noreferrer" className="text-[10px] sm:text-[11px] font-black text-violet-600 hover:text-violet-500 transition-colors uppercase tracking-widest flex items-center gap-2 group">
+                           Suhail Akhtar
+                           <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                        </a>
+                     </div>
+                     </div>
                  </div>
                </div>
             )}
