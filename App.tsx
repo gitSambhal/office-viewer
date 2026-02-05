@@ -679,15 +679,15 @@ const App: React.FC = () => {
            </div>
         )}
 
-        <header className="hide-in-zen flex items-center justify-between px-6 py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 select-none z-30 shadow-sm shrink-0 gap-4">
-          <div className="flex items-center gap-6">
+        <header className="hide-in-zen flex items-center justify-between px-4 py-2 sm:px-6 sm:py-3 bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 select-none z-30 shadow-sm shrink-0 gap-2 sm:gap-4">
+          <div className="flex items-center gap-3 sm:gap-6">
             <div title="Go to Dashboard" className="flex items-center gap-2.5 group cursor-pointer" onClick={() => setState(s => ({ ...s, activeTabId: null }))}>
-              <div className="w-9 h-9 bg-violet-600 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-violet-500/20 group-hover:scale-110 transition-transform italic">S</div>
+              <div className="w-8 h-8 sm:w-9 sm:h-9 bg-violet-600 rounded-xl flex items-center justify-center text-white font-black text-lg sm:text-xl shadow-lg shadow-violet-500/20 group-hover:scale-110 transition-transform italic">S</div>
               <h1 className="font-black text-zinc-800 dark:text-white hidden sm:block tracking-tighter text-lg">Suhail <span className="text-violet-600 dark:text-violet-400">Viewer</span></h1>
             </div>
-            <nav className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1 gap-1">
-              <button title="Sidebar" onClick={() => setState(s => ({ ...s, isSidebarOpen: !s.isSidebarOpen }))} className={`p-2 rounded-lg transition-all ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
+            <nav className="flex items-center bg-zinc-100 dark:bg-zinc-800 rounded-lg sm:rounded-xl p-1 gap-1">
+              <button title="Sidebar" onClick={() => setState(s => ({ ...s, isSidebarOpen: !s.isSidebarOpen }))} className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}>
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
               </button>
               <button 
                 title="Toggle Visual Type Highlighting"
@@ -698,25 +698,25 @@ const App: React.FC = () => {
                     return { ...prev, isTypeAwareEnabled: newValue };
                   });
                 }} 
-                className={`p-2 rounded-lg transition-all border ${state.isTypeAwareEnabled ? 'bg-violet-50 border-violet-200 text-violet-600 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-400' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:bg-white/50'}`}
+                className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all border ${state.isTypeAwareEnabled ? 'bg-violet-50 border-violet-200 text-violet-600 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-400' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:bg-white/50'}`}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h10M10 7v10m4-10v10M7 17h10" /></svg>
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h10M10 7v10m4-10v10M7 17h10" /></svg>
               </button>
-              <button title="Toggle Theme" onClick={() => setState(s => ({ ...s, darkMode: !s.darkMode }))} className="p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all text-zinc-500">
+              <button title="Toggle Theme" onClick={() => setState(s => ({ ...s, darkMode: !s.darkMode }))} className="p-1.5 sm:p-2 rounded-md sm:rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all text-zinc-500">
                 {state.darkMode ? <IconLight /> : <IconDark />}
               </button>
-              <button title="Zen Mode" onClick={() => setState(s => ({ ...s, zenMode: !s.zenMode }))} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${state.zenMode ? 'text-violet-600 bg-white dark:bg-zinc-700 shadow-md' : 'text-zinc-500'}`}>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
+              <button title="Zen Mode" onClick={() => setState(s => ({ ...s, zenMode: !s.zenMode }))} className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${state.zenMode ? 'text-violet-600 bg-white dark:bg-zinc-700 shadow-md' : 'text-zinc-500'}`}>
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
               </button>
-              <button title="Fullscreen" onClick={toggleFullscreen} className={`p-2 rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${isFullscreen ? 'text-violet-600' : 'text-zinc-500'}`}>
+              <button title="Fullscreen" onClick={toggleFullscreen} className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg hover:bg-white dark:hover:bg-zinc-700 transition-all ${isFullscreen ? 'text-violet-600' : 'text-zinc-500'}`}>
                 <IconFullscreen />
               </button>
             </nav>
           </div>
           
-          {/* Global Search */}
+          {/* Global Search - hidden on mobile to save space */}
           {state.tabs.length > 0 && (
-            <div className="flex-1 max-w-md relative">
+            <div className="hidden sm:block flex-1 max-w-md relative">
               <div className="relative">
                 <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                 <input 
@@ -738,19 +738,19 @@ const App: React.FC = () => {
             </div>
           )}
           
-          <label className="cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-violet-500/10 active:scale-95 flex items-center gap-2 whitespace-nowrap">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
-            Open Documents
+          <label className="cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-xs font-black uppercase tracking-widest transition-all shadow-xl shadow-violet-500/10 active:scale-95 flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+            <svg className="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+            <span className="hidden sm:inline">Open Documents</span>
             <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
           </label>
         </header>
 
         <div className="flex items-center bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 z-20">
-          {showScrollArrows && <button onClick={() => handleScrollTabs('left')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg></button>}
+          {showScrollArrows && <button onClick={() => handleScrollTabs('left')} className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" /></svg></button>}
           <div ref={tabBarRef} className="flex-1 flex flex-nowrap overflow-x-auto scrollbar-none items-center">
-            {/* Tab Search Input */}
+            {/* Tab Search Input - hidden on mobile to save space */}
             {state.tabs.length > 0 && (
-              <div className="flex-shrink-0 px-3 border-r border-zinc-200 dark:border-zinc-800">
+              <div className="hidden sm:flex-shrink-0 sm:px-3 border-r border-zinc-200 dark:border-zinc-800">
                 <div className="relative">
                   <svg className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
                   <input 
@@ -776,21 +776,21 @@ const App: React.FC = () => {
                 key={tab.id} 
                 onClick={() => setState(s => ({ ...s, activeTabId: tab.id }))} 
                 onContextMenu={(e) => { e.preventDefault(); setContextMenu({ x: e.clientX, y: e.clientY, tabId: tab.id }); }} 
-                className={`flex flex-shrink-0 items-center gap-2.5 px-5 py-3 border-r border-zinc-200 dark:border-zinc-800 cursor-pointer min-w-[140px] max-w-[280px] select-none group transition-all relative ${state.activeTabId === tab.id ? 'bg-zinc-50 dark:bg-zinc-950 shadow-inner' : 'hover:bg-zinc-50/50'}`}
+                className={`flex flex-shrink-0 items-center gap-2 px-3 sm:px-5 py-2 sm:py-3 border-r border-zinc-200 dark:border-zinc-800 cursor-pointer min-w-[100px] sm:min-w-[140px] max-w-[200px] sm:max-w-[280px] select-none group transition-all relative ${state.activeTabId === tab.id ? 'bg-zinc-50 dark:bg-zinc-950 shadow-inner' : 'hover:bg-zinc-50/50'}`}
               >
                 {state.activeTabId === tab.id && <div className="absolute top-0 left-0 right-0 h-0.5 bg-violet-600" />}
                 {getFileIcon(tab.type)}
-                <span className={`text-[11px] truncate font-black uppercase tracking-tight flex-1 ${state.activeTabId === tab.id ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400'}`}>{tab.name}</span>
-                <button title="Close Tab" onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }} className="opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 p-1 rounded-lg transition-all text-zinc-400"><IconX /></button>
+                <span className={`text-[10px] sm:text-[11px] truncate font-black uppercase tracking-tight flex-1 ${state.activeTabId === tab.id ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400'}`}>{tab.name}</span>
+                <button title="Close Tab" onClick={(e) => { e.stopPropagation(); closeTab(tab.id); }} className="opacity-100 sm:opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 p-0.5 sm:p-1 rounded-md sm:rounded-lg transition-all text-zinc-400"><IconX /></button>
               </div>
             ))}
             {tabSearchTerm && state.tabs.filter(tab => tab.name.toLowerCase().includes(tabSearchTerm.toLowerCase())).length === 0 && (
-              <div className="flex-shrink-0 px-6 py-3 text-xs text-zinc-400 font-medium">
+              <div className="flex-shrink-0 px-4 py-2 text-xs text-zinc-400 font-medium">
                 No tabs found
               </div>
             )}
           </div>
-          {showScrollArrows && <button onClick={() => handleScrollTabs('right')} className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg></button>}
+          {showScrollArrows && <button onClick={() => handleScrollTabs('right')} className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"><svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" /></svg></button>}
         </div>
 
         <main className="flex-1 flex overflow-hidden relative">
@@ -968,16 +968,16 @@ const App: React.FC = () => {
                 />}
               </div>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-start p-12 text-center overflow-y-auto custom-scrollbar bg-zinc-50 dark:bg-zinc-950 animate-in fade-in duration-500">
-                 <div className="max-w-5xl w-full py-16">
-                   <div className="mb-24">
-                     <div className="w-24 h-24 bg-violet-600 rounded-[2rem] flex items-center justify-center text-white text-5xl font-black shadow-2xl shadow-violet-500/40 mx-auto mb-12 italic transition-transform hover:rotate-6">S</div>
-                     <h2 className="text-7xl font-black text-zinc-950 dark:text-white mb-6 tracking-tighter leading-[1.05]">Document <span className="text-violet-600">Workstation</span></h2>
-                     <p className="text-xl text-zinc-500 dark:text-zinc-400 font-medium mb-12 max-w-2xl mx-auto leading-relaxed">
+              <div className="flex-1 flex flex-col items-center justify-start p-4 sm:p-12 text-center overflow-y-auto custom-scrollbar bg-zinc-50 dark:bg-zinc-950 animate-in fade-in duration-500">
+                 <div className="max-w-5xl w-full py-8 sm:py-16">
+                   <div className="mb-12 sm:mb-24">
+                     <div className="w-16 h-16 sm:w-24 sm:h-24 bg-violet-600 rounded-[1.5rem] sm:rounded-[2rem] flex items-center justify-center text-white text-3xl sm:text-5xl font-black shadow-2xl shadow-violet-500/40 mx-auto mb-8 sm:mb-12 italic transition-transform hover:rotate-6">S</div>
+                     <h2 className="text-4xl sm:text-7xl font-black text-zinc-950 dark:text-white mb-4 sm:mb-6 tracking-tighter leading-[1.05]">Document <span className="text-violet-600">Workstation</span></h2>
+                     <p className="text-base sm:text-xl text-zinc-500 dark:text-zinc-400 font-medium mb-8 sm:mb-12 max-w-2xl mx-auto leading-relaxed">
                        Securely open and interact with professional documents locally.
                      </p>
                      
-                     <div className="flex flex-wrap justify-center gap-4 mb-16">
+                     <div className="flex flex-wrap justify-center gap-3 sm:gap-4 mb-12 sm:mb-16">
                        {[
                          { name: 'PDF', icon: getFileIcon('pdf'), color: 'bg-rose-50 dark:bg-rose-900/10' },
                          { name: 'Word', icon: getFileIcon('docx'), color: 'bg-blue-50 dark:bg-blue-900/10' },
@@ -989,48 +989,48 @@ const App: React.FC = () => {
                           { name: 'DBF', icon: getFileIcon('dbf'), color: 'bg-orange-50 dark:bg-orange-900/10' },
                          { name: 'Images', icon: getFileIcon('image'), color: 'bg-violet-50 dark:bg-violet-900/10' }
                        ].map((fmt) => (
-                         <span key={fmt.name} className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl ${fmt.color} border border-zinc-200 dark:border-zinc-800 transition-all hover:scale-105`}>
+                         <span key={fmt.name} className={`flex items-center gap-1.5 px-4 py-2 rounded-xl sm:rounded-2xl sm:px-5 sm:py-2.5 ${fmt.color} border border-zinc-200 dark:border-zinc-800 transition-all hover:scale-105`}>
                            {fmt.icon}
-                           <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">{fmt.name}</span>
+                           <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">{fmt.name}</span>
                          </span>
                        ))}
                      </div>
 
-                     <div className="flex flex-col items-center justify-center gap-8 mb-20">
-                      <label className="group relative inline-flex items-center gap-4 cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-10 py-5 rounded-[1.5rem] font-black text-sm uppercase tracking-[0.1em] shadow-2xl shadow-violet-500/20 transition-all hover:scale-[1.05] active:scale-95">
-                          <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
+                     <div className="flex flex-col items-center justify-center gap-6 sm:gap-8 mb-12 sm:mb-20">
+                      <label className="group relative inline-flex items-center gap-3 sm:gap-4 cursor-pointer bg-zinc-950 dark:bg-violet-600 hover:bg-zinc-800 dark:hover:bg-violet-500 text-white px-6 py-4 sm:px-10 sm:py-5 rounded-[1rem] sm:rounded-[1.5rem] font-black text-xs sm:text-sm uppercase tracking-[0.1em] shadow-2xl shadow-violet-500/20 transition-all hover:scale-[1.05] active:scale-95">
+                          <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
                           Open Local Files
                           <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
                       </label>
                       
-                      <div className="flex items-center gap-2 py-4 px-6 bg-white dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-800 shadow-sm animate-in fade-in duration-1000">
-                         <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Designed & Crafted by</span>
-                         <a href="https://www.linkedin.com/in/im-suhail-akhtar/" target="_blank" rel="noopener noreferrer" className="text-[11px] font-black text-violet-600 hover:text-violet-500 transition-colors uppercase tracking-widest flex items-center gap-2 group">
+                      <div className="flex items-center gap-2 py-3 px-4 sm:py-4 sm:px-6 bg-white dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-800 shadow-sm animate-in fade-in duration-1000">
+                         <span className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest">Designed & Crafted by</span>
+                         <a href="https://www.linkedin.com/in/im-suhail-akhtar/" target="_blank" rel="noopener noreferrer" className="text-[10px] sm:text-[11px] font-black text-violet-600 hover:text-violet-500 transition-colors uppercase tracking-widest flex items-center gap-2 group">
                             Suhail Akhtar
-                            <svg className="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                            <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                          </a>
                       </div>
                      </div>
 
-                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 text-left">
                         {[
                           { title: 'Offline-First', desc: 'All files stay on your machine. No server uploads ever.', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
                           { title: 'Multi-Format', desc: 'Unified view for PDF, Spreadsheet, Word, and Documents.', icon: 'M4 6h16M4 12h16m-7 6h7' },
                           { title: 'Zen Focus', desc: 'Distraction-free interface with full-screen and Esc toggle.', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
                           { title: 'Tab Management', desc: 'Open and compare multiple documents simultaneously.', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' }
                         ].map((feature, i) => (
-                          <div key={i} className="p-8 bg-white dark:bg-zinc-900 rounded-[2rem] border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-900/30 transition-all group">
-                            <div className="w-12 h-12 bg-zinc-50 dark:bg-zinc-800 text-violet-600 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all shadow-inner">
-                              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={feature.icon} /></svg>
+                          <div key={i} className="p-5 sm:p-8 bg-white dark:bg-zinc-900 rounded-[1.5rem] sm:rounded-[2rem] border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-900/30 transition-all group">
+                            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-zinc-50 dark:bg-zinc-800 text-violet-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all shadow-inner">
+                              <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={feature.icon} /></svg>
                             </div>
-                            <h4 className="text-lg font-black text-zinc-950 dark:text-white mb-2 tracking-tight">{feature.title}</h4>
-                            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">{feature.desc}</p>
+                            <h4 className="text-base sm:text-lg font-black text-zinc-950 dark:text-white mb-2 tracking-tight">{feature.title}</h4>
+                            <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">{feature.desc}</p>
                           </div>
                         ))}
                      </div>
                    </div>
                  </div>
-              </div>
+               </div>
             )}
           </div>
         </main>
