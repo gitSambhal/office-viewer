@@ -95,6 +95,174 @@ const App: React.FC = () => {
   const [showScrollArrows, setShowScrollArrows] = useState(false);
   const [tabSearchTerm, setTabSearchTerm] = useState('');
   const tabBarRef = React.useRef<HTMLDivElement>(null);
+  
+  // Ref to store handleFiles callback for use in event listeners
+  const handleFilesRef = React.useRef<((files: FileList | File[] | null) => void) | null>(null);
+  
+  // IndexedDB helper
+  const openDB = React.useCallback((): Promise<IDBDatabase> => {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open('suhail-viewer-shared-files', 1);
+      request.onerror = () => reject(request.error);
+      request.onsuccess = () => resolve(request.result);
+      request.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains('files')) {
+          db.createObjectStore('files', { keyPath: 'id' });
+        }
+      };
+    });
+  }, []);
+  
+  // Function to retrieve shared files from IndexedDB
+  const retrieveSharedFiles = React.useCallback(async (shareId: string): Promise<File[] | null> => {
+    try {
+      const db = await openDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction('files', 'readonly');
+        const store = transaction.objectStore('files');
+        const request = store.get(shareId);
+        
+        request.onsuccess = () => {
+          const fileData = request.result;
+          if (fileData && fileData.files) {
+            const fileArray: File[] = fileData.files.map((f: { name: string; type: string; size: number; blob: Blob }) => {
+              return new File([f.blob], f.name, { type: f.type });
+            });
+            resolve(fileArray);
+          } else {
+            resolve(null);
+          }
+        };
+        request.onerror = () => reject(request.error);
+      });
+    } catch (err) {
+      console.error('[App] Error retrieving shared files:', err);
+      return null;
+    }
+  }, [openDB]);
+  
+  // Function to clear shared files from IndexedDB
+  const clearSharedFiles = React.useCallback(async (shareId: string) => {
+    try {
+      const db = await openDB();
+      const transaction = db.transaction('files', 'readwrite');
+      transaction.objectStore('files').delete(shareId);
+    } catch (err) {
+      console.error('[App] Error clearing shared files:', err);
+    }
+  }, [openDB]);
+  
+  // Handle share_target files (shared to PWA) - uses launchQueue API for Chrome 110+
+  useEffect(() => {
+    // Setup launchQueue API handler (correct API)
+    const win = window as unknown as {
+      launchQueue?: {
+        setConsumer: (consumer: (params: { files: FileSystemFileHandle[] }) => void) => void
+      }
+    };
+    
+    // Process file handles from launchQueue
+    const processFileHandles = async (handles: FileSystemFileHandle[]) => {
+      const fileArray: File[] = [];
+      for (const handle of handles) {
+        try {
+          const file = await handle.getFile();
+          fileArray.push(file);
+        } catch (err) {
+          console.error('[App] Error getting file from handle:', err);
+        }
+      }
+      if (fileArray.length > 0 && handleFilesRef.current) {
+        console.log('[App] Processing', fileArray.length, 'files from launchQueue');
+        handleFilesRef.current(fileArray as unknown as FileList);
+      }
+    };
+    
+    if (win.launchQueue) {
+      win.launchQueue.setConsumer(async (params: any) => {
+        console.log('[App] launchQueue setConsumer called with', params.files?.length || 0, 'files');
+        if (params.files && params.files.length > 0) {
+          await processFileHandles(params.files);
+        }
+      });
+    }
+
+    // Setup message listener for shared files from service worker
+    const handleMessage = async (event: MessageEvent) => {
+      console.log('[App] Message received:', event.data);
+      if (event.data && event.data.type === 'SHARED_FILES') {
+        const shareId = event.data.shareId;
+        console.log('[App] Shared files received, shareId:', shareId);
+        if (shareId && handleFilesRef.current) {
+          const files = await retrieveSharedFiles(shareId);
+          if (files && files.length > 0) {
+            console.log('[App] Calling handleFiles with:', files.length, 'files');
+            handleFilesRef.current(files as unknown as FileList);
+            // Clean up: delete the file data from IndexedDB
+            await clearSharedFiles(shareId);
+          }
+        }
+      }
+    };
+
+    // Check for shared files on initial load (in case PWA was opened with files)
+    const checkInitialSharedFiles = async () => {
+      try {
+        // Wait for handleFilesRef to be set
+        if (!handleFilesRef.current) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          if (!handleFilesRef.current) {
+            console.log('[App] handleFiles not available yet');
+            return;
+          }
+        }
+
+        const db = await openDB();
+        const transaction = db.transaction('files', 'readonly');
+        const store = transaction.objectStore('files');
+        const request = store.getAll();
+        
+        request.onsuccess = () => {
+          const fileDataList = request.result as Array<{ id: string; files: Array<{ name: string; type: string; size: number; blob: Blob }> }>;
+          if (fileDataList && fileDataList.length > 0 && handleFilesRef.current) {
+            // Get the most recent file data
+            const fileData = fileDataList[fileDataList.length - 1];
+            const fileArray: File[] = fileData.files.map((f) => {
+              return new File([f.blob], f.name, { type: f.type });
+            });
+            console.log('[App] Found shared files on load:', fileArray.length);
+            handleFilesRef.current(fileArray as unknown as FileList);
+            // Clean up
+            clearSharedFiles(fileData.id);
+          }
+        };
+      } catch (err) {
+        console.error('[App] Error checking initial shared files:', err);
+      }
+    };
+    
+    // Check service worker status
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.ready.then(registration => {
+        console.log('[App] Service worker is ready and controlling:', registration.active?.state);
+        // Check for shared files after service worker is ready
+        checkInitialSharedFiles();
+      }).catch(err => {
+        console.log('[App] Service worker not ready:', err);
+        // Still try to check for shared files
+        checkInitialSharedFiles();
+      });
+    } else {
+      checkInitialSharedFiles();
+    }
+
+    navigator.serviceWorker?.addEventListener('message', handleMessage);
+
+    return () => {
+      navigator.serviceWorker?.removeEventListener('message', handleMessage);
+    };
+  }, [openDB, retrieveSharedFiles, clearSharedFiles]);
 
   // Callback to close action popups (used by child components)
   const closeActionPopupsRef = React.useRef<(() => void) | null>(null);
@@ -280,6 +448,11 @@ const App: React.FC = () => {
     }
     setIsProcessing(false);
   }, []);
+
+  // Set handleFilesRef immediately with the current function
+  useEffect(() => {
+    handleFilesRef.current = handleFiles;
+  }, [handleFiles]);
 
   const closeTab = (id: string) => {
     setState(prev => {

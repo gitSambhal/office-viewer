@@ -1,4 +1,9 @@
-const CACHE_NAME = 'suhail-viewer-v7';
+const CACHE_NAME = 'suhail-viewer-v8';
+
+// IndexedDB name for storing shared files
+const DB_NAME = 'suhail-viewer-shared-files';
+const DB_VERSION = 1;
+const STORE_NAME = 'files';
 
 // Core assets to cache
 const CORE_ASSETS = [
@@ -24,6 +29,33 @@ const CDN_RESOURCES = [
   'https://esm.sh/react-dom@^19.2.4/',
   'https://esm.sh/react@^19.2.4/',
 ];
+
+// Open IndexedDB and return a promise
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(DB_NAME, DB_VERSION);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+      }
+    };
+  });
+}
+
+// Store file data in IndexedDB
+async function storeFileData(fileData) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(STORE_NAME, 'readwrite');
+    const store = transaction.objectStore(STORE_NAME);
+    const request = store.put(fileData);
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+  });
+}
 
 // Install event - cache core assets and CDN resources
 self.addEventListener('install', (event) => {
@@ -74,13 +106,48 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
+// Handle messages from clients
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'GET_SHARED_FILES') {
+    // Client is asking for shared files
+    event.ports[0].postMessage({ type: 'SHARED_FILES' });
+  }
+});
+
 // Fetch event - handle requests
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // Skip non-GET requests
-  if (request.method !== 'GET') {
+  // Handle share_target POST requests (file sharing to PWA)
+  if (request.method === 'POST' && url.pathname === '/') {
+    event.respondWith(
+      (async () => {
+        // Return cached index.html immediately
+        const cachedResponse = await caches.match('/');
+        if (cachedResponse) {
+          // Process the POST request asynchronously to extract file data
+          processShareTargetRequest(request).catch(err => {
+            console.error('Error processing share_target request:', err);
+          });
+          return cachedResponse;
+        }
+        
+        // If no cache, fetch index.html
+        try {
+          const response = await fetch('/index.html');
+          // Cache it for future use
+          caches.open(CACHE_NAME).then(cache => cache.put('/', response.clone()));
+          // Process the POST request asynchronously
+          processShareTargetRequest(request).catch(err => {
+            console.error('Error processing share_target request:', err);
+          });
+          return response;
+        } catch {
+          return new Response('Offline - App not cached', { status: 503 });
+        }
+      })()
+    );
     return;
   }
 
@@ -89,25 +156,18 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle navigation requests (SPA routing)
+  // Handle navigation requests (SPA routing) - network first for fresh content
   if (request.mode === 'navigate') {
     event.respondWith(
-      caches.match('/').then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-        return fetch(request).then((response) => {
-          if (response && response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        }).catch(() => {
-          // Fallback to index.html if network fails
-          return caches.match('/');
+      fetch(request).then((response) => {
+        const responseClone = response.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put('/', responseClone);
         });
+        return response;
+      }).catch(() => {
+        // Fallback to cached version if network fails
+        return caches.match('/');
       })
     );
     return;
@@ -163,3 +223,46 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Process share_target POST request and store file data
+async function processShareTargetRequest(request) {
+  try {
+    const formData = await request.formData();
+    const files = formData.getAll('files');
+    
+    console.log('[SW] Share target request received, files:', files.length);
+    
+    if (files.length > 0) {
+      // Generate a unique ID for this share session
+      const shareId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+      
+      // Store file data in IndexedDB
+      const fileData = {
+        id: shareId,
+        files: files.map(file => ({
+          name: file.name,
+          type: file.type,
+          size: file.size,
+          // Store the blob directly
+          blob: file
+        })),
+        timestamp: Date.now()
+      };
+      
+      console.log('[SW] Storing files in IndexedDB with id:', shareId);
+      await storeFileData(fileData);
+      
+      // Notify all clients about the shared files
+      const clients = await self.clients.matchAll();
+      console.log('[SW] Notifying clients:', clients.length);
+      for (const client of clients) {
+        client.postMessage({
+          type: 'SHARED_FILES',
+          shareId: shareId
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[SW] Error processing share_target request:', err);
+  }
+}
