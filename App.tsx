@@ -310,6 +310,20 @@ const App: React.FC = () => {
     return () => window.removeEventListener('resize', checkScroll);
   }, [state.tabs]);
 
+  // Show confirm dialog before page refresh or navigation with open tabs
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (state.tabs.length > 0) {
+        e.preventDefault();
+        e.returnValue = 'You have open tabs. Are you sure you want to leave?';
+        return e.returnValue;
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [state.tabs.length]);
+
   const handleScrollTabs = (direction: 'left' | 'right') => {
     if (tabBarRef.current) {
       tabBarRef.current.scrollBy({ left: direction === 'left' ? -200 : 200, behavior: 'smooth' });
