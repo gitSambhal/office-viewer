@@ -10,6 +10,15 @@ import { PREVIEW_TABS } from '../constants';
 export const DashboardPreview: React.FC = () => {
   const [previewActiveTab, setPreviewActiveTab] = useState(0);
 
+  // Auto change tabs every 3 seconds
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setPreviewActiveTab((prev) => (prev + 1) % PREVIEW_TABS.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex justify-center">
       <div className="relative w-full max-w-4xl px-4">
@@ -34,22 +43,27 @@ export const DashboardPreview: React.FC = () => {
             </div>
             
             {/* Tabs Preview */}
-            <div className="flex items-center mb-4 sm:mb-6 overflow-x-auto pb-2 scrollbar-none">
+            <div className="flex items-center bg-white dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800 mb-4 sm:mb-6 overflow-x-auto scrollbar-none">
               {PREVIEW_TABS.map((tab) => (
                 <div
                   key={tab.index}
                   onClick={() => setPreviewActiveTab(tab.index)}
-                  className={`flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg mr-2 whitespace-nowrap transition-all cursor-pointer ${
+                  className={`flex flex-shrink-0 items-center gap-2 px-3 sm:px-5 py-2 sm:py-3 border-r border-zinc-200 dark:border-zinc-800 cursor-pointer min-w-[100px] sm:min-w-[140px] max-w-[200px] sm:max-w-[280px] select-none group transition-all relative ${
                     previewActiveTab === tab.index
-                        ? 'bg-violet-600 text-white shadow-lg'
-                        : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-700'
+                        ? 'bg-zinc-50 dark:bg-zinc-950 shadow-inner'
+                        : 'hover:bg-zinc-50/50'
                   }`}
                 >
+                  {previewActiveTab === tab.index && <div className="absolute top-0 left-0 right-0 h-0.5 bg-violet-600" />}
                   {getFileIcon(tab.type)}
-                  <span className="text-xs sm:text-sm font-black uppercase tracking-tight truncate max-w-[100px] sm:max-w-[120px] md:max-w-[160px]">{tab.name}</span>
-                  {previewActiveTab === tab.index && (
-                    <div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div>
-                  )}
+                  <span className={`text-[10px] sm:text-[11px] truncate font-black uppercase tracking-tight flex-1 ${
+                    previewActiveTab === tab.index
+                        ? 'text-zinc-900 dark:text-zinc-100'
+                        : 'text-zinc-500 dark:text-zinc-400'
+                  }`}>{tab.name}</span>
+                  <div className="opacity-100 sm:opacity-0 group-hover:opacity-100 hover:bg-zinc-200 dark:hover:bg-zinc-700 p-0.5 sm:p-1 rounded-md sm:rounded-lg transition-all text-zinc-400">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  </div>
                 </div>
               ))}
             </div>
