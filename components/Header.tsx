@@ -89,19 +89,19 @@ export const Header: React.FC = () => {
       )}
       
       <div className="flex items-center gap-2">
-        {/* Always show the URL button */}
-        <label className="group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer bg-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700 text-white dark:text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
-          <span className="hidden xs:inline">Open Files</span>
-          <input type="file" multiple className="hidden" onChange={handleFileInputChange} accept={FILE_ACCEPT} />
-        </label>
-        <button
-          onClick={() => setShowUrlModal(true)}
-          className="group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer bg-transparent hover:bg-violet-50 dark:hover:bg-violet-900/20 text-violet-700 dark:text-violet-300 px-2 sm:px-4 py-2 sm:py-2 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] border-2 border-violet-300 dark:border-violet-700 hover:border-violet-400 dark:hover:border-violet-600 transition-all hover:scale-[1.02] active:scale-95"
-        >
-          <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
-          <span className="hidden xs:inline">Open from URL</span>
-        </button>
+         {/* Always show the URL button */}
+         <label className="group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer bg-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700 text-white dark:text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
+           <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
+           <span>Open Files</span>
+           <input type="file" multiple className="hidden" onChange={handleFileInputChange} accept={FILE_ACCEPT} />
+         </label>
+         <button
+           onClick={() => setShowUrlModal(true)}
+           className="group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer bg-transparent hover:bg-violet-50 dark:hover:bg-violet-900/20 text-violet-700 dark:text-violet-300 px-2 sm:px-4 py-2 sm:py-2 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] border-2 border-violet-300 dark:border-violet-700 hover:border-violet-400 dark:hover:border-violet-600 transition-all hover:scale-[1.02] active:scale-95"
+         >
+           <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" /></svg>
+           <span>Open from URL</span>
+         </button>
       </div>
     </header>
   );
