@@ -1,4 +1,3 @@
-
 import { DBFHeader, DBFField, DBFRow, DBFData } from '../types';
 
 export class DBFParser {
@@ -9,7 +8,12 @@ export class DBFParser {
     // 1. Parse Header
     const version = view.getUint8(0);
     const yearRaw = view.getUint8(1);
-    const year = yearRaw < 70 ? 2000 + yearRaw : (yearRaw < 100 ? 1900 + yearRaw : 1900 + yearRaw);
+    const year =
+      yearRaw < 70
+        ? 2000 + yearRaw
+        : yearRaw < 100
+          ? 1900 + yearRaw
+          : 1900 + yearRaw;
     const month = view.getUint8(2) - 1;
     const day = view.getUint8(3);
     const lastUpdate = new Date(year, month, day);
@@ -20,13 +24,15 @@ export class DBFParser {
     // 2. Parse Fields
     const fields: DBFField[] = [];
     let offset = 32;
-    while (offset < headerLength - 1 && view.getUint8(offset) !== 0x0D) {
+    while (offset < headerLength - 1 && view.getUint8(offset) !== 0x0d) {
       const nameBytes = new Uint8Array(buffer.slice(offset, offset + 11));
       let name = decoder.decode(nameBytes).split('\0')[0].trim();
-      const type = String.fromCharCode(view.getUint8(offset + 11)).toUpperCase();
+      const type = String.fromCharCode(
+        view.getUint8(offset + 11)
+      ).toUpperCase();
       const length = view.getUint8(offset + 16);
       const decimalCount = view.getUint8(offset + 17);
-      
+
       fields.push({ name, type, length, decimalCount });
       offset += 32;
     }
@@ -37,7 +43,7 @@ export class DBFParser {
       numberOfRecords,
       headerLength,
       recordLength,
-      fields
+      fields,
     };
 
     // 3. Parse Records
@@ -46,14 +52,14 @@ export class DBFParser {
 
     for (let i = 0; i < numberOfRecords; i++) {
       if (recordOffset + recordLength > buffer.byteLength) break;
-      
+
       const statusByte = view.getUint8(recordOffset);
-      const isDeleted = statusByte === 0x2A; 
-      
+      const isDeleted = statusByte === 0x2a;
+
       if (!isDeleted) {
         const row: DBFRow = {};
         let fieldOffset = recordOffset + 1;
-        
+
         for (const field of fields) {
           let value: any;
 
@@ -75,7 +81,7 @@ export class DBFParser {
                 const unixMs = (julianDay - 2440588) * 86400000 + ms;
                 const d = new Date(unixMs);
                 if (isNaN(d.getTime())) {
-                  value = "[Invalid Date]";
+                  value = '[Invalid Date]';
                 } else {
                   value = d.toISOString().replace('T', ' ').split('.')[0];
                 }
@@ -93,10 +99,14 @@ export class DBFParser {
             }
           } else {
             // Text-based Types
-            const fieldBytes = new Uint8Array(buffer, fieldOffset, field.length);
+            const fieldBytes = new Uint8Array(
+              buffer,
+              fieldOffset,
+              field.length
+            );
             const valueRaw = decoder.decode(fieldBytes).trim();
             value = valueRaw;
-            
+
             if (field.type === 'N' || field.type === 'F') {
               const parsed = parseFloat(valueRaw.replace(/,/g, ''));
               value = isNaN(parsed) ? (valueRaw === '' ? 0 : valueRaw) : parsed;
@@ -117,7 +127,7 @@ export class DBFParser {
               value = valueRaw ? `[Memo Pointer: ${valueRaw}]` : '';
             }
           }
-          
+
           row[field.name] = value;
           fieldOffset += field.length;
         }
@@ -129,29 +139,35 @@ export class DBFParser {
     // Identify columns with all null values
     const allNullColumns: string[] = [];
     for (const field of fields) {
-      const allValuesNull = rows.every(row => row[field.name] === null || row[field.name] === undefined || row[field.name] === '');
+      const allValuesNull = rows.every(
+        (row) =>
+          row[field.name] === null ||
+          row[field.name] === undefined ||
+          row[field.name] === ''
+      );
       if (allValuesNull) {
         allNullColumns.push(field.name);
       }
     }
 
-    return { 
+    return {
       id: Math.random().toString(36).substr(2, 9),
-      header, 
-      rows, 
-      fileName, 
-      hiddenColumns: allNullColumns 
+      header,
+      rows,
+      fileName,
+      hiddenColumns: allNullColumns,
     };
   }
 
   static generateBlob(data: DBFData): Blob {
     const { header, rows } = data;
     const encoder = new TextEncoder();
-    
-    let calculatedRecordLength = 1; 
-    header.fields.forEach(f => calculatedRecordLength += f.length);
 
-    const bufferSize = header.headerLength + (rows.length * calculatedRecordLength) + 1;
+    let calculatedRecordLength = 1;
+    header.fields.forEach((f) => (calculatedRecordLength += f.length));
+
+    const bufferSize =
+      header.headerLength + rows.length * calculatedRecordLength + 1;
     const buffer = new ArrayBuffer(bufferSize);
     const view = new DataView(buffer);
     const uint8 = new Uint8Array(buffer);
@@ -166,7 +182,7 @@ export class DBFParser {
     view.setUint16(10, calculatedRecordLength, true);
 
     let offset = 32;
-    header.fields.forEach(field => {
+    header.fields.forEach((field) => {
       const nameEncoded = encoder.encode(field.name.padEnd(11, '\0'));
       uint8.set(nameEncoded.subarray(0, 11), offset);
       view.setUint8(offset + 11, field.type.charCodeAt(0));
@@ -174,16 +190,16 @@ export class DBFParser {
       view.setUint8(offset + 17, field.decimalCount);
       offset += 32;
     });
-    view.setUint8(header.headerLength - 1, 0x0D);
+    view.setUint8(header.headerLength - 1, 0x0d);
 
     let recordOffset = header.headerLength;
-    rows.forEach(row => {
-      view.setUint8(recordOffset, 0x20); 
+    rows.forEach((row) => {
+      view.setUint8(recordOffset, 0x20);
       let fieldOffset = recordOffset + 1;
-      
-      header.fields.forEach(field => {
+
+      header.fields.forEach((field) => {
         let val = row[field.name] ?? '';
-        
+
         if (field.type === 'I') {
           view.setInt32(fieldOffset, Number(val) || 0, true);
         } else if (field.type === 'B') {
@@ -207,9 +223,14 @@ export class DBFParser {
           let strVal = '';
           if (field.type === 'N' || field.type === 'F') {
             const num = typeof val === 'number' ? val : parseFloat(val);
-            strVal = (isNaN(num) ? 0 : num).toFixed(field.decimalCount).toString().padStart(field.length, ' ');
+            strVal = (isNaN(num) ? 0 : num)
+              .toFixed(field.decimalCount)
+              .toString()
+              .padStart(field.length, ' ');
           } else if (field.type === 'D') {
-            strVal = (val as string).replace(/-/g, '').padEnd(field.length, ' ');
+            strVal = (val as string)
+              .replace(/-/g, '')
+              .padEnd(field.length, ' ');
           } else if (field.type === 'L') {
             strVal = val ? 'T' : 'F';
           } else {
@@ -224,7 +245,7 @@ export class DBFParser {
       recordOffset += calculatedRecordLength;
     });
 
-    view.setUint8(bufferSize - 1, 0x1A); 
+    view.setUint8(bufferSize - 1, 0x1a);
 
     return new Blob([buffer], { type: 'application/octet-stream' });
   }

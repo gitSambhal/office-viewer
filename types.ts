@@ -1,4 +1,16 @@
-export type FileType = 'xlsx' | 'docx' | 'pdf' | 'image' | 'rtf' | 'txt' | 'md' | 'mdb' | 'accdb' | 'sqlite' | 'dbf' | 'unknown';
+export type FileType =
+  | 'xlsx'
+  | 'docx'
+  | 'pdf'
+  | 'image'
+  | 'rtf'
+  | 'txt'
+  | 'md'
+  | 'mdb'
+  | 'accdb'
+  | 'sqlite'
+  | 'dbf'
+  | 'unknown';
 
 export interface SheetData {
   headers: string[];
@@ -54,7 +66,7 @@ export interface TableData {
 }
 
 export interface DatabaseFile {
-  id:string;
+  id: string;
   fileName: string;
   fileSize: number;
   tables: TableData[];
@@ -104,5 +116,8 @@ export interface DBFData {
   rows: DBFRow[];
   fileName: string;
   hiddenColumns: string[];
-  changes?: Record<number, Record<string, { oldValue: any; newValue: any; updatedAt: number }>>;
+  changes?: Record<
+    number,
+    Record<string, { oldValue: any; newValue: any; updatedAt: number }>
+  >;
 }

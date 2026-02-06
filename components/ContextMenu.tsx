@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 
 interface MenuItem {
@@ -15,7 +14,12 @@ interface ContextMenuProps {
   onClose: () => void;
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = ({
+  x,
+  y,
+  items,
+  onClose,
+}) => {
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -37,8 +41,10 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ x, y, items, onClose }
       {items.map((item, idx) => (
         <React.Fragment key={idx}>
           {/* Fix: Allow rendering of divider even if item has no label or onClick */}
-          {item.divider && <div className="my-1 border-t border-slate-100 dark:border-slate-700" />}
-          
+          {item.divider && (
+            <div className="my-1 border-t border-slate-100 dark:border-slate-700" />
+          )}
+
           {/* Fix: Only render the button if both label and onClick are provided */}
           {item.label && item.onClick && (
             <button

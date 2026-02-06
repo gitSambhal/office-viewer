@@ -51,39 +51,52 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return {
         ...state,
         tabs: [...state.tabs, ...action.payload],
-        activeTabId: action.payload.length > 0 ? action.payload[action.payload.length - 1].id : state.activeTabId,
+        activeTabId:
+          action.payload.length > 0
+            ? action.payload[action.payload.length - 1].id
+            : state.activeTabId,
         isSidebarOpen: state.tabs.length === 0 ? true : state.isSidebarOpen,
       };
     case 'SET_ACTIVE_TAB':
       return { ...state, activeTabId: action.payload };
-    case 'CLOSE_TAB':
-      {
-        const nextTabs = state.tabs.filter(t => t.id !== action.payload);
-        const nextId = state.activeTabId === action.payload ? (nextTabs.length ? nextTabs[nextTabs.length - 1].id : null) : state.activeTabId;
-        return { ...state, tabs: nextTabs, activeTabId: nextId };
-      }
+    case 'CLOSE_TAB': {
+      const nextTabs = state.tabs.filter((t) => t.id !== action.payload);
+      const nextId =
+        state.activeTabId === action.payload
+          ? nextTabs.length
+            ? nextTabs[nextTabs.length - 1].id
+            : null
+          : state.activeTabId;
+      return { ...state, tabs: nextTabs, activeTabId: nextId };
+    }
     case 'CLOSE_ALL_TABS':
       return { ...state, tabs: [], activeTabId: null };
-    case 'CLOSE_TABS_TO_LEFT':
-      {
-        const tabIndex = state.tabs.findIndex(t => t.id === action.payload);
-        if (tabIndex === -1) return state;
-        const tabsToKeep = state.tabs.slice(tabIndex);
-        const newActiveTabId = tabsToKeep.some(t => t.id === state.activeTabId) ? state.activeTabId : (tabsToKeep.length > 0 ? tabsToKeep[0].id : null);
-        return { ...state, tabs: tabsToKeep, activeTabId: newActiveTabId };
-      }
-    case 'CLOSE_TABS_TO_RIGHT':
-      {
-        const tabIndex = state.tabs.findIndex(t => t.id === action.payload);
-        if (tabIndex === -1) return state;
-        const tabsToKeep = state.tabs.slice(0, tabIndex + 1);
-        const newActiveTabId = tabsToKeep.some(t => t.id === state.activeTabId) ? state.activeTabId : (tabsToKeep.length > 0 ? tabsToKeep[tabsToKeep.length - 1].id : null);
-        return { ...state, tabs: tabsToKeep, activeTabId: newActiveTabId };
-      }
+    case 'CLOSE_TABS_TO_LEFT': {
+      const tabIndex = state.tabs.findIndex((t) => t.id === action.payload);
+      if (tabIndex === -1) return state;
+      const tabsToKeep = state.tabs.slice(tabIndex);
+      const newActiveTabId = tabsToKeep.some((t) => t.id === state.activeTabId)
+        ? state.activeTabId
+        : tabsToKeep.length > 0
+          ? tabsToKeep[0].id
+          : null;
+      return { ...state, tabs: tabsToKeep, activeTabId: newActiveTabId };
+    }
+    case 'CLOSE_TABS_TO_RIGHT': {
+      const tabIndex = state.tabs.findIndex((t) => t.id === action.payload);
+      if (tabIndex === -1) return state;
+      const tabsToKeep = state.tabs.slice(0, tabIndex + 1);
+      const newActiveTabId = tabsToKeep.some((t) => t.id === state.activeTabId)
+        ? state.activeTabId
+        : tabsToKeep.length > 0
+          ? tabsToKeep[tabsToKeep.length - 1].id
+          : null;
+      return { ...state, tabs: tabsToKeep, activeTabId: newActiveTabId };
+    }
     case 'UPDATE_TAB':
       return {
         ...state,
-        tabs: state.tabs.map(t =>
+        tabs: state.tabs.map((t) =>
           t.id === action.payload.id ? { ...t, ...action.payload.updates } : t
         ),
       };
@@ -104,7 +117,9 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 // Provider component
-export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export const AppProvider: React.FC<{ children: ReactNode }> = ({
+  children,
+}) => {
   const [state, dispatch] = useReducer(appReducer, initialState, (initial) => {
     // Initialize from localStorage
     const finalState = { ...initial };
@@ -113,7 +128,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (storedTheme === 'dark' || storedTheme === 'light') {
         finalState.darkMode = storedTheme === 'dark';
       }
-      
+
       const storedTypeAware = localStorage.getItem(STORAGE_KEYS.TYPE_AWARE);
       if (storedTypeAware === 'true' || storedTypeAware === 'false') {
         finalState.isTypeAwareEnabled = storedTypeAware === 'true';

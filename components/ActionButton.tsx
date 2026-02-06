@@ -21,7 +21,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   children,
   className = '',
   buttonClassName = '',
-  registerCloseActionPopups
+  registerCloseActionPopups,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -41,8 +41,12 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
     };
 
     const handleClickOutside = (e: MouseEvent) => {
-      if (buttonRef.current && !buttonRef.current.contains(e.target as Node) &&
-          popupRef.current && !popupRef.current.contains(e.target as Node)) {
+      if (
+        buttonRef.current &&
+        !buttonRef.current.contains(e.target as Node) &&
+        popupRef.current &&
+        !popupRef.current.contains(e.target as Node)
+      ) {
         setIsOpen(false);
       }
     };

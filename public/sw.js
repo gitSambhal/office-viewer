@@ -6,11 +6,7 @@ const DB_VERSION = 1;
 const STORE_NAME = 'files';
 
 // Core assets to cache
-const CORE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-];
+const CORE_ASSETS = ['/', '/index.html', '/manifest.json'];
 
 // CDN resources to cache for offline use - must be cacheable (CORS enabled)
 const CDN_RESOURCES = [
@@ -136,23 +132,25 @@ self.addEventListener('fetch', (event) => {
             // If no cache, fetch index.html from network
             const response = await fetch('/');
             // Cache it for future use
-            caches.open(CACHE_NAME).then(cache => cache.put('/', response.clone()));
+            caches
+              .open(CACHE_NAME)
+              .then((cache) => cache.put('/', response.clone()));
             console.log('[SW] Fetched and cached new index.html');
             indexResponse = response;
           }
         } catch (err) {
           console.error('[SW] Error getting index.html:', err);
-          return new Response('Offline - App not available', { 
-            status: 503, 
-            headers: { 'Content-Type': 'text/plain' }
+          return new Response('Offline - App not available', {
+            status: 503,
+            headers: { 'Content-Type': 'text/plain' },
           });
         }
-        
+
         // Process the POST request to extract file data (asynchronously so we don't block the response)
-        processShareTargetRequest(request).catch(err => {
+        processShareTargetRequest(request).catch((err) => {
           console.error('[SW] Error processing share_target request:', err);
         });
-        
+
         return indexResponse;
       })()
     );
@@ -167,16 +165,18 @@ self.addEventListener('fetch', (event) => {
   // Handle navigation requests (SPA routing) - network first for fresh content
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).then((response) => {
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put('/', responseClone);
-        });
-        return response;
-      }).catch(() => {
-        // Fallback to cached version if network fails
-        return caches.match('/');
-      })
+      fetch(request)
+        .then((response) => {
+          const responseClone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => {
+            cache.put('/', responseClone);
+          });
+          return response;
+        })
+        .catch(() => {
+          // Fallback to cached version if network fails
+          return caches.match('/');
+        })
     );
     return;
   }
@@ -188,18 +188,20 @@ self.addEventListener('fetch', (event) => {
         if (cachedResponse) {
           return cachedResponse;
         }
-        return fetch(request).then((response) => {
-          if (response && response.status === 200) {
-            const responseClone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        }).catch(() => {
-          // Return a basic error response for failed asset loads
-          return new Response('Asset not available offline', { status: 503 });
-        });
+        return fetch(request)
+          .then((response) => {
+            if (response && response.status === 200) {
+              const responseClone = response.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(request, responseClone);
+              });
+            }
+            return response;
+          })
+          .catch(() => {
+            // Return a basic error response for failed asset loads
+            return new Response('Asset not available offline', { status: 503 });
+          });
       })
     );
     return;
@@ -211,23 +213,25 @@ self.addEventListener('fetch', (event) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      return fetch(request).then((response) => {
-        // Cache successful responses (allow both 'basic' and 'cors' types)
-        if (response && response.status === 200) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone);
+      return fetch(request)
+        .then((response) => {
+          // Cache successful responses (allow both 'basic' and 'cors' types)
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(request, responseClone);
+            });
+          }
+          return response;
+        })
+        .catch(() => {
+          // For offline CDN resources, return an empty response that won't break the page
+          // This allows the page to load even if some CDNs are unavailable
+          return new Response('', {
+            status: 503,
+            statusText: 'Service Unavailable',
           });
-        }
-        return response;
-      }).catch(() => {
-        // For offline CDN resources, return an empty response that won't break the page
-        // This allows the page to load even if some CDNs are unavailable
-        return new Response('', {
-          status: 503,
-          statusText: 'Service Unavailable',
         });
-      });
     })
   );
 });
@@ -236,28 +240,29 @@ self.addEventListener('fetch', (event) => {
 async function processShareTargetRequest(request) {
   try {
     console.log('[SW] Processing share target request');
-    
+
     // Clone request before reading body
     const clonedRequest = request.clone();
-    
+
     // Try to read form data
     try {
       const formData = await clonedRequest.formData();
       const files = formData.getAll('files');
-      
+
       console.log('[SW] Share target request received, files:', files.length);
-      
+
       if (files.length > 0) {
         // Generate a unique ID for this share session
-        const shareId = Date.now().toString(36) + Math.random().toString(36).substr(2);
-        
+        const shareId =
+          Date.now().toString(36) + Math.random().toString(36).substr(2);
+
         // Convert File objects to serializable data (since Blob might not serialize directly)
         const fileData = {
           id: shareId,
           files: [],
-          timestamp: Date.now()
+          timestamp: Date.now(),
         };
-        
+
         // Read each file as array buffer for storage
         for (const file of files) {
           console.log('[SW] Reading file:', file.name, file.size);
@@ -267,27 +272,27 @@ async function processShareTargetRequest(request) {
               name: file.name,
               type: file.type,
               size: file.size,
-              arrayBuffer: arrayBuffer
+              arrayBuffer: arrayBuffer,
             });
           } catch (readErr) {
             console.error('[SW] Error reading file:', file.name, readErr);
           }
         }
-        
+
         if (fileData.files.length > 0) {
           console.log('[SW] Storing files in IndexedDB with id:', shareId);
           await storeFileData(fileData);
-          
+
           // Notify all clients about the shared files
           const clients = await self.clients.matchAll();
           console.log('[SW] Notifying clients:', clients.length);
           for (const client of clients) {
             client.postMessage({
               type: 'SHARED_FILES',
-              shareId: shareId
+              shareId: shareId,
             });
           }
-          
+
           return shareId;
         } else {
           console.log('[SW] No files could be read');
@@ -299,14 +304,18 @@ async function processShareTargetRequest(request) {
       }
     } catch (err) {
       console.error('[SW] Error reading form data:', err);
-      
+
       // Try different approach - check if launchQueue API is available (Chrome 110+),
       // which is the recommended way for PWA file handling
       console.log('[SW] LaunchQueue approach might be more reliable');
       return null;
     }
   } catch (err) {
-    console.error('[SW] Error processing share_target request:', err, err.stack);
+    console.error(
+      '[SW] Error processing share_target request:',
+      err,
+      err.stack
+    );
     return null;
   }
 }
