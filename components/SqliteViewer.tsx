@@ -4,12 +4,9 @@ import { TableData, SortConfig, ColumnWidths, TabStateChange } from '../types';
 import { ActionButton } from './ActionButton';
 import { ChevronDown, ChevronUp, ArrowUpDown, Search, FileSpreadsheet } from 'lucide-react';
 
-const IconSearch = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
-const IconClear = () => <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>;
 const IconColumns = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>;
 const IconExport = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
 const IconSort = () => <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>;
-const IconType = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 7h10M10 7v10m4-10v10M7 17h10" /></svg>;
 const IconSlicer = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>;
 
 const ROW_HEIGHT = 44; // px
@@ -38,8 +35,6 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' | null }>({ key: '', direction: null });
-  const [searchTerm, setSearchTerm] = useState('');
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [isSlicerOpen, setIsSlicerOpen] = useState(false);
   const [isColumnManagerOpen, setIsColumnManagerOpen] = useState(false);
@@ -94,8 +89,6 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
         
         // Reset view settings for new table
         setSortConfig({ key: '', direction: null });
-        setSearchTerm('');
-        setDebouncedSearchTerm('');
         setHiddenColumns(new Set());
         setSlicer({ mode: 'all', value: 100, endValue: 200 });
         setColumnWidths({}); // Reset column widths
@@ -108,13 +101,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
     }
   }, [db, activeTableName]);
 
-  // Debounce search term
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 400);
-    return () => clearTimeout(handler);
-  }, [searchTerm]);
+
 
   // Observe container height for virtualization
   useEffect(() => {
@@ -156,20 +143,16 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
     let rows = currentTableData.rows;
     let indices = Array.from({ length: rows.length }, (_, i) => i);
 
-    // Combine local search and global search
-    const searchTerms = [];
-    if (debouncedSearchTerm) searchTerms.push(debouncedSearchTerm.toLowerCase());
-    if (globalSearchTerm) searchTerms.push(globalSearchTerm.toLowerCase());
-    
-    if (searchTerms.length > 0) {
+    // Global search
+    if (globalSearchTerm) {
+      const term = globalSearchTerm.toLowerCase();
       indices = indices.filter(i => {
-        return rows[i].some(cell => 
-          searchTerms.some(term => String(cell ?? '').toLowerCase().includes(term))
-        );
+        const row = rows[i];
+        return row.some(cell => String(cell ?? '').toLowerCase().includes(term));
       });
     }
 
-    // 2. Sorting
+    // 1. Sorting
     if (sortConfig.key && sortConfig.direction) {
       const colIndex = currentTableData.columns.indexOf(sortConfig.key);
       if (colIndex !== -1) {
@@ -195,7 +178,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
       }
     }
 
-    // 3. Slicer
+    // 2. Slicer
     if (slicer.mode === 'first') {
         indices = indices.slice(0, Math.max(0, slicer.value));
     } else if (slicer.mode === 'last') {
@@ -205,7 +188,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
     }
 
     return indices.map(idx => ({ row: rows[idx], originalIndex: idx }));
-  }, [currentTableData, debouncedSearchTerm, sortConfig, slicer, globalSearchTerm]);
+  }, [currentTableData, sortConfig, slicer, globalSearchTerm]);
 
   // Keep ref updated with latest callback
   useEffect(() => {
@@ -218,7 +201,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
       const visibleColCount = currentTableData.columns.filter((_, i) => !hiddenColumns.has(i)).length;
       onStateChangeRef.current({
         sortConfig: sortConfig.key ? sortConfig : null,
-        searchTerm,
+        searchTerm: '',
         filteredCount: filteredData.length,
         totalRows: currentTableData.rows.length,
         visibleColumns: visibleColCount,
@@ -226,7 +209,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
         activeTable: activeTableName
       });
     }
-  }, [sortConfig, searchTerm, filteredData.length, hiddenColumns, currentTableData, tableNames.length, activeTableName]);
+  }, [sortConfig, filteredData.length, hiddenColumns, currentTableData, tableNames.length, activeTableName]);
 
   const handleToggleSort = (columnKey: string) => {
     setSortConfig(prev => {
@@ -330,26 +313,6 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full bg-zinc-50 dark:bg-zinc-950">
       <div className="flex items-center gap-3 p-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm z-30">
-        <div className="relative flex-1 min-w-[180px] max-w-xs">
-          <input 
-            type="text" 
-            placeholder={`Search ${currentTableData.name}...`}
-            className={`w-full pl-8 pr-8 py-1.5 text-xs font-medium rounded-lg border border-zinc-200 dark:border-zinc-700 bg-transparent text-zinc-900 dark:text-white outline-none focus:ring-2 focus:ring-violet-500 shadow-sm transition-all ${searchTerm !== debouncedSearchTerm ? 'opacity-50' : ''}`} 
-            value={searchTerm} 
-            onChange={(e) => setSearchTerm(e.target.value)} 
-          />
-           <div className="absolute left-2.5 top-2 text-zinc-400"><IconSearch /></div>
-          {(searchTerm || debouncedSearchTerm) && (
-            <button 
-              onClick={() => { setSearchTerm(''); setDebouncedSearchTerm(''); }}
-              className="absolute right-2.5 top-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors"
-              title="Clear Search"
-            >
-              <IconClear />
-            </button>
-          )}
-        </div>
-
         <div className="flex items-center gap-1 shrink-0">
            <ActionButton
              icon={<IconSlicer />}
@@ -424,17 +387,15 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
              </div>
            </ActionButton>
 
-           <button 
-            title="Clear all filters and sorts"
-            onClick={() => {
-              setSearchTerm('');
-              setDebouncedSearchTerm('');
-              setSortConfig({ key: '', direction: null });
-              setSlicer({ mode: 'all', value: 100, endValue: 200 });
-              setHiddenColumns(new Set());
-            }} 
-            className="p-1.5 rounded-lg border bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-zinc-700 transition-all"
-          >
+            <button 
+             title="Clear all filters and sorts"
+             onClick={() => {
+               setSortConfig({ key: '', direction: null });
+               setSlicer({ mode: 'all', value: 100, endValue: 200 });
+               setHiddenColumns(new Set());
+             }} 
+             className="p-1.5 rounded-lg border bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-zinc-700 transition-all"
+           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
           </button>
         </div>
@@ -489,7 +450,11 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
                     <td colSpan={currentTableData.columns.length + 1} className="py-32 text-center">
                        <div className="flex flex-col items-center gap-4">
                          <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">No records found</p>
-                         <button onClick={() => { setSearchTerm(''); setDebouncedSearchTerm(''); }} className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all">Clear Filters</button>
+                         <button onClick={() => {
+                           setSortConfig({ key: '', direction: null });
+                           setSlicer({ mode: 'all', value: 100, endValue: 200 });
+                           setHiddenColumns(new Set());
+                         }} className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all">Clear Filters</button>
                        </div>
                     </td>
                   </tr>
