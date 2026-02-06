@@ -69,4 +69,21 @@
     border-color: #a78bfa;
     box-shadow: 0 25px 50px -12px rgba(124, 58, 237, 0.3);
   }
+  
+  /* RTF content styles for dark mode */
+  .dark .rtf-container {
+    color: #f4f4f5 !important; /* zinc-100 */
+  }
+  
+  .dark .rtf-container p {
+    color: #f4f4f5 !important; /* zinc-100 */
+  }
+  
+  .dark .rtf-container span {
+    color: #f4f4f5 !important; /* zinc-100 */
+  }
+  
+  .dark .rtf-container div {
+    color: #f4f4f5 !important; /* zinc-100 */
+  }
 }

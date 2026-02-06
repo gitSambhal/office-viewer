@@ -43,6 +43,7 @@ export interface AppState {
   isSidebarOpen: boolean;
   isTypeAwareEnabled: boolean;
   globalSearchTerm: string;
+  showUrlModal: boolean;
 }
 
 export interface TableData {

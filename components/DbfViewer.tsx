@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { TableData, TabStateChange } from '../types';
+import { ActionButton } from './ActionButton';
 
 // Icons
 const IconSearch = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>;
@@ -296,84 +297,78 @@ const DbfViewer: React.FC<DbfViewerProps> = ({ tableData: initialData, onStateCh
         </div>
 
         <div className="flex items-center gap-1 shrink-0">
-          <div className="relative">
-            <button 
-              title="Filter and Slice Dataset"
-              onClick={() => { setIsSlicerOpen(!isSlicerOpen); setIsColumnManagerOpen(false); setIsExportOpen(false); }}
-              className={`p-1.5 rounded-lg transition-all border ${slicer.mode !== 'all' ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-900/30 dark:border-amber-800' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400'}`}
-            >
-              <IconSlicer />
-            </button>
-            {isSlicerOpen && (
-              <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl p-4 z-40 animate-in fade-in slide-in-from-top-2">
-                <h4 className="text-[10px] font-black uppercase tracking-widest mb-3 text-zinc-400">View Slicer</h4>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {['all', 'first', 'last', 'range'].map(mode => (
-                    <button 
-                      key={mode} 
-                      onClick={() => setSlicer(s => ({ ...s, mode: mode as any }))} 
-                      className={`text-[10px] font-black uppercase tracking-tighter py-2 rounded-md transition-all ${slicer.mode === mode ? 'bg-violet-600 text-white' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-500 hover:text-zinc-800 dark:hover:text-white'}`}
-                    >
-                      {mode}
-                    </button>
-                  ))}
-                </div>
-                {slicer.mode !== 'all' && (
-                  <div className="flex flex-col gap-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-black uppercase text-zinc-400">{slicer.mode === 'range' ? 'Start' : 'Count'}</span>
-                      <input 
-                        type="number" 
-                        className="w-16 p-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs font-bold" 
-                        value={slicer.value} 
-                        onChange={(e) => setSlicer(s => ({ ...s, value: parseInt(e.target.value) || 0 }))} 
-                      />
-                    </div>
-                    {slicer.mode === 'range' && (
-                      <div className="flex items-center justify-between">
-                        <span className="text-[9px] font-black uppercase text-zinc-400">End</span>
-                        <input 
-                          type="number" 
-                          className="w-16 p-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs font-bold" 
-                          value={slicer.endValue} 
-                          onChange={(e) => setSlicer(s => ({ ...s, endValue: parseInt(e.target.value) || 0 }))} 
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
+           <ActionButton
+             icon={<IconSlicer />}
+             title="Filter and Slice Dataset"
+             isActive={slicer.mode !== 'all'}
+             onClick={() => { setIsColumnManagerOpen(false); setIsExportOpen(false); }}
+             registerCloseActionPopups={registerCloseActionPopups}
+           >
+             <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl p-4 z-40 animate-in fade-in slide-in-from-top-2">
+               <h4 className="text-[10px] font-black uppercase tracking-widest mb-3 text-zinc-400">View Slicer</h4>
+               <div className="grid grid-cols-2 gap-2 mb-3">
+                 {['all', 'first', 'last', 'range'].map(mode => (
+                   <button 
+                     key={mode} 
+                     onClick={() => setSlicer(s => ({ ...s, mode: mode as any }))} 
+                     className={`text-[10px] font-black uppercase tracking-tighter py-2 rounded-md transition-all ${slicer.mode === mode ? 'bg-violet-600 text-white' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-500 hover:text-zinc-800 dark:hover:text-white'}`}
+                   >
+                     {mode}
+                   </button>
+                 ))}
+               </div>
+               {slicer.mode !== 'all' && (
+                 <div className="flex flex-col gap-2">
+                   <div className="flex items-center justify-between">
+                     <span className="text-[9px] font-black uppercase text-zinc-400">{slicer.mode === 'range' ? 'Start' : 'Count'}</span>
+                     <input 
+                       type="number" 
+                       className="w-16 p-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs font-bold" 
+                       value={slicer.value} 
+                       onChange={(e) => setSlicer(s => ({ ...s, value: parseInt(e.target.value) || 0 }))} 
+                     />
+                   </div>
+                   {slicer.mode === 'range' && (
+                     <div className="flex items-center justify-between">
+                       <span className="text-[9px] font-black uppercase text-zinc-400">End</span>
+                       <input 
+                         type="number" 
+                         className="w-16 p-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs font-bold" 
+                         value={slicer.endValue} 
+                         onChange={(e) => setSlicer(s => ({ ...s, endValue: parseInt(e.target.value) || 0 }))} 
+                       />
+                     </div>
+                   )}
+                 </div>
+               )}
+             </div>
+           </ActionButton>
 
-          <div className="relative">
-            <button 
-              title="Show / Hide Columns"
-              onClick={() => { setIsColumnManagerOpen(!isColumnManagerOpen); setIsSlicerOpen(false); setIsExportOpen(false); }}
-              className={`p-1.5 rounded-lg transition-all border ${hiddenColumns.size > 0 ? 'bg-rose-50 border-rose-200 text-rose-600 dark:bg-rose-900/30 dark:border-rose-800' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400'}`}
-            >
-              <IconColumns />
-            </button>
-            {isColumnManagerOpen && (
-              <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl p-4 z-40 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100 dark:border-zinc-700">
-                  <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Layout</h4>
-                  <div className="flex gap-2">
-                    <button onClick={() => setHiddenColumns(new Set())} className="text-[8px] font-black uppercase text-violet-500 hover:text-violet-600">Show All</button>
-                    <button onClick={() => setHiddenColumns(new Set(tableData.columns.map((_, i) => i)))} className="text-[8px] font-black uppercase text-rose-500 hover:text-rose-600">Hide All</button>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  {tableData.columns.map((h, i) => (
-                    <button key={i} onClick={() => toggleColumnVisibility(i)} className="w-full flex items-center justify-between px-2.5 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-lg transition-all">
-                      <span className={`text-[10px] font-bold uppercase truncate max-w-[150px] ${hiddenColumns.has(i) ? 'text-zinc-300 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>{h || `Col ${i+1}`}</span>
-                      <div className={`w-2.5 h-2.5 rounded-full ${!hiddenColumns.has(i) ? 'bg-emerald-500 shadow-sm shadow-emerald-500/20' : 'bg-zinc-200 dark:bg-zinc-700'}`} />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+           <ActionButton
+             icon={<IconColumns />}
+             title="Show / Hide Columns"
+             isActive={hiddenColumns.size > 0}
+             onClick={() => { setIsSlicerOpen(false); setIsExportOpen(false); }}
+             registerCloseActionPopups={registerCloseActionPopups}
+           >
+             <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl p-4 z-40 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-2">
+               <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100 dark:border-zinc-700">
+                 <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Layout</h4>
+                 <div className="flex gap-2">
+                   <button onClick={() => setHiddenColumns(new Set())} className="text-[8px] font-black uppercase text-violet-500 hover:text-violet-600">Show All</button>
+                   <button onClick={() => setHiddenColumns(new Set(tableData.columns.map((_, i) => i)))} className="text-[8px] font-black uppercase text-rose-500 hover:text-rose-600">Hide All</button>
+                 </div>
+               </div>
+               <div className="space-y-1">
+                 {tableData.columns.map((h, i) => (
+                   <button key={i} onClick={() => toggleColumnVisibility(i)} className="w-full flex items-center justify-between px-2.5 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-lg transition-all">
+                     <span className={`text-[10px] font-bold uppercase truncate max-w-[150px] ${hiddenColumns.has(i) ? 'text-zinc-300 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}>{h || `Col ${i+1}`}</span>
+                     <div className={`w-2.5 h-2.5 rounded-full ${!hiddenColumns.has(i) ? 'bg-emerald-500 shadow-sm shadow-emerald-500/20' : 'bg-zinc-200 dark:bg-zinc-700'}`} />
+                   </button>
+                 ))}
+               </div>
+             </div>
+           </ActionButton>
 
           <button 
             title="Clear all filters and sorts"

@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
 import './src/index.css';
+import { AppProvider } from './context/AppContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -26,6 +27,8 @@ if ('serviceWorker' in navigator) {
 
 root.render(
   <React.StrictMode>
-    <App />
+    <AppProvider>
+      <App />
+    </AppProvider>
   </React.StrictMode>
 );
