@@ -17,6 +17,7 @@ export const RtfViewer: React.FC<Props> = ({ data }) => {
   useEffect(() => {
     const renderRtf = async () => {
       if (typeof RTFJS === 'undefined') { setError('RTF engine missing.'); return; }
+      RTFJS.loggingEnabled(false);
       try {
         if (containerRef.current) containerRef.current.innerHTML = '';
         const doc = new RTFJS.Document(data);
