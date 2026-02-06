@@ -2,10 +2,10 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import initSqlJs, { Database } from 'sql.js';
 import { TableData, SortConfig, ColumnWidths, TabStateChange } from '../types';
 import { ActionButton } from './ActionButton';
+import { ExportButton } from './ExportButton';
 import { ChevronDown, ChevronUp, ArrowUpDown, Search, FileSpreadsheet } from 'lucide-react';
 
 const IconColumns = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" /></svg>;
-const IconExport = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
 const IconSort = () => <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" /></svg>;
 const IconSlicer = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" /></svg>;
 
@@ -259,34 +259,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
     });
   };
 
-  const handleExport = (type: 'csv' | 'json') => {
-    if (!currentTableData) return;
-    const exportData = filteredData.map(d => d.row);
-    const headers = currentTableData.columns;
-    if (type === 'json') {
-      const jsonData = exportData.map(row => {
-        const obj: any = {};
-        headers.forEach((h, i) => { obj[h || `Col_${i+1}`] = row[i]; });
-        return obj;
-      });
-      const blob = new Blob([JSON.stringify(jsonData, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${currentTableData.name}.json`;
-      a.click();
-    } else {
-        const csvContent = "data:text/csv;charset=utf-8," 
-            + [headers.join(","), ...exportData.map(e => e.join(","))].join("\n");
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `${currentTableData.name}.csv`);
-        document.body.appendChild(link);
-        link.click();
-    }
-    setIsExportOpen(false);
-  };
+
 
   const renderCell = (value: any) => {
     const isNull = value === null || value === undefined || String(value).trim() === '';
@@ -400,17 +373,12 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({ file, onStateChange, isType
           </button>
         </div>
         
-        <div className="relative ml-auto shrink-0">
-          <button title="Download current view" onClick={() => { setIsExportOpen(!isExportOpen); setIsSlicerOpen(false); setIsColumnManagerOpen(false); }} className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-violet-600 text-white shadow-lg hover:bg-violet-700 transition-all active:scale-95 shadow-violet-500/20">
-            <IconExport /> Export
-          </button>
-          {isExportOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl py-1.5 z-40 animate-in slide-in-from-top-2 duration-200">
-              <button onClick={() => handleExport('csv')} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">CSV File</button>
-              <button onClick={() => handleExport('json')} className="w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest text-violet-600 dark:text-violet-400 hover:bg-zinc-50 dark:hover:bg-zinc-700 font-bold">JSON Mapping</button>
-            </div>
-          )}
-        </div>
+        <ExportButton 
+          tableName={currentTableData.name}
+          columns={currentTableData.columns}
+          data={filteredData.map(d => d.row)}
+          registerCloseActionPopups={registerCloseActionPopups}
+        />
       </div>
 
       <div ref={scrollContainerRef} className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950 relative custom-scrollbar" onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}>
