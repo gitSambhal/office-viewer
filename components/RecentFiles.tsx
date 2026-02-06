@@ -1,11 +1,12 @@
 import React from 'react';
 import { useFileHandler } from '../hooks/useFileHandler';
+import { FILE_ACCEPT, STORAGE_KEYS, UI_CONSTANTS } from '../constants';
 
 export const RecentFiles: React.FC = () => {
   const { handleFiles } = useFileHandler();
 
   try {
-    const recentFiles = JSON.parse(localStorage.getItem('suhail_recent_files') || '[]');
+    const recentFiles = JSON.parse(localStorage.getItem(STORAGE_KEYS.RECENT_FILES) || '[]');
     if (recentFiles.length > 0) {
       return (
         <div className="mb-12 sm:mb-16 mt-8 sm:mt-12">
@@ -18,7 +19,7 @@ export const RecentFiles: React.FC = () => {
                 onClick={() => {
                   const fileInput = document.createElement('input');
                   fileInput.type = 'file';
-                  fileInput.accept = '.pdf,.xlsx,.docx,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf';
+                  fileInput.accept = FILE_ACCEPT;
                   fileInput.onchange = (e) => handleFiles((e.target as HTMLInputElement).files);
                   fileInput.click();
                 }}

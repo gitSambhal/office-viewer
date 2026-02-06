@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAppContext } from './context/AppContext';
+import { SUPPORTED_EXTENSIONS, INDEXED_DB, STORAGE_KEYS } from './constants';
 import { useFileHandler } from './hooks/useFileHandler';
 import { useUrlHandler } from './hooks/useUrlHandler';
 import { Header } from './components/Header';
@@ -25,13 +26,13 @@ const AppContent: React.FC = () => {
   // IndexedDB helper
   const openDB = React.useCallback((): Promise<IDBDatabase> => {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open('suhail-viewer-shared-files', 1);
+      const request = indexedDB.open(INDEXED_DB.NAME, INDEXED_DB.VERSION);
       request.onerror = () => reject(request.error);
       request.onsuccess = () => resolve(request.result);
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains('files')) {
-          db.createObjectStore('files', { keyPath: 'id' });
+        if (!db.objectStoreNames.contains(INDEXED_DB.STORE)) {
+          db.createObjectStore(INDEXED_DB.STORE, { keyPath: 'id' });
         }
       };
     });
@@ -42,8 +43,8 @@ const AppContent: React.FC = () => {
     try {
       const db = await openDB();
       return new Promise((resolve, reject) => {
-        const transaction = db.transaction('files', 'readonly');
-        const store = transaction.objectStore('files');
+        const transaction = db.transaction(INDEXED_DB.STORE, 'readonly');
+        const store = transaction.objectStore(INDEXED_DB.STORE);
         const request = store.get(shareId);
         
         request.onsuccess = () => {
@@ -77,8 +78,8 @@ const AppContent: React.FC = () => {
   const clearSharedFiles = React.useCallback(async (shareId: string) => {
     try {
       const db = await openDB();
-      const transaction = db.transaction('files', 'readwrite');
-      transaction.objectStore('files').delete(shareId);
+      const transaction = db.transaction(INDEXED_DB.STORE, 'readwrite');
+      transaction.objectStore(INDEXED_DB.STORE).delete(shareId);
     } catch (err) {
       console.error('[App] Error clearing shared files:', err);
     }
@@ -103,8 +104,8 @@ const AppContent: React.FC = () => {
         }
 
         const db = await openDB();
-        const transaction = db.transaction('files', 'readonly');
-        const store = transaction.objectStore('files');
+        const transaction = db.transaction(INDEXED_DB.STORE, 'readonly');
+        const store = transaction.objectStore(INDEXED_DB.STORE);
         const request = store.getAll();
         
         request.onsuccess = () => {
@@ -246,10 +247,10 @@ const AppContent: React.FC = () => {
     const root = window.document.documentElement;
     if (state.darkMode) {
       root.classList.add('dark');
-      localStorage.setItem('suhail_theme', 'dark');
+      localStorage.setItem(STORAGE_KEYS.THEME, 'dark');
     } else {
       root.classList.remove('dark');
-      localStorage.setItem('suhail_theme', 'light');
+      localStorage.setItem(STORAGE_KEYS.THEME, 'light');
     }
   }, [state.darkMode]);
 
@@ -339,9 +340,9 @@ const AppContent: React.FC = () => {
                         const file = await new Promise<File>((resolveFile, rejectFile) => {
                           subEntry.file(resolveFile, rejectFile);
                         });
-                        const supportedTypes = ['.xlsx', '.xls', '.csv', '.docx', '.doc', '.pdf', '.txt', '.md', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.rtf', '.mdb', '.accdb', '.sqlite', '.db', '.db3', '.dbf'];
+                        const supportedTypes = SUPPORTED_EXTENSIONS;
                         const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-                        if (supportedTypes.includes(fileExtension)) {
+                        if (supportedTypes.includes(fileExtension as any)) {
                           files.push(file);
                         }
                       }
@@ -372,12 +373,11 @@ const AppContent: React.FC = () => {
                 }
               }
               
-              // Filter supported files
-              const supportedFiles = allFiles.filter(file => {
-                const supportedTypes = ['.xlsx', '.xls', '.csv', '.docx', '.doc', '.pdf', '.txt', '.md', '.png', '.jpg', '.jpeg', '.gif', '.webp', '.rtf', '.mdb', '.accdb', '.sqlite', '.db', '.db3', '.dbf'];
-                const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
-                return supportedTypes.includes(fileExtension);
-              });
+               // Filter supported files
+               const supportedFiles = allFiles.filter(file => {
+                 const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+                 return SUPPORTED_EXTENSIONS.includes(fileExtension as any);
+               });
               
               if (supportedFiles.length > 0) {
                 // Ask for confirmation

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { AppState, Tab, FileType, TableData } from '../types';
+import { STORAGE_KEYS } from '../constants';
 
 // Action types
 export type AppAction =
@@ -108,12 +109,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     // Initialize from localStorage
     const finalState = { ...initial };
     try {
-      const storedTheme = localStorage.getItem('suhail_theme');
+      const storedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
       if (storedTheme === 'dark' || storedTheme === 'light') {
         finalState.darkMode = storedTheme === 'dark';
       }
       
-      const storedTypeAware = localStorage.getItem('suhail_type_aware');
+      const storedTypeAware = localStorage.getItem(STORAGE_KEYS.TYPE_AWARE);
       if (storedTypeAware === 'true' || storedTypeAware === 'false') {
         finalState.isTypeAwareEnabled = storedTypeAware === 'true';
       }

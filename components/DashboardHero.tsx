@@ -5,6 +5,7 @@ import { FileType } from '../types';
 import { getFileIcon } from '../utils/helpers';
 import { DashboardPreview } from './DashboardPreview';
 import { RecentFiles } from './RecentFiles';
+import { FILE_ACCEPT, PREVIEW_DATA, FEATURES } from '../constants';
 
 export const DashboardHero: React.FC = () => {
   const { handleFiles } = useFileHandler();
@@ -46,7 +47,7 @@ export const DashboardHero: React.FC = () => {
               <label className="group relative inline-flex items-center gap-3 cursor-pointer bg-violet-600 hover:bg-violet-700 text-white px-8 py-4 rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
                  <svg className="w-5 h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
                  Open Files
-                 <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
+                 <input type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} accept={FILE_ACCEPT} />
              </label>
 
              <button
@@ -62,9 +63,9 @@ export const DashboardHero: React.FC = () => {
            <button
              onClick={async () => {
                try {
-                 const response = await fetch('https://pdfobject.com/pdf/sample.pdf');
+                 const response = await fetch(PREVIEW_DATA.SAMPLE_PDF_URL);
                  const blob = await response.blob();
-                 const file = new File([blob], 'sample-document.pdf', { type: 'application/pdf' });
+                 const file = new File([blob], PREVIEW_DATA.SAMPLE_PDF_NAME, { type: 'application/pdf' });
                  handleFiles([file]);
                } catch (error) {
                  console.error('Failed to load sample file:', error);
@@ -84,22 +85,7 @@ export const DashboardHero: React.FC = () => {
         <RecentFiles />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 text-left mb-12 sm:mb-16">
-           {[
-             { title: 'Offline-First & Local Processing', desc: 'Your files are processed entirely on your device, ensuring privacy and security with absolutely no server uploads.', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
-             { title: 'Ad-Free Experience', desc: 'Enjoy a clean, uninterrupted viewing experience without any advertisements.', icon: 'M6 18L18 6M6 6l12 12' },
-             { title: 'Multi-Format Viewing', desc: 'Seamlessly open and view a wide range of documents including PDFs, Spreadsheets, Word files, various Databases (MDB, SQLite, DBF), Images, and more.', icon: 'M4 6h16M4 12h16m-7 6h7' },
-             { title: 'Tab Management', desc: 'Efficiently manage multiple open documents in a tabbed interface for easy comparison and multitasking.', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
-             { title: 'Zen Focus Mode', desc: 'Eliminate distractions with a dedicated focus mode, including fullscreen viewing and quick toggles.', icon: 'M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
-             { title: 'Intuitive File Handling', desc: 'Easily load files via drag & drop (even entire folders), a traditional file picker, or by providing a URL.', icon: 'M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' },
-             { title: 'PWA File Sharing', desc: 'Directly receive and open files shared from other applications on your device when installed as a Progressive Web App.', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
-             { title: 'Type-Aware Visualization', desc: 'Automatic data type detection with color-coded visual highlighting for better data comprehension.', icon: 'M7 7h10M10 7v10m4-10v10M7 17h10' },
-             { title: 'Advanced Search & Filter', desc: 'Powerful search capabilities across all open tabs and databases with real-time filtering.', icon: 'M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' },
-             { title: 'Sorting & Organization', desc: 'Multi-column sorting and data organization for tables and spreadsheets.', icon: 'M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4' },
-             { title: 'Real-time Metadata', desc: 'Detailed file information and metadata displayed in a customizable sidebar.', icon: 'M4 6h16M4 10h16M4 14h16M4 18h16' },
-             { title: 'Responsive Design', desc: 'Optimized viewing experience across all device sizes from mobile to desktop.', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
-             { title: 'Dark & Light Themes', desc: 'Toggle between dark and light themes for comfortable viewing in any environment.', icon: 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z' },
-             { title: 'Cross-Browser Support', desc: 'Works seamlessly on all modern browsers including Chrome, Firefox, Safari, and Edge.', icon: 'M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4' }
-           ].map((feature, index) => (
+           {FEATURES.map((feature, index) => (
              <div key={index} className="p-5 sm:p-8 bg-zinc-50 dark:bg-zinc-900/50 rounded-[1.5rem] sm:rounded-[2rem] border border-zinc-100/50 dark:border-zinc-800/50 shadow-sm hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-900/30 transition-all group">
                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-zinc-100 dark:bg-zinc-800 text-violet-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all shadow-inner">
                  <svg className="w-6 h-6 sm:w-7 sm:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">

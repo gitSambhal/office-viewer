@@ -2,6 +2,7 @@ import React, { useCallback } from 'react';
 import { useAppContext } from '../context/AppContext';
 import { useUrlHandler } from '../hooks/useUrlHandler';
 import { useFileHandler } from '../hooks/useFileHandler';
+import { FILE_ACCEPT, STORAGE_KEYS } from '../constants';
 
 const IconX = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>;
 const IconDark = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg>;
@@ -43,7 +44,7 @@ export const Header: React.FC = () => {
               title="Toggle Visual Type Highlighting"
               onClick={() => {
                 const newValue = !state.isTypeAwareEnabled;
-                localStorage.setItem('suhail_type_aware', String(newValue));
+                localStorage.setItem(STORAGE_KEYS.TYPE_AWARE, String(newValue));
                 dispatch({ type: 'SET_TYPE_AWARE_ENABLED', payload: newValue });
               }}
               className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all border ${state.isTypeAwareEnabled ? 'bg-violet-50 border-violet-200 text-violet-600 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-400' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:bg-white/50'}`}
@@ -92,7 +93,7 @@ export const Header: React.FC = () => {
         <label className="group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer bg-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700 text-white dark:text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
           <svg className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" /></svg>
           <span className="hidden xs:inline">Open Files</span>
-          <input type="file" multiple className="hidden" onChange={handleFileInputChange} accept=".xlsx,.xls,.csv,.docx,.doc,.pdf,.txt,.md,.png,.jpg,.jpeg,.gif,.webp,.rtf,.mdb,.accdb,.sqlite,.db,.db3,.dbf" />
+          <input type="file" multiple className="hidden" onChange={handleFileInputChange} accept={FILE_ACCEPT} />
         </label>
         <button
           onClick={() => setShowUrlModal(true)}

@@ -5,6 +5,7 @@ import { PreviewPdfContent } from './preview/PreviewPdfContent';
 import { PreviewSpreadsheetContent } from './preview/PreviewSpreadsheetContent';
 import { PreviewMarkdownContent } from './preview/PreviewMarkdownContent';
 import { PreviewSqliteContent } from './preview/PreviewSqliteContent';
+import { PREVIEW_TABS } from '../constants';
 
 export const DashboardPreview: React.FC = () => {
   const [previewActiveTab, setPreviewActiveTab] = useState(0);
@@ -34,12 +35,7 @@ export const DashboardPreview: React.FC = () => {
             
             {/* Tabs Preview */}
             <div className="flex items-center mb-4 sm:mb-6 overflow-x-auto pb-2 scrollbar-none">
-              {[
-                { name: 'report.pdf', type: 'pdf' as FileType, index: 0 },
-                { name: 'budget.xlsx', type: 'xlsx' as FileType, index: 1 },
-                { name: 'notes.md', type: 'md' as FileType, index: 2 },
-                { name: 'database.sqlite', type: 'sqlite' as FileType, index: 3 }
-              ].map((tab) => (
+              {PREVIEW_TABS.map((tab) => (
                 <div
                   key={tab.index}
                   onClick={() => setPreviewActiveTab(tab.index)}
