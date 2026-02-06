@@ -121,31 +121,39 @@ self.addEventListener('fetch', (event) => {
 
   // Handle share_target POST requests (file sharing to PWA)
   if (request.method === 'POST' && url.pathname === '/') {
+    console.log('[SW] Handling share_target POST request');
     event.respondWith(
       (async () => {
-        // Return cached index.html immediately
-        const cachedResponse = await caches.match('/');
-        if (cachedResponse) {
-          // Process the POST request asynchronously to extract file data
-          processShareTargetRequest(request).catch(err => {
-            console.error('Error processing share_target request:', err);
+        // Always return index.html first (so the app loads)
+        let indexResponse;
+        try {
+          // Try to get cached version first
+          const cachedResponse = await caches.match('/');
+          if (cachedResponse) {
+            console.log('[SW] Returning cached index.html');
+            indexResponse = cachedResponse;
+          } else {
+            // If no cache, fetch index.html from network
+            const response = await fetch('/');
+            // Cache it for future use
+            caches.open(CACHE_NAME).then(cache => cache.put('/', response.clone()));
+            console.log('[SW] Fetched and cached new index.html');
+            indexResponse = response;
+          }
+        } catch (err) {
+          console.error('[SW] Error getting index.html:', err);
+          return new Response('Offline - App not available', { 
+            status: 503, 
+            headers: { 'Content-Type': 'text/plain' }
           });
-          return cachedResponse;
         }
         
-        // If no cache, fetch index.html
-        try {
-          const response = await fetch('/index.html');
-          // Cache it for future use
-          caches.open(CACHE_NAME).then(cache => cache.put('/', response.clone()));
-          // Process the POST request asynchronously
-          processShareTargetRequest(request).catch(err => {
-            console.error('Error processing share_target request:', err);
-          });
-          return response;
-        } catch {
-          return new Response('Offline - App not cached', { status: 503 });
-        }
+        // Process the POST request to extract file data (asynchronously so we don't block the response)
+        processShareTargetRequest(request).catch(err => {
+          console.error('[SW] Error processing share_target request:', err);
+        });
+        
+        return indexResponse;
       })()
     );
     return;
@@ -227,42 +235,78 @@ self.addEventListener('fetch', (event) => {
 // Process share_target POST request and store file data
 async function processShareTargetRequest(request) {
   try {
-    const formData = await request.formData();
-    const files = formData.getAll('files');
+    console.log('[SW] Processing share target request');
     
-    console.log('[SW] Share target request received, files:', files.length);
+    // Clone request before reading body
+    const clonedRequest = request.clone();
     
-    if (files.length > 0) {
-      // Generate a unique ID for this share session
-      const shareId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+    // Try to read form data
+    try {
+      const formData = await clonedRequest.formData();
+      const files = formData.getAll('files');
       
-      // Store file data in IndexedDB
-      const fileData = {
-        id: shareId,
-        files: files.map(file => ({
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          // Store the blob directly
-          blob: file
-        })),
-        timestamp: Date.now()
-      };
+      console.log('[SW] Share target request received, files:', files.length);
       
-      console.log('[SW] Storing files in IndexedDB with id:', shareId);
-      await storeFileData(fileData);
-      
-      // Notify all clients about the shared files
-      const clients = await self.clients.matchAll();
-      console.log('[SW] Notifying clients:', clients.length);
-      for (const client of clients) {
-        client.postMessage({
-          type: 'SHARED_FILES',
-          shareId: shareId
-        });
+      if (files.length > 0) {
+        // Generate a unique ID for this share session
+        const shareId = Date.now().toString(36) + Math.random().toString(36).substr(2);
+        
+        // Convert File objects to serializable data (since Blob might not serialize directly)
+        const fileData = {
+          id: shareId,
+          files: [],
+          timestamp: Date.now()
+        };
+        
+        // Read each file as array buffer for storage
+        for (const file of files) {
+          console.log('[SW] Reading file:', file.name, file.size);
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            fileData.files.push({
+              name: file.name,
+              type: file.type,
+              size: file.size,
+              arrayBuffer: arrayBuffer
+            });
+          } catch (readErr) {
+            console.error('[SW] Error reading file:', file.name, readErr);
+          }
+        }
+        
+        if (fileData.files.length > 0) {
+          console.log('[SW] Storing files in IndexedDB with id:', shareId);
+          await storeFileData(fileData);
+          
+          // Notify all clients about the shared files
+          const clients = await self.clients.matchAll();
+          console.log('[SW] Notifying clients:', clients.length);
+          for (const client of clients) {
+            client.postMessage({
+              type: 'SHARED_FILES',
+              shareId: shareId
+            });
+          }
+          
+          return shareId;
+        } else {
+          console.log('[SW] No files could be read');
+          return null;
+        }
+      } else {
+        console.log('[SW] No files in the request');
+        return null;
       }
+    } catch (err) {
+      console.error('[SW] Error reading form data:', err);
+      
+      // Try different approach - check if launchQueue API is available (Chrome 110+),
+      // which is the recommended way for PWA file handling
+      console.log('[SW] LaunchQueue approach might be more reliable');
+      return null;
     }
   } catch (err) {
-    console.error('[SW] Error processing share_target request:', err);
+    console.error('[SW] Error processing share_target request:', err, err.stack);
+    return null;
   }
 }

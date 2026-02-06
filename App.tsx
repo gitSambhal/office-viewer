@@ -132,11 +132,19 @@ const App: React.FC = () => {
         request.onsuccess = () => {
           const fileData = request.result;
           if (fileData && fileData.files) {
-            const fileArray: File[] = fileData.files.map((f: { name: string; type: string; size: number; blob: Blob }) => {
-              return new File([f.blob], f.name, { type: f.type });
-            });
+            const fileArray: File[] = fileData.files.map((f: { name: string; type: string; size: number; blob?: Blob; arrayBuffer?: ArrayBuffer }) => {
+              const data = f.blob || f.arrayBuffer;
+              if (!data) {
+                console.log('[App] No data for file:', f.name);
+                return null;
+              }
+              return new File([data], f.name, { type: f.type });
+            }).filter(Boolean) as File[];
+            
+            console.log('[App] Retrieved files from IndexedDB:', fileArray.length, fileArray.map(f => f.name));
             resolve(fileArray);
           } else {
+            console.log('[App] No file data found for shareId:', shareId);
             resolve(null);
           }
         };
@@ -161,6 +169,58 @@ const App: React.FC = () => {
   
   // Handle share_target files (shared to PWA) - uses launchQueue API for Chrome 110+
   useEffect(() => {
+    console.log('[App] Initializing PWA file handling');
+    
+    // Check for shared files on initial load (in case PWA was opened with files)
+    const checkInitialSharedFiles = async () => {
+      console.log('[App] Checking for initial shared files');
+      try {
+        // Wait for handleFilesRef to be set
+        if (!handleFilesRef.current) {
+          console.log('[App] handleFilesRef not available, waiting...');
+          await new Promise(resolve => setTimeout(resolve, 100));
+          if (!handleFilesRef.current) {
+            console.log('[App] handleFiles not available yet');
+            return;
+          }
+        }
+
+        const db = await openDB();
+        const transaction = db.transaction('files', 'readonly');
+        const store = transaction.objectStore('files');
+        const request = store.getAll();
+        
+        request.onsuccess = () => {
+          const fileDataList = request.result as Array<{ id: string; files: Array<{ name: string; type: string; size: number; blob?: Blob; arrayBuffer?: ArrayBuffer }> }>;
+          if (fileDataList && fileDataList.length > 0 && handleFilesRef.current) {
+            // Get the most recent file data
+            const fileData = fileDataList[fileDataList.length - 1];
+            const fileArray: File[] = fileData.files.map((f) => {
+              const data = f.blob || f.arrayBuffer;
+              if (!data) {
+                console.log('[App] No data for file:', f.name);
+                return null;
+              }
+              return new File([data], f.name, { type: f.type });
+            }).filter(Boolean) as File[];
+            
+            console.log('[App] Found shared files on load:', fileArray.length, fileArray.map(f => f.name));
+            handleFilesRef.current(fileArray as unknown as FileList);
+            // Clean up
+            clearSharedFiles(fileData.id);
+          } else {
+            console.log('[App] No shared files found in IndexedDB');
+          }
+        };
+        
+        request.onerror = () => {
+          console.error('[App] Error getting shared files from IndexedDB:', request.error);
+        };
+      } catch (err) {
+        console.error('[App] Error checking initial shared files:', err);
+      }
+    };
+    
     // Setup launchQueue API handler (correct API)
     const win = window as unknown as {
       launchQueue?: {
@@ -170,11 +230,14 @@ const App: React.FC = () => {
     
     // Process file handles from launchQueue
     const processFileHandles = async (handles: FileSystemFileHandle[]) => {
+      console.log('[App] Processing file handles:', handles.length);
       const fileArray: File[] = [];
       for (const handle of handles) {
         try {
+          console.log('[App] Getting file from handle:', handle.name);
           const file = await handle.getFile();
           fileArray.push(file);
+          console.log('[App] File obtained:', file.name, file.size);
         } catch (err) {
           console.error('[App] Error getting file from handle:', err);
         }
@@ -186,12 +249,21 @@ const App: React.FC = () => {
     };
     
     if (win.launchQueue) {
+      console.log('[App] launchQueue API available');
       win.launchQueue.setConsumer(async (params: any) => {
-        console.log('[App] launchQueue setConsumer called with', params.files?.length || 0, 'files');
+        console.log('[App] launchQueue setConsumer called with params:', params);
         if (params.files && params.files.length > 0) {
           await processFileHandles(params.files);
+        } else {
+          console.log('[App] No files in launchQueue params');
+          // If no files in launchQueue, check IndexedDB for shared files
+          checkInitialSharedFiles();
         }
       });
+    } else {
+      console.log('[App] launchQueue API not available');
+      // Fallback to checking IndexedDB
+      checkInitialSharedFiles();
     }
 
     // Setup message listener for shared files from service worker
@@ -211,45 +283,10 @@ const App: React.FC = () => {
         }
       }
     };
-
-    // Check for shared files on initial load (in case PWA was opened with files)
-    const checkInitialSharedFiles = async () => {
-      try {
-        // Wait for handleFilesRef to be set
-        if (!handleFilesRef.current) {
-          await new Promise(resolve => setTimeout(resolve, 100));
-          if (!handleFilesRef.current) {
-            console.log('[App] handleFiles not available yet');
-            return;
-          }
-        }
-
-        const db = await openDB();
-        const transaction = db.transaction('files', 'readonly');
-        const store = transaction.objectStore('files');
-        const request = store.getAll();
-        
-        request.onsuccess = () => {
-          const fileDataList = request.result as Array<{ id: string; files: Array<{ name: string; type: string; size: number; blob: Blob }> }>;
-          if (fileDataList && fileDataList.length > 0 && handleFilesRef.current) {
-            // Get the most recent file data
-            const fileData = fileDataList[fileDataList.length - 1];
-            const fileArray: File[] = fileData.files.map((f) => {
-              return new File([f.blob], f.name, { type: f.type });
-            });
-            console.log('[App] Found shared files on load:', fileArray.length);
-            handleFilesRef.current(fileArray as unknown as FileList);
-            // Clean up
-            clearSharedFiles(fileData.id);
-          }
-        };
-      } catch (err) {
-        console.error('[App] Error checking initial shared files:', err);
-      }
-    };
     
     // Check service worker status
     if (navigator.serviceWorker) {
+      console.log('[App] Service worker available, checking status...');
       navigator.serviceWorker.ready.then(registration => {
         console.log('[App] Service worker is ready and controlling:', registration.active?.state);
         // Check for shared files after service worker is ready
@@ -260,6 +297,7 @@ const App: React.FC = () => {
         checkInitialSharedFiles();
       });
     } else {
+      console.log('[App] Service worker not available');
       checkInitialSharedFiles();
     }
 
