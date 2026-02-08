@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 
 declare const $: any;
@@ -18,26 +17,32 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
       if (!containerRef.current) return;
       setLoading(true);
       setError(null);
-      
+
       try {
         const id = 'pptx-' + Math.random().toString(36).substr(2, 9);
         containerRef.current.id = id;
-        
-        const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation' });
-        const file = new File([blob], "presentation.pptx");
+
+        const blob = new Blob([data], {
+          type: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        });
+        const file = new File([blob], 'presentation.pptx');
 
         if (typeof $ !== 'undefined' && $.fn.pptxToHtml) {
           $(`#${id}`).pptxToHtml({
             file: file,
-            slidesScale: "80%",
+            slidesScale: '80%',
             slideMode: false,
             keyBoardShortCut: true,
-            onDone: () => { if (isMounted) setLoading(false); },
+            onDone: () => {
+              if (isMounted) setLoading(false);
+            },
             onProcess: () => {},
-            onError: (err: any) => { if (isMounted) setError(`PowerPoint render failed: ${err}`); }
+            onError: (err: any) => {
+              if (isMounted) setError(`PowerPoint render failed: ${err}`);
+            },
           });
         } else {
-          throw new Error("PPTX engine not found.");
+          throw new Error('PPTX engine not found.');
         }
       } catch (err: any) {
         if (isMounted) {
@@ -48,13 +53,17 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
     };
 
     renderPptx();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [data]);
 
   return (
     <div className="h-full w-full flex flex-col bg-zinc-100 dark:bg-zinc-950 overflow-hidden relative">
       <div className="p-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 flex justify-between items-center z-20 shadow-sm">
-        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-2">POWERPOINT PREVIEW</span>
+        <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-2">
+          POWERPOINT PREVIEW
+        </span>
       </div>
       <div className="flex-1 overflow-auto p-4 md:p-12 custom-scrollbar">
         {loading && (

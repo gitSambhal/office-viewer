@@ -1,7 +1,7 @@
 {
   "name": "Suhail Office Viewer",
   "short_name": "Suhail Viewer",
-  "description": "High-performance private document workstation for PDF, Excel, Word, Access, SQLite, DBF, RTF, Markdown & Images.",
+  "description": "High-performance private document app for PDF, Excel, Word, Access, SQLite, DBF, RTF, Markdown & Images.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -22,19 +22,19 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": [
-    "productivity",
-    "utilities",
-    "business"
-  ],
+  "categories": ["productivity", "utilities", "business"],
   "file_handlers": [
     {
       "action": "/",
       "accept": {
         "application/pdf": [".pdf"],
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+          ".xlsx"
+        ],
         "application/vnd.ms-excel": [".xls", ".csv"],
-        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
+          ".docx"
+        ],
         "application/msword": [".doc"],
         "text/plain": [".txt"],
         "text/markdown": [".md"],
@@ -59,14 +59,25 @@
         {
           "name": "files",
           "accept": [
-            ".pdf", 
-            ".xlsx", ".xls", ".csv",
-            ".docx", ".doc",
-            ".txt", ".md",
+            ".pdf",
+            ".xlsx",
+            ".xls",
+            ".csv",
+            ".docx",
+            ".doc",
+            ".txt",
+            ".md",
             ".rtf",
-            ".png", ".jpg", ".jpeg", ".gif", ".webp",
-            ".mdb", ".accdb",
-            ".sqlite", ".db", ".db3",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".webp",
+            ".mdb",
+            ".accdb",
+            ".sqlite",
+            ".db",
+            ".db3",
             ".dbf"
           ]
         }
