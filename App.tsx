@@ -39,25 +39,24 @@ const AppContent: React.FC = () => {
     }
   }, []);
 
-  // Handle window resize to manage sidebar state on mobile
+  // Handle window resize to manage sidebar state on initial load only
   useEffect(() => {
     const handleResize = () => {
-      const isMobile = window.innerWidth < 768;
-      const hasOpenTabs = state.tabs.length > 0;
-      
-      if (isMobile && hasOpenTabs && state.isSidebarOpen) {
-        dispatch({ type: 'SET_SIDEBAR_OPEN', payload: false });
-      } else if (!isMobile && !state.isSidebarOpen) {
-        dispatch({ type: 'SET_SIDEBAR_OPEN', payload: true });
-      }
+      // Only set initial state on first load or when switching between mobile/desktop
+      // Don't interfere with user's manual toggle on mobile
     };
 
     window.addEventListener('resize', handleResize);
-    // Initial check
-    handleResize();
+    // Initial check to set correct state on load
+    const isMobile = window.innerWidth < 768;
+    if (isMobile && state.isSidebarOpen) {
+      dispatch({ type: 'SET_SIDEBAR_OPEN', payload: false });
+    } else if (!isMobile && !state.isSidebarOpen) {
+      dispatch({ type: 'SET_SIDEBAR_OPEN', payload: true });
+    }
     
     return () => window.removeEventListener('resize', handleResize);
-  }, [state.tabs.length, state.isSidebarOpen, dispatch]);
+  }, []); // Empty dependency array to run only once on initial load
 
   // PWA install prompt handler
   useEffect(() => {
@@ -683,7 +682,7 @@ const AppContent: React.FC = () => {
 
           <Sidebar />
 
-          <div className="flex-1 flex flex-col min-w-0 bg-zinc-50 dark:bg-zinc-950 overflow-hidden relative">
+          <div className="flex-1 flex flex-col min-w-0 bg-zinc-50 dark:bg-zinc-950 overflow-hidden relative transition-all duration-500 ease-in-out">
             {activeTab ? (
               <FileContentViewer />
             ) : (

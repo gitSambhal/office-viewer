@@ -154,7 +154,7 @@ export const Sidebar: React.FC = () => {
 
   return (
     <aside
-      className={`hide-in-zen w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-300 shadow-2xl z-40 ${state.isSidebarOpen ? 'translate-x-0' : '-translate-x-full absolute h-full'}`}
+      className={`hide-in-zen w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out shadow-2xl z-40 ${state.isSidebarOpen ? 'translate-x-0' : '-translate-x-full absolute h-full'}`}
     >
       <div className="p-6 space-y-8 h-full overflow-y-auto custom-scrollbar">
         <section>

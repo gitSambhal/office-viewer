@@ -110,7 +110,7 @@ export const Header: React.FC = () => {
                   payload: !state.isSidebarOpen,
                 })
               }
-              className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}
+              className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all duration-300 ease-in-out ${state.isSidebarOpen ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}
             >
               <svg
                 className="w-4 h-4 sm:w-5 sm:h-5"

@@ -24,7 +24,7 @@ const initialState: AppState = {
   activeTabId: null,
   darkMode: false,
   zenMode: false,
-  isSidebarOpen: true,
+  isSidebarOpen: window.innerWidth >= 768, // Open on desktop, closed on mobile by default
   isTypeAwareEnabled: true,
   globalSearchTerm: '',
   showUrlModal: false,
