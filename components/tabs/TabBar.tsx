@@ -169,11 +169,20 @@ export const TabBar: React.FC = () => {
                 {state.activeTabId === tab.id && (
                   <div className="absolute top-0 left-0 right-0 h-0.5 bg-violet-600" />
                 )}
-                {getFileIcon(tab.type)}
+                {tab.isLoading ? (
+                  <div className="w-4 h-4 border-2 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  getFileIcon(tab.type)
+                )}
                 <span
-                  className={`text-[10px] sm:text-[11px] truncate font-black uppercase tracking-tight flex-1 ${state.activeTabId === tab.id ? 'text-zinc-900 dark:text-zinc-100' : 'text-zinc-500 dark:text-zinc-400'}`}
+                  className={`text-[10px] sm:text-[11px] truncate font-black uppercase tracking-tight flex-1 ${
+                    state.activeTabId === tab.id 
+                      ? 'text-zinc-900 dark:text-zinc-100' 
+                      : 'text-zinc-500 dark:text-zinc-400'
+                  } ${tab.isLoading ? 'opacity-70' : ''}`}
                 >
                   {tab.name}
+                  {tab.isLoading && <span className="ml-1 text-zinc-400">...</span>}
                 </span>
                 <button
                   title="Close Tab"

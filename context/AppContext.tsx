@@ -9,6 +9,7 @@ export type AppAction =
   | { type: 'SET_SIDEBAR_OPEN'; payload: boolean }
   | { type: 'SET_TYPE_AWARE_ENABLED'; payload: boolean }
   | { type: 'SET_GLOBAL_SEARCH_TERM'; payload: string }
+  | { type: 'SET_SEARCH_LOADING'; payload: boolean }
   | { type: 'ADD_TABS'; payload: Tab[] }
   | { type: 'SET_ACTIVE_TAB'; payload: string | null }
   | { type: 'CLOSE_TAB'; payload: string }
@@ -28,6 +29,7 @@ const initialState: AppState = {
   isTypeAwareEnabled: true,
   globalSearchTerm: '',
   showUrlModal: false,
+  isSearchLoading: false,
 };
 
 // Reducer
@@ -47,6 +49,8 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return { ...state, isTypeAwareEnabled: action.payload };
     case 'SET_GLOBAL_SEARCH_TERM':
       return { ...state, globalSearchTerm: action.payload };
+    case 'SET_SEARCH_LOADING':
+      return { ...state, isSearchLoading: action.payload };
      case 'ADD_TABS': {
        const isMobile = window.innerWidth < 768;
        return {

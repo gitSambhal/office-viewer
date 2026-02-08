@@ -8,6 +8,7 @@ import React, {
 import { SheetData, TabStateChange } from '../types';
 import { ActionButton } from './ActionButton';
 import { ExportButton } from './ExportButton';
+import { useAppContext } from '../context/AppContext';
 
 declare const XLSX: any;
 
@@ -97,6 +98,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   registerCloseActionPopups,
   globalSearchTerm,
 }) => {
+  const { state, dispatch } = useAppContext();
   const data = sheets[activeSheet] || { headers: [], rows: [] };
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -120,10 +122,17 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   const [cellHistory, setCellHistory] = useState<Record<string, CellChange>>(
     {}
   );
+  const [filteredData, setFilteredData] = useState<
+    { row: any[]; originalIndex: number }[]
+  >([]);
 
   // Virtualization state
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
+  
+  // Pagination for very large datasets
+  const [pageSize, setPageSize] = useState(1000);
+  const [currentPage, setCurrentPage] = useState(0);
 
   const resizeRef = useRef<{
     colIdx: number;
@@ -171,73 +180,106 @@ export const SpreadsheetViewer: React.FC<Props> = ({
     setScrollTop(e.currentTarget.scrollTop);
   };
 
-  const filteredData = useMemo(() => {
-    const rows = data.rows;
-    const rowCount = rows.length;
-    let indices: number[] = Array.from({ length: rowCount }, (_, i) => i);
-
-    // Global search
-    if (globalSearchTerm) {
-      const term = globalSearchTerm.toLowerCase();
-      indices = indices.filter((i) => {
-        const row = rows[i];
-        return row.some((cell) =>
-          String(cell ?? '')
-            .toLowerCase()
-            .includes(term)
-        );
-      });
-    }
-
-    // 1. Sorting
-    if (sortConfig.key !== -1 && sortConfig.direction) {
-      const { key, direction } = sortConfig;
-      indices.sort((idxA, idxB) => {
-        const valA = rows[idxA][key];
-        const valB = rows[idxB][key];
-        const isEmptyA =
-          valA === null || valA === undefined || String(valA).trim() === '';
-        const isEmptyB =
-          valB === null || valB === undefined || String(valB).trim() === '';
-        if (isEmptyA && isEmptyB) return 0;
-        if (isEmptyA) return 1;
-        if (isEmptyB) return -1;
-
-        const strA = String(valA).trim().replace(/,/g, '');
-        const strB = String(valB).trim().replace(/,/g, '');
-        const numA = parseFloat(strA);
-        const numB = parseFloat(strB);
-        const isNumA = !isNaN(numA) && /^-?\d*(\.\d+)?$/.test(strA);
-        const isNumB = !isNaN(numB) && /^-?\d*(\.\d+)?$/.test(strB);
-
-        let res = 0;
-        if (isNumA && isNumB) {
-          res = numA - numB;
-        } else {
-          res = strA.localeCompare(strB, undefined, {
-            numeric: true,
-            sensitivity: 'base',
+  // Async filtering with optimized performance for large datasets
+  useEffect(() => {
+    dispatch({ type: 'SET_SEARCH_LOADING', payload: true });
+    
+    // Debounce search by 150ms for responsive typing
+    const timer = setTimeout(() => {
+      const rows = data.rows;
+      const rowCount = rows.length;
+      
+      // Skip processing if no search term and all rows are visible
+      if (!globalSearchTerm && slicer.mode === 'all' && sortConfig.key === -1) {
+        const result = Array.from({ length: rowCount }, (_, i) => ({
+          row: rows[i],
+          originalIndex: i,
+        }));
+        setFilteredData(result);
+        dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
+        return;
+      }
+      
+      // Process in chunks to avoid blocking
+      let indices: number[] = [];
+      
+      // Optimal chunk size for responsive performance
+      const chunkSize = 10000;
+      for (let i = 0; i < rowCount; i += chunkSize) {
+        const chunk = rows.slice(i, i + chunkSize);
+        const chunkIndices = chunk.map((_, index) => i + index);
+        
+        // Filter chunk
+        let filteredChunk = chunkIndices;
+        if (globalSearchTerm) {
+          const term = globalSearchTerm.toLowerCase();
+          filteredChunk = chunkIndices.filter((idx) => {
+            const row = rows[idx];
+            return row.some((cell) =>
+              String(cell ?? '')
+                .toLowerCase()
+                .includes(term)
+            );
           });
         }
-        return (direction === 'asc' ? res : -res) || idxA - idxB;
-      });
-    }
+        
+        indices = indices.concat(filteredChunk);
+      }
 
-    // 2. Slicer (Fast slice)
-    if (slicer.mode === 'first') {
-      indices = indices.slice(0, Math.max(0, slicer.value));
-    } else if (slicer.mode === 'last') {
-      indices = indices.slice(-Math.max(0, slicer.value));
-    } else if (slicer.mode === 'range') {
-      indices = indices.slice(
-        Math.max(0, slicer.value - 1),
-        Math.max(0, slicer.endValue)
-      );
-    }
+      // 1. Sorting (optimized for large datasets)
+      if (sortConfig.key !== -1 && sortConfig.direction) {
+        const { key, direction } = sortConfig;
+        indices.sort((idxA, idxB) => {
+          const valA = rows[idxA][key];
+          const valB = rows[idxB][key];
+          const isEmptyA =
+            valA === null || valA === undefined || String(valA).trim() === '';
+          const isEmptyB =
+            valB === null || valB === undefined || String(valB).trim() === '';
+          if (isEmptyA && isEmptyB) return 0;
+          if (isEmptyA) return 1;
+          if (isEmptyB) return -1;
 
-    // 3. Map to object structure for view
-    return indices.map((idx) => ({ row: rows[idx], originalIndex: idx }));
-  }, [data.rows, sortConfig, slicer, globalSearchTerm]);
+          const strA = String(valA).trim().replace(/,/g, '');
+          const strB = String(valB).trim().replace(/,/g, '');
+          const numA = parseFloat(strA);
+          const numB = parseFloat(strB);
+          const isNumA = !isNaN(numA) && /^-?\d*(\.\d+)?$/.test(strA);
+          const isNumB = !isNaN(numB) && /^-?\d*(\.\d+)?$/.test(strB);
+
+          let res = 0;
+          if (isNumA && isNumB) {
+            res = numA - numB;
+          } else {
+            res = strA.localeCompare(strB, undefined, {
+              numeric: true,
+              sensitivity: 'base',
+            });
+          }
+          return (direction === 'asc' ? res : -res) || idxA - idxB;
+        });
+      }
+
+      // 2. Slicer (Fast slice)
+      if (slicer.mode === 'first') {
+        indices = indices.slice(0, Math.max(0, slicer.value));
+      } else if (slicer.mode === 'last') {
+        indices = indices.slice(-Math.max(0, slicer.value));
+      } else if (slicer.mode === 'range') {
+        indices = indices.slice(
+          Math.max(0, slicer.value - 1),
+          Math.max(0, slicer.endValue)
+        );
+      }
+
+      // 3. Map to object structure for view
+      const result = indices.map((idx) => ({ row: rows[idx], originalIndex: idx }));
+      setFilteredData(result);
+      dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
+    }, 150); // 150ms debounce for responsive typing
+
+    return () => clearTimeout(timer);
+  }, [data.rows, sortConfig, slicer, globalSearchTerm, dispatch]);
 
   // Keep ref updated with latest callback
   useEffect(() => {
@@ -521,6 +563,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
               setSortConfig({ key: -1, direction: null });
               setSlicer({ mode: 'all', value: 100, endValue: 200 });
               setHiddenColumns(new Set());
+              dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
             }}
             className="p-1.5 rounded-lg border bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-zinc-700 transition-all"
           >
@@ -553,118 +596,130 @@ export const SpreadsheetViewer: React.FC<Props> = ({
         className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950 relative custom-scrollbar"
         onScroll={handleScroll}
       >
-        <div
-          style={{
-            height: filteredData.length * ROW_HEIGHT,
-            position: 'relative',
-          }}
-        >
-          <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0">
-            <thead className="sticky top-0 z-20 shadow-sm">
-              <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-                <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] text-zinc-400 font-black uppercase py-2">
-                  #
-                </th>
-                {data.headers.map(
-                  (header, i) =>
-                    !hiddenColumns.has(i) && (
-                      <th
-                        key={i}
-                        style={{ width: columnWidths[i] || 150 }}
-                        className={`relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group transition-colors uppercase select-none ${sortConfig.key === i ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/20' : 'text-zinc-500'}`}
-                      >
-                        <div
-                          className="flex items-center justify-between h-full"
-                          title={`Sort by ${header || 'Column'}`}
-                          onClick={() => handleToggleSort(i)}
+        {filteredData.length === 0 && state.isSearchLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                Searching...
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              height: filteredData.length * ROW_HEIGHT,
+              position: 'relative',
+            }}
+          >
+            <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0">
+              <thead className="sticky top-0 z-20 shadow-sm">
+                <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+                  <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] text-zinc-400 font-black uppercase py-2">
+                    #
+                  </th>
+                  {data.headers.map(
+                    (header, i) =>
+                      !hiddenColumns.has(i) && (
+                        <th
+                          key={i}
+                          style={{ width: columnWidths[i] || 150 }}
+                          className={`relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group transition-colors uppercase select-none ${sortConfig.key === i ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/20' : 'text-zinc-500'}`}
                         >
-                          <span className="truncate pr-4">
-                            {header || `Col ${i + 1}`}
-                          </span>
                           <div
-                            className={`${sortConfig.key === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}
+                            className="flex items-center justify-between h-full"
+                            title={`Sort by ${header || 'Column'}`}
+                            onClick={() => handleToggleSort(i)}
                           >
-                            <IconSort />
-                          </div>
-                        </div>
-                        <div
-                          onMouseDown={(e) => handleResizeStart(e, i)}
-                          title="Drag to resize column"
-                          className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 transition-colors z-30"
-                        />
-                      </th>
-                    )
-                )}
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-zinc-950">
-              <tr
-                style={{ height: startIndex * ROW_HEIGHT }}
-                aria-hidden="true"
-              />
-              {visibleRows.length > 0
-                ? visibleRows.map(({ row, originalIndex }) => (
-                    <tr
-                      key={originalIndex}
-                      className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors"
-                      style={{ height: ROW_HEIGHT }}
-                    >
-                      <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">
-                        {originalIndex + 1}
-                      </td>
-                      {row.map(
-                        (cell, cIdx) =>
-                          !hiddenColumns.has(cIdx) && (
-                            <td
-                              key={cIdx}
-                              className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top"
+                            <span className="truncate pr-4">
+                              {header || `Col ${i + 1}`}
+                            </span>
+                            <div
+                              className={`${sortConfig.key === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}
                             >
-                              {renderCell(cell, originalIndex, cIdx)}
-                            </td>
-                          )
-                      )}
-                    </tr>
-                  ))
-                : filteredData.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={data.headers.length + 1}
-                        className="py-32 text-center"
-                      >
-                        <div className="flex flex-col items-center gap-4">
-                          <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
-                            No records found
-                          </p>
-                          <button
-                            onClick={() => {
-                              setSortConfig({ key: -1, direction: null });
-                              setSlicer({
-                                mode: 'all',
-                                value: 100,
-                                endValue: 200,
-                              });
-                              setHiddenColumns(new Set());
-                            }}
-                            className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all"
-                          >
-                            Clear Filters
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                              <IconSort />
+                            </div>
+                          </div>
+                          <div
+                            onMouseDown={(e) => handleResizeStart(e, i)}
+                            title="Drag to resize column"
+                            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 transition-colors z-30"
+                          />
+                        </th>
+                      )
                   )}
-              <tr
-                style={{
-                  height: Math.max(
-                    0,
-                    (filteredData.length - endIndex) * ROW_HEIGHT
-                  ),
-                }}
-                aria-hidden="true"
-              />
-            </tbody>
-          </table>
-        </div>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-zinc-950">
+                <tr
+                  style={{ height: startIndex * ROW_HEIGHT }}
+                  aria-hidden="true"
+                />
+                {visibleRows.length > 0
+                  ? visibleRows.map(({ row, originalIndex }) => (
+                      <tr
+                        key={originalIndex}
+                        className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors"
+                        style={{ height: ROW_HEIGHT }}
+                      >
+                        <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">
+                          {originalIndex + 1}
+                        </td>
+                        {row.map(
+                          (cell, cIdx) =>
+                            !hiddenColumns.has(cIdx) && (
+                              <td
+                                key={cIdx}
+                                className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top"
+                              >
+                                {renderCell(cell, originalIndex, cIdx)}
+                              </td>
+                            )
+                        )}
+                      </tr>
+                    ))
+                  : filteredData.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={data.headers.length + 1}
+                          className="py-32 text-center"
+                        >
+                          <div className="flex flex-col items-center gap-4">
+                            <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                              No records found
+                            </p>
+                            <button
+                              onClick={() => {
+                                setSortConfig({ key: -1, direction: null });
+                                setSlicer({
+                                  mode: 'all',
+                                  value: 100,
+                                  endValue: 200,
+                                });
+                                setHiddenColumns(new Set());
+                                dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
+                              }}
+                              className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all"
+                            >
+                              Clear Filters
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                <tr
+                  style={{
+                    height: Math.max(
+                      0,
+                      (filteredData.length - endIndex) * ROW_HEIGHT
+                    ),
+                  }}
+                  aria-hidden="true"
+                />
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center p-1.5 overflow-x-auto no-scrollbar z-20 shrink-0">

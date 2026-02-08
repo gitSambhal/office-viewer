@@ -45,6 +45,8 @@ export interface Tab {
   totalRows: number | null;
   visibleColumns: number | null;
   tableCount: number | null;
+  // Loading state
+  isLoading?: boolean;
 }
 
 export interface AppState {
@@ -56,6 +58,7 @@ export interface AppState {
   isTypeAwareEnabled: boolean;
   globalSearchTerm: string;
   showUrlModal: boolean;
+  isSearchLoading: boolean;
 }
 
 export interface TableData {

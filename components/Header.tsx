@@ -68,7 +68,8 @@ const IconFullscreen = () => (
 export const Header: React.FC = () => {
   const { state, dispatch } = useAppContext();
   const { setShowUrlModal } = useUrlHandler();
-  const { handleFiles } = useFileHandler();
+  const { handleFiles, isProcessing, processingProgress } = useFileHandler();
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
@@ -200,29 +201,35 @@ export const Header: React.FC = () => {
       {state.tabs.length > 0 && (
         <div className="hidden sm:block flex-1 max-w-md relative">
           <div className="relative">
-            <svg
-              className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
+            {state.isSearchLoading ? (
+              <div className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-violet-600">
+                <div className="w-full h-full border-2 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <svg
+                className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+            )}
             <input
               type="text"
               placeholder="Search databases..."
               value={state.globalSearchTerm}
-              onChange={(e) =>
+              onChange={(e) => {
                 dispatch({
                   type: 'SET_GLOBAL_SEARCH_TERM',
                   payload: e.target.value,
-                })
-              }
+                });
+              }}
               className="w-full pl-10 pr-10 py-2.5 bg-zinc-100 dark:bg-zinc-800 border-0 rounded-xl text-sm text-zinc-900 dark:text-white placeholder-zinc-400 focus:outline-none focus:ring-2 focus:ring-violet-500 transition-all"
             />
             {state.globalSearchTerm && (
@@ -240,8 +247,28 @@ export const Header: React.FC = () => {
       )}
 
       <div className="flex items-center gap-2">
+        {/* Processing Progress */}
+        {isProcessing && (
+          <div className="flex items-center gap-2 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5 rounded-lg">
+            <div className="w-4 h-4 border-2 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+            <div className="w-20 h-1.5 bg-zinc-200 dark:bg-zinc-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-violet-600 transition-all duration-300"
+                style={{ width: `${processingProgress}%` }}
+              ></div>
+            </div>
+            <span className="text-xs font-bold text-zinc-600 dark:text-zinc-400">
+              {processingProgress}%
+            </span>
+          </div>
+        )}
+        
         {/* Always show the URL button */}
-        <label className="group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer bg-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700 text-white dark:text-white px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95">
+        <label className={`group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer px-3 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] shadow-xl transition-all hover:scale-[1.02] active:scale-95 ${
+          isProcessing 
+            ? 'bg-zinc-300 dark:bg-zinc-600 text-zinc-500 dark:text-zinc-400 cursor-not-allowed' 
+            : 'bg-violet-600 hover:bg-violet-700 dark:bg-violet-600 dark:hover:bg-violet-700 text-white dark:text-white'
+        }`}>
           <svg
             className="w-4 h-4 sm:w-5 sm:h-5 group-hover:rotate-12 transition-transform"
             fill="none"
@@ -255,18 +282,24 @@ export const Header: React.FC = () => {
               d="M12 4v16m8-8H4"
             />
           </svg>
-          <span>Open Files</span>
+          <span>{isProcessing ? 'Processing...' : 'Open Files'}</span>
           <input
             type="file"
             multiple
             className="hidden"
             onChange={handleFileInputChange}
             accept={FILE_ACCEPT}
+            disabled={isProcessing}
           />
         </label>
         <button
           onClick={() => setShowUrlModal(true)}
-          className="group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer bg-transparent hover:bg-violet-50 dark:hover:bg-violet-900/20 text-violet-700 dark:text-violet-300 px-2 sm:px-4 py-2 sm:py-2 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] border-2 border-violet-300 dark:border-violet-700 hover:border-violet-400 dark:hover:border-violet-600 transition-all hover:scale-[1.02] active:scale-95"
+          disabled={isProcessing}
+          className={`group relative inline-flex items-center gap-2 sm:gap-3 cursor-pointer px-2 sm:px-4 py-2 sm:py-2 rounded-lg sm:rounded-xl font-black text-xs uppercase tracking-[0.1em] transition-all hover:scale-[1.02] active:scale-95 ${
+            isProcessing
+              ? 'bg-zinc-300 dark:bg-zinc-600 text-zinc-500 dark:text-zinc-400 border-zinc-300 dark:border-zinc-600 cursor-not-allowed'
+              : 'bg-transparent hover:bg-violet-50 dark:hover:bg-violet-900/20 text-violet-700 dark:text-violet-300 border-2 border-violet-300 dark:border-violet-700 hover:border-violet-400 dark:hover:border-violet-600'
+          }`}
         >
           <svg
             className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform"

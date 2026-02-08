@@ -37,6 +37,25 @@ export const FileContentViewer: React.FC = () => {
     return null;
   }
 
+  // Show loading indicator if tab is still loading
+  if (activeTab.isLoading) {
+    return (
+      <div className="flex-1 h-full w-full flex items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-center">
+            <p className="text-sm font-bold text-zinc-900 dark:text-zinc-100">
+              Loading {activeTab.name}...
+            </p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+              Please wait while we process your file
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 h-full w-full animate-in fade-in duration-300">
       {activeTab.type === 'xlsx' && (

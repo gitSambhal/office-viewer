@@ -10,6 +10,7 @@ import MDBReader from 'mdb-reader';
 import { TableData, SortConfig, ColumnWidths, TabStateChange } from '../types';
 import { ActionButton } from './ActionButton';
 import { ExportButton } from './ExportButton';
+import { useAppContext } from '../context/AppContext';
 import {
   ChevronDown,
   ChevronUp,
@@ -88,6 +89,7 @@ const MdbViewer: React.FC<MdbViewerProps> = ({
   registerCloseActionPopups,
   globalSearchTerm,
 }) => {
+  const { state, dispatch } = useAppContext();
   const [tables, setTables] = useState<TableData[]>([]);
   const [activeTableId, setActiveTableId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -195,63 +197,82 @@ const MdbViewer: React.FC<MdbViewerProps> = ({
     [tables, activeTableId]
   );
 
-  const filteredData = useMemo(() => {
-    if (!activeTable) return [];
-    const rows = activeTable.rows;
-    let indices = Array.from({ length: rows.length }, (_, i) => i);
+  const [filteredData, setFilteredData] = useState<
+    { row: any[]; originalIndex: number }[]
+  >([]);
 
-    // Global search
-    if (globalSearchTerm) {
-      const term = globalSearchTerm.toLowerCase();
-      indices = indices.filter((i) => {
-        const row = rows[i];
-        return row.some((cell) =>
-          String(cell ?? '')
-            .toLowerCase()
-            .includes(term)
+  // Async filtering
+  useEffect(() => {
+    dispatch({ type: 'SET_SEARCH_LOADING', payload: true });
+    
+    // Use setTimeout to allow UI to update with loading indicator
+    const timer = setTimeout(() => {
+      if (!activeTable) {
+        setFilteredData([]);
+        dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
+        return;
+      }
+
+      const rows = activeTable.rows;
+      let indices: number[] = Array.from({ length: rows.length }, (_, i) => i);
+
+      // Global search
+      if (globalSearchTerm) {
+        const term = globalSearchTerm.toLowerCase();
+        indices = indices.filter((i) => {
+          const row = rows[i];
+          return row.some((cell) =>
+            String(cell ?? '')
+              .toLowerCase()
+              .includes(term)
+          );
+        });
+      }
+
+      if (sortConfig.key !== -1 && sortConfig.direction) {
+        const { key, direction } = sortConfig;
+        indices.sort((idxA, idxB) => {
+          const valA = rows[idxA][key];
+          const valB = rows[idxB][key];
+          const isEmptyA =
+            valA === null || valA === undefined || String(valA).trim() === '';
+          const isEmptyB =
+            valB === null || valB === undefined || String(valB).trim() === '';
+          if (isEmptyA && isEmptyB) return 0;
+          if (isEmptyA) return 1;
+          if (isEmptyB) return -1;
+
+          let res = 0;
+          if (typeof valA === 'number' && typeof valB === 'number') {
+            res = valA - valB;
+          } else {
+            res = String(valA).localeCompare(String(valB), undefined, {
+              numeric: true,
+              sensitivity: 'base',
+            });
+          }
+          return (direction === 'asc' ? res : -res) || idxA - idxB;
+        });
+      }
+
+      if (slicer.mode === 'first') {
+        indices = indices.slice(0, Math.max(0, slicer.value));
+      } else if (slicer.mode === 'last') {
+        indices = indices.slice(-Math.max(0, slicer.value));
+      } else if (slicer.mode === 'range') {
+        indices = indices.slice(
+          Math.max(0, slicer.value - 1),
+          Math.max(0, slicer.endValue)
         );
-      });
-    }
+      }
 
-    if (sortConfig.key !== -1 && sortConfig.direction) {
-      const { key, direction } = sortConfig;
-      indices.sort((idxA, idxB) => {
-        const valA = rows[idxA][key];
-        const valB = rows[idxB][key];
-        const isEmptyA =
-          valA === null || valA === undefined || String(valA).trim() === '';
-        const isEmptyB =
-          valB === null || valB === undefined || String(valB).trim() === '';
-        if (isEmptyA && isEmptyB) return 0;
-        if (isEmptyA) return 1;
-        if (isEmptyB) return -1;
+      const result = indices.map((idx) => ({ row: rows[idx], originalIndex: idx }));
+      setFilteredData(result);
+      dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
+    }, 50);
 
-        let res = 0;
-        if (typeof valA === 'number' && typeof valB === 'number') {
-          res = valA - valB;
-        } else {
-          res = String(valA).localeCompare(String(valB), undefined, {
-            numeric: true,
-            sensitivity: 'base',
-          });
-        }
-        return (direction === 'asc' ? res : -res) || idxA - idxB;
-      });
-    }
-
-    if (slicer.mode === 'first') {
-      indices = indices.slice(0, Math.max(0, slicer.value));
-    } else if (slicer.mode === 'last') {
-      indices = indices.slice(-Math.max(0, slicer.value));
-    } else if (slicer.mode === 'range') {
-      indices = indices.slice(
-        Math.max(0, slicer.value - 1),
-        Math.max(0, slicer.endValue)
-      );
-    }
-
-    return indices.map((idx) => ({ row: rows[idx], originalIndex: idx }));
-  }, [activeTable, sortConfig, slicer, globalSearchTerm]);
+    return () => clearTimeout(timer);
+  }, [activeTable, sortConfig, slicer, globalSearchTerm, dispatch]);
 
   // Keep ref updated with latest callback
   useEffect(() => {
@@ -508,6 +529,7 @@ const MdbViewer: React.FC<MdbViewerProps> = ({
               setSortConfig({ key: -1, direction: null });
               setSlicer({ mode: 'all', value: 100, endValue: 200 });
               setHiddenColumns(new Set());
+              dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
             }}
             className="p-1.5 rounded-lg border bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-zinc-700 transition-all"
           >
@@ -540,78 +562,89 @@ const MdbViewer: React.FC<MdbViewerProps> = ({
         className="flex-1 overflow-auto relative"
         onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
       >
-        <div
-          style={{
-            height: filteredData.length * ROW_HEIGHT,
-            position: 'relative',
-          }}
-        >
-          <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0">
-            <thead className="sticky top-0 z-20 shadow-sm">
-              <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-                <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] text-zinc-400 font-black uppercase py-2">
-                  #
-                </th>
-                {activeTable.columns.map(
-                  (header, i) =>
-                    !hiddenColumns.has(i) && (
-                      <th
-                        key={i}
-                        style={{ width: columnWidths[i] || 150 }}
-                        className="relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group uppercase select-none"
-                      >
-                        <div
-                          className="flex items-center justify-between h-full"
-                          onClick={() => handleToggleSort(i)}
+        {filteredData.length === 0 && state.isSearchLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                Searching...
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              height: filteredData.length * ROW_HEIGHT,
+              position: 'relative',
+            }}
+          >
+            <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0">
+              <thead className="sticky top-0 z-20 shadow-sm">
+                <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+                  <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] text-zinc-400 font-black uppercase py-2">
+                    #
+                  </th>
+                  {activeTable.columns.map(
+                    (header, i) =>
+                      !hiddenColumns.has(i) && (
+                        <th
+                          key={i}
+                          style={{ width: columnWidths[i] || 150 }}
+                          className="relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group uppercase select-none"
                         >
-                          <span className="truncate pr-4">{header}</span>
                           <div
-                            className={`${sortConfig.key === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}
+                            className="flex items-center justify-between h-full"
+                            onClick={() => handleToggleSort(i)}
                           >
-                            <IconSort />
+                            <span className="truncate pr-4">{header}</span>
+                            <div
+                              className={`${sortConfig.key === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}
+                            >
+                              <IconSort />
+                            </div>
                           </div>
-                        </div>
-                        <div
-                          onMouseDown={(e) => handleResizeStart(e, i)}
-                          className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 z-30"
-                        />
-                      </th>
-                    )
-                )}
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-zinc-950">
-              <tr style={{ height: startIndex * ROW_HEIGHT }} />
-              {visibleRows.map(({ row, originalIndex }) => (
-                <tr
-                  key={originalIndex}
-                  className="group border-b border-zinc-100 dark:border-zinc-900"
-                  style={{ height: ROW_HEIGHT }}
-                >
-                  <td className="text-center text-[10px] text-zinc-400 font-mono border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
-                    {originalIndex + 1}
-                  </td>
-                  {row.map(
-                    (cell, cIdx) =>
-                      !hiddenColumns.has(cIdx) && (
-                        <td
-                          key={cIdx}
-                          className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top"
-                        >
-                          {renderCell(cell)}
-                        </td>
+                          <div
+                            onMouseDown={(e) => handleResizeStart(e, i)}
+                            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 z-30"
+                          />
+                        </th>
                       )
                   )}
                 </tr>
-              ))}
-              <tr
-                style={{
-                  height: (filteredData.length - endIndex) * ROW_HEIGHT,
-                }}
-              />
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white dark:bg-zinc-950">
+                <tr style={{ height: startIndex * ROW_HEIGHT }} />
+                {visibleRows.map(({ row, originalIndex }) => (
+                  <tr
+                    key={originalIndex}
+                    className="group border-b border-zinc-100 dark:border-zinc-900"
+                    style={{ height: ROW_HEIGHT }}
+                  >
+                    <td className="text-center text-[10px] text-zinc-400 font-mono border-r border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30">
+                      {originalIndex + 1}
+                    </td>
+                    {row.map(
+                      (cell, cIdx) =>
+                        !hiddenColumns.has(cIdx) && (
+                          <td
+                            key={cIdx}
+                            className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top"
+                          >
+                            {renderCell(cell)}
+                          </td>
+                        )
+                    )}
+                  </tr>
+                ))}
+                <tr
+                  style={{
+                    height: (filteredData.length - endIndex) * ROW_HEIGHT,
+                  }}
+                />
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
       <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center p-1.5 z-20 overflow-x-auto no-scrollbar">
         <div className="flex gap-1 px-1">

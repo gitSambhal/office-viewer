@@ -9,6 +9,7 @@ import initSqlJs, { Database } from 'sql.js';
 import { TableData, SortConfig, ColumnWidths, TabStateChange } from '../types';
 import { ActionButton } from './ActionButton';
 import { ExportButton } from './ExportButton';
+import { useAppContext } from '../context/AppContext';
 import {
   ChevronDown,
   ChevronUp,
@@ -87,6 +88,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({
   registerCloseActionPopups,
   globalSearchTerm,
 }) => {
+  const { state, dispatch } = useAppContext();
   const [db, setDb] = useState<Database | null>(null);
   const [tableNames, setTableNames] = useState<string[]>([]);
   const [activeTableName, setActiveTableName] = useState<string | null>(null);
@@ -221,69 +223,88 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({
     }
   }, [registerCloseActionPopups]);
 
-  const filteredData = useMemo(() => {
-    if (!currentTableData) return [];
-    const rows = currentTableData.rows;
-    let indices = Array.from({ length: rows.length }, (_, i) => i);
+  const [filteredData, setFilteredData] = useState<
+    { row: any[]; originalIndex: number }[]
+  >([]);
 
-    // Global search
-    if (globalSearchTerm) {
-      const term = globalSearchTerm.toLowerCase();
-      indices = indices.filter((i) => {
-        const row = rows[i];
-        return row.some((cell) =>
-          String(cell ?? '')
-            .toLowerCase()
-            .includes(term)
-        );
-      });
-    }
+  // Async filtering
+  useEffect(() => {
+    dispatch({ type: 'SET_SEARCH_LOADING', payload: true });
+    
+    // Use setTimeout to allow UI to update with loading indicator
+    const timer = setTimeout(() => {
+      if (!currentTableData) {
+        setFilteredData([]);
+        dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
+        return;
+      }
 
-    // 1. Sorting
-    if (sortConfig.key && sortConfig.direction) {
-      const colIndex = currentTableData.columns.indexOf(sortConfig.key);
-      if (colIndex !== -1) {
-        indices.sort((idxA, idxB) => {
-          const valA = rows[idxA][colIndex];
-          const valB = rows[idxB][colIndex];
-          const isEmptyA =
-            valA === null || valA === undefined || String(valA).trim() === '';
-          const isEmptyB =
-            valB === null || valB === undefined || String(valB).trim() === '';
-          if (isEmptyA && isEmptyB) return 0;
-          if (isEmptyA) return 1; // Empty values go to the end
-          if (isEmptyB) return -1; // Empty values go to the end
+      const rows = currentTableData.rows;
+      let indices: number[] = Array.from({ length: rows.length }, (_, i) => i);
 
-          let res = 0;
-          // Attempt numeric comparison first
-          if (typeof valA === 'number' && typeof valB === 'number') {
-            res = valA - valB;
-          } else {
-            // Fallback to locale-aware string comparison
-            res = String(valA).localeCompare(String(valB), undefined, {
-              numeric: true,
-              sensitivity: 'base',
-            });
-          }
-          return (sortConfig.direction === 'asc' ? res : -res) || idxA - idxB;
+      // Global search
+      if (globalSearchTerm) {
+        const term = globalSearchTerm.toLowerCase();
+        indices = indices.filter((i) => {
+          const row = rows[i];
+          return row.some((cell) =>
+            String(cell ?? '')
+              .toLowerCase()
+              .includes(term)
+          );
         });
       }
-    }
 
-    // 2. Slicer
-    if (slicer.mode === 'first') {
-      indices = indices.slice(0, Math.max(0, slicer.value));
-    } else if (slicer.mode === 'last') {
-      indices = indices.slice(-Math.max(0, slicer.value));
-    } else if (slicer.mode === 'range') {
-      indices = indices.slice(
-        Math.max(0, slicer.value - 1),
-        Math.max(0, slicer.endValue)
-      );
-    }
+      // 1. Sorting
+      if (sortConfig.key && sortConfig.direction) {
+        const colIndex = currentTableData.columns.indexOf(sortConfig.key);
+        if (colIndex !== -1) {
+          indices.sort((idxA, idxB) => {
+            const valA = rows[idxA][colIndex];
+            const valB = rows[idxB][colIndex];
+            const isEmptyA =
+              valA === null || valA === undefined || String(valA).trim() === '';
+            const isEmptyB =
+              valB === null || valB === undefined || String(valB).trim() === '';
+            if (isEmptyA && isEmptyB) return 0;
+            if (isEmptyA) return 1; // Empty values go to the end
+            if (isEmptyB) return -1; // Empty values go to the end
 
-    return indices.map((idx) => ({ row: rows[idx], originalIndex: idx }));
-  }, [currentTableData, sortConfig, slicer, globalSearchTerm]);
+            let res = 0;
+            // Attempt numeric comparison first
+            if (typeof valA === 'number' && typeof valB === 'number') {
+              res = valA - valB;
+            } else {
+              // Fallback to locale-aware string comparison
+              res = String(valA).localeCompare(String(valB), undefined, {
+                numeric: true,
+                sensitivity: 'base',
+              });
+            }
+            return (sortConfig.direction === 'asc' ? res : -res) || idxA - idxB;
+          });
+        }
+      }
+
+      // 2. Slicer
+      if (slicer.mode === 'first') {
+        indices = indices.slice(0, Math.max(0, slicer.value));
+      } else if (slicer.mode === 'last') {
+        indices = indices.slice(-Math.max(0, slicer.value));
+      } else if (slicer.mode === 'range') {
+        indices = indices.slice(
+          Math.max(0, slicer.value - 1),
+          Math.max(0, slicer.endValue)
+        );
+      }
+
+      const result = indices.map((idx) => ({ row: rows[idx], originalIndex: idx }));
+      setFilteredData(result);
+      dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
+    }, 50);
+
+    return () => clearTimeout(timer);
+  }, [currentTableData, sortConfig, slicer, globalSearchTerm, dispatch]);
 
   // Keep ref updated with latest callback
   useEffect(() => {
@@ -548,6 +569,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({
               setSortConfig({ key: '', direction: null });
               setSlicer({ mode: 'all', value: 100, endValue: 200 });
               setHiddenColumns(new Set());
+              dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
             }}
             className="p-1.5 rounded-lg border bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-zinc-700 transition-all"
           >
@@ -580,111 +602,123 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({
         className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950 relative custom-scrollbar"
         onScroll={(e) => setScrollTop(e.currentTarget.scrollTop)}
       >
-        <div
-          style={{
-            height: Math.max(filteredData.length * ROW_HEIGHT, containerHeight),
-            position: 'relative',
-          }}
-        >
-          <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0">
-            <thead className="sticky top-0 z-20 shadow-sm">
-              <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-                <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] font-black uppercase py-2">
-                  #
-                </th>
-                {currentTableData.columns.map(
-                  (col, i) =>
-                    !hiddenColumns.has(i) && (
-                      <th
-                        key={i}
-                        style={{ width: columnWidths[i] || 150 }}
-                        className={`relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group transition-colors uppercase select-none ${sortConfig.key === col ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/20' : 'text-zinc-500'}`}
-                      >
-                        <div
-                          className="flex items-center justify-between h-full"
-                          title={`Sort by ${col || 'Column'}`}
-                          onClick={() => handleToggleSort(col)}
+        {filteredData.length === 0 && state.isSearchLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="flex flex-col items-center gap-4">
+              <div className="w-8 h-8 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
+              <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest">
+                Searching...
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div
+            style={{
+              height: Math.max(filteredData.length * ROW_HEIGHT, containerHeight),
+              position: 'relative',
+            }}
+          >
+            <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0">
+              <thead className="sticky top-0 z-20 shadow-sm">
+                <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
+                  <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] font-black uppercase py-2">
+                    #
+                  </th>
+                  {currentTableData.columns.map(
+                    (col, i) =>
+                      !hiddenColumns.has(i) && (
+                        <th
+                          key={i}
+                          style={{ width: columnWidths[i] || 150 }}
+                          className={`relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group transition-colors uppercase select-none ${sortConfig.key === col ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/20' : 'text-zinc-500'}`}
                         >
-                          <span className="truncate pr-4">{col}</span>
                           <div
-                            className={`${sortConfig.key === col ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}
+                            className="flex items-center justify-between h-full"
+                            title={`Sort by ${col || 'Column'}`}
+                            onClick={() => handleToggleSort(col)}
                           >
-                            <IconSort />
-                          </div>
-                        </div>
-                        <div
-                          onMouseDown={(e) => handleResizeStart(e, i)}
-                          title="Drag to resize column"
-                          className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 transition-colors z-30"
-                        />
-                      </th>
-                    )
-                )}
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-zinc-950">
-              <tr
-                style={{ height: startIndex * ROW_HEIGHT }}
-                aria-hidden="true"
-              />
-              {effectiveVisibleRows.length > 0 ? (
-                effectiveVisibleRows.map((rowData, rowIndex) => {
-                  return (
-                    <tr
-                      key={startIndex + rowIndex}
-                      className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors"
-                      style={{ height: ROW_HEIGHT }}
-                    >
-                      <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">
-                        {startIndex + rowIndex + 1}
-                      </td>
-                      {rowData.row.map(
-                        (cell, cellIndex) =>
-                          !hiddenColumns.has(cellIndex) && (
-                            <td
-                              key={cellIndex}
-                              className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top"
+                            <span className="truncate pr-4">{col}</span>
+                            <div
+                              className={`${sortConfig.key === col ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}
                             >
-                              {renderCell(cell)}
-                            </td>
-                          )
-                      )}
-                    </tr>
-                  );
-                })
-              ) : (
-                <tr>
-                  <td
-                    colSpan={currentTableData.columns.length + 1}
-                    className="py-32 text-center"
-                  >
-                    <div className="flex flex-col items-center gap-4">
-                      <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
-                        No records found
-                      </p>
-                      <button
-                        onClick={() => {
-                          setSortConfig({ key: '', direction: null });
-                          setSlicer({ mode: 'all', value: 100, endValue: 200 });
-                          setHiddenColumns(new Set());
-                        }}
-                        className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all"
-                      >
-                        Clear Filters
-                      </button>
-                    </div>
-                  </td>
+                              <IconSort />
+                            </div>
+                          </div>
+                          <div
+                            onMouseDown={(e) => handleResizeStart(e, i)}
+                            title="Drag to resize column"
+                            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 transition-colors z-30"
+                          />
+                        </th>
+                      )
+                  )}
                 </tr>
-              )}
-              <tr
-                style={{
-                  height: (filteredData.length - endIndex) * ROW_HEIGHT,
-                }}
-                aria-hidden="true"
-              />
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="bg-white dark:bg-zinc-950">
+                <tr
+                  style={{ height: startIndex * ROW_HEIGHT }}
+                  aria-hidden="true"
+                />
+                {effectiveVisibleRows.length > 0 ? (
+                  effectiveVisibleRows.map((rowData, rowIndex) => {
+                    return (
+                      <tr
+                        key={startIndex + rowIndex}
+                        className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors"
+                        style={{ height: ROW_HEIGHT }}
+                      >
+                        <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">
+                          {startIndex + rowIndex + 1}
+                        </td>
+                        {rowData.row.map(
+                          (cell, cellIndex) =>
+                            !hiddenColumns.has(cellIndex) && (
+                              <td
+                                key={cellIndex}
+                                className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top"
+                              >
+                                {renderCell(cell)}
+                              </td>
+                            )
+                        )}
+                      </tr>
+                    );
+                  })
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={currentTableData.columns.length + 1}
+                      className="py-32 text-center"
+                    >
+                      <div className="flex flex-col items-center gap-4">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                          No records found
+                        </p>
+                        <button
+                            onClick={() => {
+                              setSortConfig({ key: '', direction: null });
+                              setSlicer({ mode: 'all', value: 100, endValue: 200 });
+                              setHiddenColumns(new Set());
+                              dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
+                            }}
+                          className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all"
+                        >
+                          Clear Filters
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                <tr
+                  style={{
+                    height: (filteredData.length - endIndex) * ROW_HEIGHT,
+                  }}
+                  aria-hidden="true"
+                />
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
       <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center p-1.5 z-20 overflow-x-auto no-scrollbar">
         <div className="flex gap-1 px-1">

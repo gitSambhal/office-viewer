@@ -27,7 +27,62 @@ export class FileProcessor {
     return this.EXTENSION_MAP[ext] || 'unknown';
   }
 
+  /**
+   * Process file using web worker for heavy operations to avoid blocking the main thread
+   */
   static async process(file: File): Promise<{ type: FileType; data: any }> {
+    // Check if web workers are supported
+    if (typeof Worker !== 'undefined') {
+      try {
+        return await this.processWithWorker(file);
+      } catch (workerError) {
+        console.warn('Web worker processing failed, falling back to main thread:', workerError);
+        return this.processInMainThread(file);
+      }
+    }
+    
+    // Fallback to main thread if workers not supported
+    return this.processInMainThread(file);
+  }
+
+  /**
+   * Process file in web worker to avoid blocking the main thread
+   */
+  private static async processWithWorker(file: File): Promise<{ type: FileType; data: any }> {
+    return new Promise((resolve, reject) => {
+      const worker = new Worker(new URL('./fileProcessor.worker.ts', import.meta.url));
+      
+      // Set timeout for worker processing to prevent hanging
+      const timeout = setTimeout(() => {
+        worker.terminate();
+        reject(new Error(`File processing timed out. "${file.name}" may be too large or corrupt.`));
+      }, 30000); // 30 second timeout
+
+      worker.postMessage({ file, fileName: file.name });
+
+      worker.onmessage = (e) => {
+        clearTimeout(timeout);
+        if (e.data.success) {
+          resolve(e.data.data);
+        } else {
+          reject(new Error(e.data.error || `Failed to process "${file.name}"`));
+        }
+        worker.terminate();
+      };
+
+      worker.onerror = (error) => {
+        clearTimeout(timeout);
+        console.error('Worker error:', error);
+        reject(new Error(`Error processing "${file.name}". Please try again.`));
+        worker.terminate();
+      };
+    });
+  }
+
+  /**
+   * Process file directly in main thread (fallback option)
+   */
+  private static async processInMainThread(file: File): Promise<{ type: FileType; data: any }> {
     const type = this.getFileType(file.name);
 
     try {
@@ -62,31 +117,39 @@ export class FileProcessor {
     return { type: 'unknown', data: null };
   }
 
+  /**
+   * Process Excel files with memory optimizations
+   */
   private static processExcel(buffer: ArrayBuffer) {
-    const workbook = XLSX.read(new Uint8Array(buffer), {
-      type: 'array',
-      dense: true,
-      cellStyles: false,
-      cellHTML: false,
-      cellFormula: false,
-    });
-
-    const sheets: { [name: string]: SheetData } = {};
-
-    workbook.SheetNames.forEach((name: string) => {
-      const worksheet = workbook.Sheets[name];
-      const jsonData = XLSX.utils.sheet_to_json(worksheet, {
-        header: 1,
-        defval: '',
-        raw: true,
+    try {
+      const workbook = XLSX.read(new Uint8Array(buffer), {
+        type: 'array',
+        dense: true,
+        cellStyles: false,
+        cellHTML: false,
+        cellFormula: false,
       });
 
-      sheets[name] = {
-        headers: (jsonData[0] as string[]) || [],
-        rows: jsonData.slice(1),
-      };
-    });
+      const sheets: { [name: string]: SheetData } = {};
 
-    return sheets;
+      workbook.SheetNames.forEach((name: string) => {
+        const worksheet = workbook.Sheets[name];
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, {
+          header: 1,
+          defval: '',
+          raw: true,
+        });
+
+        sheets[name] = {
+          headers: (jsonData[0] as string[]) || [],
+          rows: jsonData.slice(1),
+        };
+      });
+
+      return sheets;
+    } catch (error) {
+      console.error('Excel processing error:', error);
+      throw new Error('Failed to process Excel file');
+    }
   }
 }
