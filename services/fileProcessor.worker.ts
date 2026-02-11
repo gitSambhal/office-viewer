@@ -18,8 +18,7 @@ const EXTENSION_MAP: Record<string, FileType> = {
   gif: 'image',
   webp: 'image',
   rtf: 'rtf',
-  pptx: 'unknown',
-  ppt: 'unknown',
+  pptx: 'pptx',
 };
 
 const getFileType = (fileName: string): FileType => {
@@ -63,64 +62,47 @@ const processExcel = (buffer: ArrayBuffer) => {
 // Listen for messages from main thread
 self.addEventListener('message', async (e) => {
   const { file, fileName } = e.data;
-  
+
   try {
     const type = getFileType(fileName);
-    
+
     if (type === 'xlsx') {
       const buffer = await file.arrayBuffer();
       const result = processExcel(buffer);
-      self.postMessage({ 
-        success: true, 
-        data: { type, data: result }, 
-        fileName 
+      self.postMessage({
+        success: true,
+        data: { type, data: result },
+        fileName
       });
-    } else if (type === 'docx' || type === 'pdf' || type === 'rtf') {
+    } else if (type === 'docx' || type === 'pdf' || type === 'rtf' || type === 'pptx') {
       const buffer = await file.arrayBuffer();
-      self.postMessage({ 
-        success: true, 
-        data: { type, data: buffer }, 
-        fileName 
+      self.postMessage({
+        success: true,
+        data: { type, data: buffer },
+        fileName
       });
-    } else if (type === 'image') {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        self.postMessage({ 
-          success: true, 
-          data: { type, data: event.target?.result }, 
-          fileName 
-        });
-      };
-      reader.onerror = () => {
-        self.postMessage({ 
-          success: false, 
-          error: 'Failed to read image file', 
-          fileName 
-        });
-      };
-      reader.readAsDataURL(file);
     } else if (type === 'txt' || type === 'md') {
       const text = await file.text();
-      self.postMessage({ 
-        success: true, 
-        data: { type, data: text }, 
-        fileName 
+      self.postMessage({
+        success: true,
+        data: { type, data: text },
+        fileName
       });
     } else {
-      self.postMessage({ 
-        success: true, 
-        data: { type: 'unknown', data: null }, 
-        fileName 
+      self.postMessage({
+        success: true,
+        data: { type: 'unknown', data: null },
+        fileName
       });
     }
   } catch (error) {
     console.error(`Error processing ${fileName}:`, error);
-    self.postMessage({ 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Failed to parse file content', 
-      fileName 
+    self.postMessage({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to parse file content',
+      fileName
     });
   }
 });
 
-export {};
+export { };

@@ -9,6 +9,7 @@ import { RtfViewer } from './RtfViewer';
 import MdbViewer from './MdbViewer';
 import SqliteViewer from './SqliteViewer';
 import DbfViewer from './DbfViewer';
+import { PptxViewer } from './PptxViewer';
 import { updateSEO } from '../utils/helpers';
 
 export const FileContentViewer: React.FC = () => {
@@ -231,6 +232,9 @@ export const FileContentViewer: React.FC = () => {
             });
           }}
         />
+      )}
+      {activeTab.type === 'pptx' && (
+        <PptxViewer key={activeTab.id} data={activeTab.data} />
       )}
     </div>
   );

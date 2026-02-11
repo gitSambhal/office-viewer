@@ -10,6 +10,8 @@ export type FileType =
   | 'accdb'
   | 'sqlite'
   | 'dbf'
+  | 'pptx'
+  | 'ppt'
   | 'unknown';
 
 export interface SheetData {

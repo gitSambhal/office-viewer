@@ -1,13 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useFileHandler } from '../hooks/useFileHandler';
 import { useUrlHandler } from '../hooks/useUrlHandler';
 import { FileType } from '../types';
 import { getFileIcon } from '../utils/helpers';
 import { DashboardPreview } from './DashboardPreview';
 import { RecentFiles } from './RecentFiles';
-import { FILE_ACCEPT, PREVIEW_DATA, FEATURES } from '../constants';
+import { FILE_ACCEPT, PREVIEW_DATA, FEATURES, FILE_TYPE_EXTENSIONS, SUPPORTED_EXTENSIONS } from '../constants';
 import { CREDITS } from '../utils/credits';
-import { CreditsPopup } from './CreditsPopup';
+// import { CreditsPopup } from './CreditsPopup';
 import { useAppContext } from '../context/AppContext';
 import { FILE_TYPE_SEO } from '../constants';
 import analytics from '../utils/analytics';
@@ -51,6 +51,9 @@ const getQueryType = (query: string): FileType | null => {
   if (lowerQuery.includes('dbf') || lowerQuery.includes('dbase')) {
     return 'dbf';
   }
+  if (lowerQuery.includes('powerpoint') || lowerQuery.includes('pptx') || lowerQuery.includes('presentation') || lowerQuery.includes('slide')) {
+    return 'pptx';
+  }
   
   return null;
 };
@@ -60,6 +63,41 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
   const { setShowUrlModal } = useUrlHandler();
   const { state, dispatch } = useAppContext();
   const [queryType, setQueryType] = useState<FileType | null>(null);
+  const [fileTypeFilter, setFileTypeFilter] = useState<string>(FILE_ACCEPT);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isFileSupported = (fileName: string): boolean => {
+    const extension = '.' + fileName.split('.').pop()?.toLowerCase();
+    return SUPPORTED_EXTENSIONS.some(ext => 
+      fileName.toLowerCase().endsWith(ext.toLowerCase())
+    );
+  };
+
+  const handleChipClick = () => {
+    setErrorMessage(null);
+    setFileTypeFilter(FILE_ACCEPT);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    // Check for unsupported files
+    const unsupportedFiles = Array.from(files).filter(file => !isFileSupported(file.name));
+    if (unsupportedFiles.length > 0) {
+      const fileNames = unsupportedFiles.map(f => f.name).join(', ');
+      setErrorMessage(`Unsupported file format: ${fileNames}. Please select a supported file type.`);
+      e.target.value = '';
+      return;
+    }
+
+    setErrorMessage(null);
+    handleFiles(files);
+    // Reset the input so the same file can be selected again
+    e.target.value = '';
+  };
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -143,63 +181,105 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
           {[
             {
               name: 'PDF',
+              type: 'pdf',
               icon: getFileIcon('pdf'),
               color: 'bg-rose-50 dark:bg-rose-900/10',
             },
             {
               name: 'Word',
+              type: 'docx',
               icon: getFileIcon('docx'),
               color: 'bg-blue-50 dark:bg-blue-900/10',
             },
             {
               name: 'RTF',
+              type: 'rtf',
               icon: getFileIcon('rtf'),
               color: 'bg-amber-50 dark:bg-amber-900/10',
             },
             {
               name: 'Markdown',
+              type: 'md',
               icon: getFileIcon('md'),
               color: 'bg-zinc-100 dark:bg-zinc-800/50',
             },
             {
               name: 'Excel',
+              type: 'xlsx',
               icon: getFileIcon('xlsx'),
               color: 'bg-emerald-50 dark:bg-emerald-900/10',
             },
             {
               name: 'Access DB',
+              type: 'mdb',
               icon: getFileIcon('mdb'),
               color: 'bg-teal-50 dark:bg-teal-900/10',
             },
             {
               name: 'SQLite',
+              type: 'sqlite',
               icon: getFileIcon('sqlite'),
               color: 'bg-sky-50 dark:bg-sky-900/10',
             },
             {
               name: 'DBF',
+              type: 'dbf',
               icon: getFileIcon('dbf'),
               color: 'bg-orange-50 dark:bg-orange-900/10',
             },
             {
               name: 'Images',
+              type: 'image',
               icon: getFileIcon('image'),
               color: 'bg-violet-50 dark:bg-violet-900/10',
             },
+            {
+              name: 'PowerPoint',
+              type: 'pptx',
+              icon: getFileIcon('pptx'),
+              color: 'bg-orange-50 dark:bg-orange-900/10',
+            },
           ].map((fmt) => (
-            <span
+            <button
               key={fmt.name}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg sm:px-4 sm:py-2 ${fmt.color} border border-zinc-200 dark:border-zinc-800 transition-all hover:scale-105`}
+              type="button"
+              onClick={() => handleChipClick()}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg sm:px-4 sm:py-2 ${fmt.color} border border-zinc-200 dark:border-zinc-800 transition-all hover:scale-105 hover:shadow-md cursor-pointer`}
+              title={`Click to open ${fmt.name} files`}
             >
               {fmt.icon}
               <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-widest text-zinc-600 dark:text-zinc-400">
                 {fmt.name}
               </span>
-            </span>
+            </button>
           ))}
         </div>
 
         {/* CTA Buttons */}
+        <div
+          id="main-cta-section"
+          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-4"
+        >
+          {errorMessage && (
+            <div className="w-full max-w-md mb-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
+              <div className="flex items-center gap-2">
+                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>{errorMessage}</span>
+                <button 
+                  onClick={() => setErrorMessage(null)}
+                  className="ml-auto hover:bg-red-100 dark:hover:bg-red-800/50 rounded-full p-1 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+        
         <div
           id="main-cta-section"
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
@@ -220,11 +300,12 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
             </svg>
             Open Files
             <input
+              ref={fileInputRef}
               type="file"
               multiple
               className="hidden"
-              onChange={(e) => handleFiles(e.target.files)}
-              accept={FILE_ACCEPT}
+              onChange={handleFileInputChange}
+              accept={fileTypeFilter}
             />
           </label>
 
@@ -410,7 +491,7 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
           </svg>
         </a>
         {/* <span className="text-[9px] sm:text-[10px] font-black text-zinc-400">|</span> */}
-        <CreditsPopup />
+        {/* <CreditsPopup /> */}
       </div>
     </div>
   );

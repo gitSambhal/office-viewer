@@ -1,7 +1,7 @@
 {
   "name": "Suhail Office Viewer",
   "short_name": "Suhail Viewer",
-  "description": "High-performance private document app for PDF, Excel, Word, Access, SQLite, DBF, RTF, Markdown & Images.",
+  "description": "High-performance private document app for PDF, Excel, Word, PowerPoint, Access, SQLite, DBF, RTF, Markdown & Images.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -46,7 +46,8 @@
         "image/*": [".png", ".jpg", ".jpeg", ".gif", ".webp"],
         "application/x-msaccess": [".mdb", ".accdb"],
         "application/x-sqlite3": [".sqlite", ".db", ".db3"],
-        "application/x-dbf": [".dbf"]
+        "application/x-dbf": [".dbf"],
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"]
       }
     }
   ],
@@ -78,7 +79,8 @@
             ".sqlite",
             ".db",
             ".db3",
-            ".dbf"
+            ".dbf",
+            ".pptx"
           ]
         }
       ]

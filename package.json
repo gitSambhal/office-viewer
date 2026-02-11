@@ -16,6 +16,7 @@
     "dbf-js": "^1.2.1",
     "lucide-react": "^0.563.0",
     "mdb-reader": "^2.2.0",
+    "pptx-viewer": "^0.1.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "regenerator-runtime": "^0.14.1",

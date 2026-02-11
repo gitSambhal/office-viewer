@@ -18,8 +18,7 @@ export class FileProcessor {
     gif: 'image',
     webp: 'image',
     rtf: 'rtf',
-    pptx: 'unknown', // Not fully supported yet
-    ppt: 'unknown', // Not fully supported yet
+    pptx: 'pptx',
   };
 
   static getFileType(fileName: string): FileType {
@@ -40,7 +39,7 @@ export class FileProcessor {
         return this.processInMainThread(file);
       }
     }
-    
+
     // Fallback to main thread if workers not supported
     return this.processInMainThread(file);
   }
@@ -51,7 +50,7 @@ export class FileProcessor {
   private static async processWithWorker(file: File): Promise<{ type: FileType; data: any }> {
     return new Promise((resolve, reject) => {
       const worker = new Worker(new URL('./fileProcessor.worker.ts', import.meta.url));
-      
+
       // Set timeout for worker processing to prevent hanging
       const timeout = setTimeout(() => {
         worker.terminate();
@@ -91,7 +90,7 @@ export class FileProcessor {
         return { type, data: this.processExcel(buffer) };
       }
 
-      if (type === 'docx' || type === 'pdf' || type === 'rtf') {
+      if (type === 'docx' || type === 'pdf' || type === 'rtf' || type === 'pptx') {
         const buffer = await file.arrayBuffer();
         return { type, data: buffer };
       }

@@ -36,6 +36,9 @@ const getQueryType = (query: string): FileType | null => {
   if (lowerQuery.includes('dbf') || lowerQuery.includes('dbase')) {
     return 'dbf';
   }
+  if (lowerQuery.includes('powerpoint') || lowerQuery.includes('pptx') || lowerQuery.includes('presentation') || lowerQuery.includes('slide')) {
+    return 'pptx';
+  }
   
   return null;
 };
@@ -56,7 +59,7 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
     if (metaDescription) {
       metaDescription.setAttribute(
         'content',
-        'High-performance local viewer for PDF, Excel (XLS/XLSX), Word (DOC/DOCX), Access databases (MDB/ACCDB), SQLite databases (DB/SQLite3), RTF, Markdown, and Images. Secure, offline-first app with Zen Mode and multi-tab support.'
+        'High-performance local viewer for PDF, Excel (XLS/XLSX), Word (DOC/DOCX), PowerPoint (PPT/PPTX), Access databases (MDB/ACCDB), SQLite databases (DB/SQLite3), RTF, Markdown, and Images. Secure, offline-first app with Zen Mode and multi-tab support.'
       );
     }
     const metaKeywords = document.querySelector('meta[name="keywords"]');
@@ -77,7 +80,7 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
     if (ogDescription) {
       ogDescription.setAttribute(
         'content',
-        'High-performance local viewer for PDF, Excel (XLS/XLSX), Word (DOC/DOCX), Access databases (MDB/ACCDB), SQLite databases (DB/SQLite3), RTF, Markdown, and Images.'
+        'High-performance local viewer for PDF, Excel (XLS/XLSX), Word (DOC/DOCX), PowerPoint (PPT/PPTX), Access databases (MDB/ACCDB), SQLite databases (DB/SQLite3), RTF, Markdown, and Images.'
       );
     }
     const twitterTitle = document.querySelector('meta[name="twitter:title"]');
@@ -91,7 +94,7 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
     if (twitterDescription) {
       twitterDescription.setAttribute(
         'content',
-        'High-performance local viewer for PDF, Excel, Word, Access, SQLite, RTF, Markdown, and Images.'
+        'High-performance local viewer for PDF, Excel, Word, PowerPoint, Access, SQLite, RTF, Markdown, and Images.'
       );
     }
     return;
@@ -220,6 +223,14 @@ export const getFileIcon = (type: FileType) => {
         <div className="w-4 h-4 text-orange-600">
           <svg fill="currentColor" viewBox="0 0 24 24">
             <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+          </svg>
+        </div>
+      );
+    case 'pptx':
+      return (
+        <div className="w-4 h-4 text-orange-500">
+          <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM17 19H7v-2h10v2zm0-4H7v-2h10v2z" />
           </svg>
         </div>
       );

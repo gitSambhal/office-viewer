@@ -20,6 +20,7 @@ export const FILE_EXTENSIONS = {
   DB: '.db',
   DB3: '.db3',
   DBF: '.dbf',
+  PPTX: '.pptx',
 } as const;
 
 // Supported file types array for quick access
@@ -47,6 +48,7 @@ export const FILE_TYPE_EXTENSIONS = {
   mdb: [FILE_EXTENSIONS.MDB, FILE_EXTENSIONS.ACCDB],
   sqlite: [FILE_EXTENSIONS.SQLITE, FILE_EXTENSIONS.DB, FILE_EXTENSIONS.DB3],
   dbf: FILE_EXTENSIONS.DBF,
+  pptx: FILE_EXTENSIONS.PPTX,
 } as const;
 
 // Export formats
@@ -246,5 +248,11 @@ export const FILE_TYPE_SEO = {
     description: 'Free online DBF file viewer. View dBase database files with our fast and secure DBF viewer. Supports tables, fields, and data export.',
     type: 'dbf viewer',
     keywords: 'dbf viewer, dbase viewer, database viewer, table viewer',
+  },
+  pptx: {
+    title: 'PowerPoint Viewer - PPTX Presentation Reader',
+    description: 'Free online PowerPoint viewer. View PPTX files without Microsoft PowerPoint. Supports slides, animations, and transitions.',
+    type: 'presentation viewer',
+    keywords: 'powerpoint viewer, pptx viewer, presentation viewer, slide viewer',
   },
 } as const;
