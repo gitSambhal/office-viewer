@@ -30,55 +30,122 @@ export const DocxViewer: React.FC<Props> = ({ data, name }) => {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'layout' | 'speed'>('layout');
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const viewModeRef = useRef(viewMode);
+  const isMountedRef = useRef(true);
+  const renderCancelledRef = useRef(false);
+  const timeoutIdRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Update ref when viewMode changes
+  useEffect(() => {
+    viewModeRef.current = viewMode;
+  }, [viewMode]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutIdRef.current) {
+        clearTimeout(timeoutIdRef.current);
+      }
+      isMountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
+    isMountedRef.current = true;
+    renderCancelledRef.current = false;
+    
     const renderDoc = async () => {
       if (!containerRef.current) return;
+      
       setLoading(true);
       setError(null);
-
+      
       try {
+        // Clear previous content and cancel any pending render
         containerRef.current.innerHTML = '';
-
-        if (viewMode === 'layout') {
-          const renderer =
-            typeof docx !== 'undefined' ? docx : (window as any).docx;
-          if (!renderer || !renderer.renderAsync)
-            throw new Error('Layout engine missing.');
-
-          const blob = new Blob([data], {
-            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-          });
-          await renderer.renderAsync(blob, containerRef.current, undefined, {
-            className: 'docx-inner',
-            inWrapper: false,
-            ignoreWidth: false,
-            breakPages: true,
-            useBase64URL: true,
-            renderChanges: true,
-          });
-        } else {
-          // Speed mode using Mammoth for high-performance text-first rendering
-          const result = await mammoth.convertToHtml({ arrayBuffer: data });
-          containerRef.current.innerHTML = `<div class="prose dark:prose-invert max-w-none p-12 bg-white dark:bg-zinc-900 shadow-2xl rounded-lg">${result.value}</div>`;
+        if (timeoutIdRef.current) {
+          clearTimeout(timeoutIdRef.current);
+          timeoutIdRef.current = null;
         }
+        
+        const currentViewMode = viewModeRef.current;
+        
+        // Try layout mode first (if available)
+        if (currentViewMode === 'layout' && !renderCancelledRef.current) {
+          const renderer = typeof docx !== 'undefined' ? docx : (window as any).docx;
+          
+          if (renderer && renderer.renderAsync) {
+            const blob = new Blob([data], {
+              type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            });
+            
+            // Set up timeout - cancel render after 5 seconds
+            timeoutIdRef.current = setTimeout(() => {
+              renderCancelledRef.current = true;
+            }, 5000);
+            
+            try {
+              await renderer.renderAsync(blob, containerRef.current, undefined, {
+                className: 'docx-inner',
+                inWrapper: false,
+                ignoreWidth: false,
+                breakPages: true,
+                useBase64URL: true,
+                renderChanges: true,
+              });
+              
+              // Clear timeout on success
+              if (timeoutIdRef.current) {
+                clearTimeout(timeoutIdRef.current);
+                timeoutIdRef.current = null;
+              }
+              
+              // Success! Exit early
+              if (isMountedRef.current) {
+                setLoading(false);
+              }
+              return;
+            } catch (e: any) {
+              // Clear timeout on error
+              if (timeoutIdRef.current) {
+                clearTimeout(timeoutIdRef.current);
+                timeoutIdRef.current = null;
+              }
+              
+              // If cancelled (timeout), silently fall through to speed mode
+              if (renderCancelledRef.current) {
+                // Timeout - fall through to Mammoth
+              } else if (e.message && !e.message.includes('timeout')) {
+                // Real error (not timeout) - log warning but still try Mammoth
+                console.warn('Layout rendering warning:', e.message);
+              }
+            }
+          }
+        }
+        
+        // Use Mammoth for speed mode (or if layout was cancelled/timed out)
+        if (!renderCancelledRef.current && typeof mammoth !== 'undefined') {
+          const result = await mammoth.convertToHtml({ arrayBuffer: data });
+          if (containerRef.current && isMountedRef.current) {
+            containerRef.current.innerHTML = `<div class="prose dark:prose-invert max-w-none p-12 bg-white dark:bg-zinc-900 shadow-2xl rounded-lg">${result.value}</div>`;
+          }
+        } else if (typeof mammoth === 'undefined') {
+          throw new Error('Text extraction engine not available');
+        }
+        
       } catch (err: any) {
-        console.error('DOCX rendering error:', err);
-        if (isMounted) {
-          setError(`Engine Error: ${err.message}. Switching to speed mode...`);
-          if (viewMode === 'layout') setViewMode('speed');
+        if (isMountedRef.current) {
+          setError(`Unable to render: ${err.message || 'Unknown error'}. Try downloading the file.`);
         }
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMountedRef.current) {
+          setLoading(false);
+        }
       }
     };
 
     renderDoc();
-    return () => {
-      isMounted = false;
-    };
-  }, [data, viewMode]);
+  }, [data]);
 
   const handlePrint = () => {
     if (!containerRef.current) return;
@@ -125,13 +192,13 @@ export const DocxViewer: React.FC<Props> = ({ data, name }) => {
               onClick={() => setViewMode('layout')}
               className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'layout' ? 'bg-white dark:bg-zinc-700 text-violet-600 shadow-sm' : 'text-zinc-500'}`}
             >
-              Layout Fidelity
+              Layout
             </button>
             <button
               onClick={() => setViewMode('speed')}
               className={`px-3 py-1 rounded-md text-[9px] font-black uppercase tracking-widest transition-all ${viewMode === 'speed' ? 'bg-white dark:bg-zinc-700 text-violet-600 shadow-sm' : 'text-zinc-500'}`}
             >
-              High Speed
+              Speed
             </button>
           </div>
         </div>
@@ -168,6 +235,9 @@ export const DocxViewer: React.FC<Props> = ({ data, name }) => {
         {loading && (
           <div className="flex flex-col items-center justify-center h-full">
             <div className="w-10 h-10 border-4 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-xs text-zinc-500 mt-4">
+              {viewMode === 'layout' ? 'Rendering document...' : 'Extracting text...'}
+            </p>
           </div>
         )}
         {error && (

@@ -6,12 +6,12 @@ export const CreditsPopup: React.FC = () => {
 
   return (
     <>
-      {/* <button
+      <button
         onClick={() => setIsOpen(true)}
         className="text-[9px] sm:text-[10px] font-black text-zinc-400 uppercase tracking-widest hover:text-violet-500 transition-colors"
       >
         Donate
-      </button> */}
+      </button>
 
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">

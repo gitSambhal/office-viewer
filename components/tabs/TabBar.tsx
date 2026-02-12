@@ -1,6 +1,8 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useAppContext } from '../../context/AppContext';
+import { useFileHandler } from '../../hooks/useFileHandler';
 import { getFileIcon } from '../../utils/helpers';
+import { FILE_ACCEPT } from '../../constants';
 import { ContextMenu } from '../ContextMenu';
 
 const IconX = () => (
@@ -21,6 +23,8 @@ const IconX = () => (
 
 export const TabBar: React.FC = () => {
   const { state, dispatch } = useAppContext();
+  const { handleFiles } = useFileHandler();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [showScrollArrows, setShowScrollArrows] = useState(false);
   const [tabSearchTerm, setTabSearchTerm] = useState('');
   const [contextMenu, setContextMenu] = useState<{
@@ -82,6 +86,10 @@ export const TabBar: React.FC = () => {
       dispatch({ type: 'CLOSE_TAB', payload: tab.id });
     });
   };
+
+  if (state.tabs.length === 0) {
+    return null;
+  }
 
   return (
     <>
@@ -175,11 +183,10 @@ export const TabBar: React.FC = () => {
                   getFileIcon(tab.type)
                 )}
                 <span
-                  className={`text-[10px] sm:text-[11px] truncate font-black uppercase tracking-tight flex-1 ${
-                    state.activeTabId === tab.id 
-                      ? 'text-zinc-900 dark:text-zinc-100' 
-                      : 'text-zinc-500 dark:text-zinc-400'
-                  } ${tab.isLoading ? 'opacity-70' : ''}`}
+                  className={`text-[10px] sm:text-[11px] truncate font-black uppercase tracking-tight flex-1 ${state.activeTabId === tab.id
+                    ? 'text-zinc-900 dark:text-zinc-100'
+                    : 'text-zinc-500 dark:text-zinc-400'
+                    } ${tab.isLoading ? 'opacity-70' : ''}`}
                 >
                   {tab.name}
                   {tab.isLoading && <span className="ml-1 text-zinc-400">...</span>}
@@ -196,6 +203,30 @@ export const TabBar: React.FC = () => {
                 </button>
               </div>
             ))}
+          {/* New Tab Button */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center justify-center w-8 h-8 ml-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-violet-600 transition-colors shrink-0"
+            title="Open New File"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            </svg>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              className="hidden"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  handleFiles(e.target.files);
+                  e.target.value = ''; // Reset
+                }
+              }}
+              accept={FILE_ACCEPT}
+            />
+          </button>
+
           {tabSearchTerm &&
             state.tabs.filter((tab) =>
               tab.name.toLowerCase().includes(tabSearchTerm.toLowerCase())

@@ -19,7 +19,7 @@ export const RecentFiles: React.FC = () => {
             {recentFiles.map((file: any, index: number) => (
               <div
                 key={index}
-                className="flex items-center gap-3 p-3 sm:p-4 bg-white dark:bg-zinc-900 rounded-xl sm:rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/30 transition-all cursor-pointer group overflow-hidden"
+                className="flex items-center gap-3 p-3 sm:p-4 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-sm rounded-xl sm:rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm hover:shadow-md hover:border-violet-200 dark:hover:border-violet-900/30 transition-all cursor-pointer group overflow-hidden"
                 onClick={() => {
                   const fileInput = document.createElement('input');
                   fileInput.type = 'file';

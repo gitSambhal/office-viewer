@@ -49,6 +49,11 @@ export interface Tab {
   tableCount: number | null;
   // Loading state
   isLoading?: boolean;
+  // AI state per tab
+  aiExtractedText?: string;
+  aiSummary?: string;
+  aiMessages?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  isAIInsightsOpen?: boolean;
 }
 
 export interface AppState {
@@ -61,6 +66,7 @@ export interface AppState {
   globalSearchTerm: string;
   showUrlModal: boolean;
   isSearchLoading: boolean;
+  isAIInsightsOpen: boolean;
 }
 
 export interface TableData {

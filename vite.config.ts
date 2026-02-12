@@ -14,7 +14,7 @@ const indexContent = fs.readFileSync(indexPath, 'utf8');
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
-  
+
   // Create a plugin to replace environment variables in index.html
   const replaceEnvInHtml = {
     name: 'replace-env-in-html',
@@ -24,7 +24,7 @@ export default defineConfig(({ mode }) => {
         .replace(/%VITE_CLARITY_PROJECT_ID%/g, env.VITE_CLARITY_PROJECT_ID || 'XXXXXXXXXX');
     }
   };
-  
+
   return {
     server: {
       port: 3000,
@@ -98,6 +98,8 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        'react': path.resolve(__dirname, './node_modules/react'),
+        'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
       },
     },
     build: {

@@ -1,6 +1,5 @@
 import { FileType, SheetData } from '../types';
-
-declare const XLSX: any;
+import * as XLSX from 'xlsx';
 
 // File type detection
 const EXTENSION_MAP: Record<string, FileType> = {
@@ -48,7 +47,7 @@ const processExcel = (buffer: ArrayBuffer) => {
 
       sheets[name] = {
         headers: (jsonData[0] as string[]) || [],
-        rows: jsonData.slice(1),
+        rows: jsonData.slice(1) as any[][],
       };
     });
 

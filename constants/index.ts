@@ -102,6 +102,11 @@ export const UI_CONSTANTS = {
 // Supported features for dashboard
 export const FEATURES = [
   {
+    title: 'AI Local Analysis & Insights',
+    desc: 'Get instant summaries and ask factual questions about your documents using private, local AI that never leaves your device.',
+    icon: 'M13 10V3L4 14h7v7l9-11h-7z',
+  },
+  {
     title: 'Offline-First & Local Processing',
     desc: 'Your files are processed entirely on your device, ensuring privacy and security with absolutely no server uploads.',
     icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
@@ -184,40 +189,40 @@ export const PREVIEW_TABS = [
 // SEO metadata for each file type
 export const FILE_TYPE_SEO = {
   xlsx: {
-    title: 'Excel Sheet Viewer - XLSX/XLS Spreadsheet Viewer',
-    description: 'Free online Excel viewer for XLSX and XLS files. View Excel spreadsheets without Microsoft Office. Supports tables, formulas, and charts.',
-    type: 'sheet viewer',
-    keywords: 'excel viewer, xlsx viewer, xls viewer, spreadsheet viewer, sheet viewer',
+    title: 'Excel & AI Spreadsheet Analysis - XLSX/XLS Viewer',
+    description: 'Free online Excel viewer with built-in AI analysis. Chat with your spreadsheets, get summaries, and find insights instantly. 100% private local processing.',
+    type: 'ai spreadsheet viewer',
+    keywords: 'excel ai, talk to excel, xlsx viewer, spreadsheet analysis, local ai',
   },
   csv: {
-    title: 'CSV File Viewer - Comma Separated Values Reader',
-    description: 'Free online CSV file viewer. View and analyze CSV data with our easy-to-use spreadsheet viewer. Supports sorting, filtering, and search.',
-    type: 'csv viewer',
-    keywords: 'csv viewer, comma separated values, csv reader, spreadsheet viewer',
+    title: 'CSV Viewer & AI Data Analysis',
+    description: 'View and analyze CSV files with AI. Ask questions about your data and get instant answers without uploading files to a server.',
+    type: 'ai csv viewer',
+    keywords: 'csv ai, chat with csv, csv viewer, data analysis, local llm',
   },
   docx: {
-    title: 'Word Document Viewer - DOCX/DOC File Reader',
-    description: 'Free online Word document viewer. View DOCX and DOC files without Microsoft Office. Supports text formatting, images, and tables.',
-    type: 'doc viewer',
-    keywords: 'word viewer, docx viewer, doc viewer, document viewer',
+    title: 'Word Reader & AI Summarizer - DOCX Viewer',
+    description: 'Read Word documents with instant AI summaries. Chat with your DOCX files to extract key information privately in your browser.',
+    type: 'ai document reader',
+    keywords: 'word ai, docx summary, chat with document, private ai reader',
   },
   pdf: {
-    title: 'PDF Viewer - Online PDF Reader',
-    description: 'Free online PDF viewer. View PDF documents in your browser with our fast and secure PDF reader. Supports zoom, search, and printing.',
-    type: 'pdf viewer',
-    keywords: 'pdf viewer, pdf reader, online pdf viewer, document viewer',
+    title: 'PDF Viewer with AI Chat - Private Local Analysis',
+    description: 'Chat with PDF documents using local AI. Summarize reports, ask questions, and extract data from PDFs without server uploads.',
+    type: 'ai pdf viewer',
+    keywords: 'chat with pdf, pdf ai, pdf summary, local pdf analysis',
   },
   txt: {
-    title: 'Text File Viewer - TXT Document Reader',
-    description: 'Free online text file viewer. View TXT files with syntax highlighting and search capabilities. Support for large text files.',
-    type: 'text viewer',
-    keywords: 'text viewer, txt viewer, text file reader, document viewer',
+    title: 'Text File Viewer & AI Analysis',
+    description: 'View and analyze text files with local AI. Summarize notes, logs, and code snippets instantly.',
+    type: 'ai text viewer',
+    keywords: 'text ai, txt analysis, log viewer ai, local llm',
   },
   md: {
-    title: 'Markdown Viewer - MD File Reader',
-    description: 'Free online Markdown viewer. View and render MD files with beautiful formatting. Supports tables, code blocks, and links.',
-    type: 'markdown viewer',
-    keywords: 'markdown viewer, md viewer, markdown reader, document viewer',
+    title: 'Markdown Viewer & AI Helper',
+    description: 'Render Markdown files and use AI to summarize content or format structure. Perfect for documentation and notes.',
+    type: 'ai markdown viewer',
+    keywords: 'markdown ai, md viewer, documentation helper, local ai',
   },
   image: {
     title: 'Image Viewer - Photo and Image File Viewer',
@@ -250,9 +255,9 @@ export const FILE_TYPE_SEO = {
     keywords: 'dbf viewer, dbase viewer, database viewer, table viewer',
   },
   pptx: {
-    title: 'PowerPoint Viewer - PPTX Presentation Reader',
-    description: 'Free online PowerPoint viewer. View PPTX files without Microsoft PowerPoint. Supports slides, animations, and transitions.',
-    type: 'presentation viewer',
-    keywords: 'powerpoint viewer, pptx viewer, presentation viewer, slide viewer',
+    title: 'PowerPoint AI Viewer - Presentation Summaries',
+    description: 'View PowerPoint slides with instant AI summaries. Extract key points from presentations privately without Microsoft Office.',
+    type: 'ai presentation viewer',
+    keywords: 'pptx ai, powerpoint summary, chat with slides, presentation analysis',
   },
 } as const;

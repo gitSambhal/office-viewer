@@ -1,6 +1,5 @@
 import { FileType, SheetData } from '../types';
-
-declare const XLSX: any;
+import * as XLSX from 'xlsx';
 
 export class FileProcessor {
   private static EXTENSION_MAP: Record<string, FileType> = {
@@ -137,7 +136,7 @@ export class FileProcessor {
           header: 1,
           defval: '',
           raw: true,
-        });
+        }) as any[][];
 
         sheets[name] = {
           headers: (jsonData[0] as string[]) || [],

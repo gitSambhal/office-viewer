@@ -17,6 +17,7 @@ export type AppAction =
   | { type: 'CLOSE_TABS_TO_LEFT'; payload: string }
   | { type: 'CLOSE_TABS_TO_RIGHT'; payload: string }
   | { type: 'UPDATE_TAB'; payload: { id: string; updates: Partial<Tab> } }
+  | { type: 'SET_AI_INSIGHTS_OPEN'; payload: boolean }
   | { type: 'SET_SHOW_URL_MODAL'; payload: boolean };
 
 // Initial state
@@ -30,6 +31,7 @@ const initialState: AppState = {
   globalSearchTerm: '',
   showUrlModal: false,
   isSearchLoading: false,
+  isAIInsightsOpen: false,
 };
 
 // Reducer
@@ -51,18 +53,18 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
       return { ...state, globalSearchTerm: action.payload };
     case 'SET_SEARCH_LOADING':
       return { ...state, isSearchLoading: action.payload };
-     case 'ADD_TABS': {
-       const isMobile = window.innerWidth < 768;
-       return {
-         ...state,
-         tabs: [...state.tabs, ...action.payload],
-         activeTabId:
-           action.payload.length > 0
-             ? action.payload[action.payload.length - 1].id
-             : state.activeTabId,
-         isSidebarOpen: state.tabs.length === 0 ? true : (isMobile ? false : state.isSidebarOpen),
-       };
-     }
+    case 'ADD_TABS': {
+      const isMobile = window.innerWidth < 768;
+      return {
+        ...state,
+        tabs: [...state.tabs, ...action.payload],
+        activeTabId:
+          action.payload.length > 0
+            ? action.payload[action.payload.length - 1].id
+            : state.activeTabId,
+        isSidebarOpen: state.tabs.length === 0 ? true : (isMobile ? false : state.isSidebarOpen),
+      };
+    }
     case 'SET_ACTIVE_TAB':
       return { ...state, activeTabId: action.payload };
     case 'CLOSE_TAB': {
@@ -106,6 +108,8 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
           t.id === action.payload.id ? { ...t, ...action.payload.updates } : t
         ),
       };
+    case 'SET_AI_INSIGHTS_OPEN':
+      return { ...state, isAIInsightsOpen: action.payload };
     case 'SET_SHOW_URL_MODAL':
       return { ...state, showUrlModal: action.payload };
     default:

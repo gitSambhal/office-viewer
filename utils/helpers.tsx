@@ -4,7 +4,7 @@ import { FILE_TYPE_SEO } from '../constants';
 // Function to detect query type from search query
 const getQueryType = (query: string): FileType | null => {
   const lowerQuery = query.toLowerCase().trim();
-  
+
   // Check for document type keywords
   if (lowerQuery.includes('pdf') || lowerQuery.includes('pdf viewer') || lowerQuery.includes('pdf reader')) {
     return 'pdf';
@@ -39,7 +39,7 @@ const getQueryType = (query: string): FileType | null => {
   if (lowerQuery.includes('powerpoint') || lowerQuery.includes('pptx') || lowerQuery.includes('presentation') || lowerQuery.includes('slide')) {
     return 'pptx';
   }
-  
+
   return null;
 };
 
@@ -54,7 +54,7 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
   }
   if (!fileType) {
     // Reset to default SEO when no file is open
-    document.title = 'Suhail Viewer - Professional Document & Database Viewer';
+    document.title = 'Suhail Viewer - AI-Powered Local Document & Database Viewer';
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute(
@@ -108,7 +108,7 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
   }
 
   // Update page title
-  const pageTitle = fileName 
+  const pageTitle = fileName
     ? `${fileName} - ${seoData.title}`
     : seoData.title;
   document.title = pageTitle;
@@ -202,19 +202,19 @@ export const getFileIcon = (type: FileType) => {
           </svg>
         </div>
       );
+    case 'md':
+      return (
+        <div className="w-4 h-4 text-zinc-600">
+          <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6zm10-8l-4 4-4-4 1.4-1.4 2.6 2.6 2.6-2.6L16 12z" />
+          </svg>
+        </div>
+      );
     case 'mdb':
       return (
         <div className="w-4 h-4 text-teal-600">
           <svg fill="currentColor" viewBox="0 0 24 24">
-            <path d="M2 5.52v12.96C2 19.88 3.12 21 4.5 21h15c1.38 0 2.5-1.12 2.5-2.52V5.52C22 4.12 20.88 3 19.5 3H4.5C3.12 3 2 4.12 2 5.52zM12 11H9v2h3v2H9v2H7V9h5v2zm4-2h-2v6h-2v-6h-2V9h6v2z" />
-          </svg>
-        </div>
-      );
-    case 'sqlite':
-      return (
-        <div className="w-4 h-4 text-sky-600">
-          <svg fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2a10 10 0 100 20 10 10 0 000-20zm0 18a8 8 0 110-16 8 8 0 010 16zm-1-8h2v5h-2v-5zm0-3h2v2h-2V9z" />
+            <path d="M21 5c0 2.2-4.1 4-9 4S3 7.2 3 5s4.1-4 9-4 9 1.8 9 4zm0 6c0 2.2-4.1 4-9 4S3 13.2 3 11V7c0 2.2 4.1 4 9 4s9-1.8 9-4v4zm0 6c0 2.2-4.1 4-9 4S3 19.2 3 17v-4c0 2.2 4.1 4 9 4s9-1.8 9-4v4z" />
           </svg>
         </div>
       );
@@ -222,7 +222,7 @@ export const getFileIcon = (type: FileType) => {
       return (
         <div className="w-4 h-4 text-orange-600">
           <svg fill="currentColor" viewBox="0 0 24 24">
-            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+            <path d="M21 5c0 2.2-4.1 4-9 4S3 7.2 3 5s4.1-4 9-4 9 1.8 9 4zm0 6c0 2.2-4.1 4-9 4S3 13.2 3 11V7c0 2.2 4.1 4 9 4s9-1.8 9-4v4zm0 6c0 2.2-4.1 4-9 4S3 19.2 3 17v-4c0 2.2 4.1 4 9 4s9-1.8 9-4v4z" />
           </svg>
         </div>
       );
@@ -231,6 +231,14 @@ export const getFileIcon = (type: FileType) => {
         <div className="w-4 h-4 text-orange-500">
           <svg fill="currentColor" viewBox="0 0 24 24">
             <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM17 19H7v-2h10v2zm0-4H7v-2h10v2z" />
+          </svg>
+        </div>
+      );
+    case 'sqlite':
+      return (
+        <div className="w-4 h-4 text-sky-600">
+          <svg fill="currentColor" viewBox="0 0 24 24">
+            <path d="M21 5c0 2.2-4.1 4-9 4S3 7.2 3 5s4.1-4 9-4 9 1.8 9 4zm0 6c0 2.2-4.1 4-9 4S3 13.2 3 11V7c0 2.2 4.1 4 9 4s9-1.8 9-4v4zm0 6c0 2.2-4.1 4-9 4S3 19.2 3 17v-4c0 2.2 4.1 4 9 4s9-1.8 9-4v4z" />
           </svg>
         </div>
       );

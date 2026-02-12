@@ -9,8 +9,7 @@ import { SheetData, TabStateChange } from '../types';
 import { ActionButton } from './ActionButton';
 import { ExportButton } from './ExportButton';
 import { useAppContext } from '../context/AppContext';
-
-declare const XLSX: any;
+import * as XLSX from 'xlsx';
 
 const IconColumns = () => (
   <svg
@@ -129,7 +128,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   // Virtualization state
   const [scrollTop, setScrollTop] = useState(0);
   const [containerHeight, setContainerHeight] = useState(0);
-  
+
   // Pagination for very large datasets
   const [pageSize, setPageSize] = useState(1000);
   const [currentPage, setCurrentPage] = useState(0);
@@ -183,12 +182,12 @@ export const SpreadsheetViewer: React.FC<Props> = ({
   // Async filtering with optimized performance for large datasets
   useEffect(() => {
     dispatch({ type: 'SET_SEARCH_LOADING', payload: true });
-    
+
     // Debounce search by 150ms for responsive typing
     const timer = setTimeout(() => {
       const rows = data.rows;
       const rowCount = rows.length;
-      
+
       // Skip processing if no search term and all rows are visible
       if (!globalSearchTerm && slicer.mode === 'all' && sortConfig.key === -1) {
         const result = Array.from({ length: rowCount }, (_, i) => ({
@@ -199,16 +198,16 @@ export const SpreadsheetViewer: React.FC<Props> = ({
         dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
         return;
       }
-      
+
       // Process in chunks to avoid blocking
       let indices: number[] = [];
-      
+
       // Optimal chunk size for responsive performance
       const chunkSize = 10000;
       for (let i = 0; i < rowCount; i += chunkSize) {
         const chunk = rows.slice(i, i + chunkSize);
         const chunkIndices = chunk.map((_, index) => i + index);
-        
+
         // Filter chunk
         let filteredChunk = chunkIndices;
         if (globalSearchTerm) {
@@ -222,7 +221,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
             );
           });
         }
-        
+
         indices = indices.concat(filteredChunk);
       }
 
@@ -657,56 +656,56 @@ export const SpreadsheetViewer: React.FC<Props> = ({
                 />
                 {visibleRows.length > 0
                   ? visibleRows.map(({ row, originalIndex }) => (
-                      <tr
-                        key={originalIndex}
-                        className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors"
-                        style={{ height: ROW_HEIGHT }}
-                      >
-                        <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">
-                          {originalIndex + 1}
-                        </td>
-                        {row.map(
-                          (cell, cIdx) =>
-                            !hiddenColumns.has(cIdx) && (
-                              <td
-                                key={cIdx}
-                                className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top"
-                              >
-                                {renderCell(cell, originalIndex, cIdx)}
-                              </td>
-                            )
-                        )}
-                      </tr>
-                    ))
-                  : filteredData.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={data.headers.length + 1}
-                          className="py-32 text-center"
-                        >
-                          <div className="flex flex-col items-center gap-4">
-                            <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
-                              No records found
-                            </p>
-                            <button
-                              onClick={() => {
-                                setSortConfig({ key: -1, direction: null });
-                                setSlicer({
-                                  mode: 'all',
-                                  value: 100,
-                                  endValue: 200,
-                                });
-                                setHiddenColumns(new Set());
-                                dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
-                              }}
-                              className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all"
+                    <tr
+                      key={originalIndex}
+                      className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors"
+                      style={{ height: ROW_HEIGHT }}
+                    >
+                      <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">
+                        {originalIndex + 1}
+                      </td>
+                      {row.map(
+                        (cell, cIdx) =>
+                          !hiddenColumns.has(cIdx) && (
+                            <td
+                              key={cIdx}
+                              className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top"
                             >
-                              Clear Filters
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
+                              {renderCell(cell, originalIndex, cIdx)}
+                            </td>
+                          )
+                      )}
+                    </tr>
+                  ))
+                  : filteredData.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={data.headers.length + 1}
+                        className="py-32 text-center"
+                      >
+                        <div className="flex flex-col items-center gap-4">
+                          <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
+                            No records found
+                          </p>
+                          <button
+                            onClick={() => {
+                              setSortConfig({ key: -1, direction: null });
+                              setSlicer({
+                                mode: 'all',
+                                value: 100,
+                                endValue: 200,
+                              });
+                              setHiddenColumns(new Set());
+                              dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
+                            }}
+                            className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all"
+                          >
+                            Clear Filters
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 <tr
                   style={{
                     height: Math.max(

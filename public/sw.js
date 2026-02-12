@@ -1,4 +1,4 @@
-const CACHE_NAME = 'suhail-viewer-v8';
+const CACHE_NAME = 'suhail-viewer-v10';
 
 // IndexedDB name for storing shared files
 const DB_NAME = 'suhail-viewer-shared-files';

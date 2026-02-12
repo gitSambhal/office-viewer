@@ -20,7 +20,7 @@ interface Props {
 // Function to detect query type from search query
 const getQueryType = (query: string): FileType | null => {
   const lowerQuery = query.toLowerCase().trim();
-  
+
   if (lowerQuery.includes('pdf') || lowerQuery.includes('pdf viewer') || lowerQuery.includes('pdf reader')) {
     return 'pdf';
   }
@@ -54,7 +54,7 @@ const getQueryType = (query: string): FileType | null => {
   if (lowerQuery.includes('powerpoint') || lowerQuery.includes('pptx') || lowerQuery.includes('presentation') || lowerQuery.includes('slide')) {
     return 'pptx';
   }
-  
+
   return null;
 };
 
@@ -69,7 +69,7 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
 
   const isFileSupported = (fileName: string): boolean => {
     const extension = '.' + fileName.split('.').pop()?.toLowerCase();
-    return SUPPORTED_EXTENSIONS.some(ext => 
+    return SUPPORTED_EXTENSIONS.some(ext =>
       fileName.toLowerCase().endsWith(ext.toLowerCase())
     );
   };
@@ -109,7 +109,7 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
   }, []);
 
   return (
-    <div className="max-w-5xl w-full py-8 sm:py-16">
+    <div className="max-w-5xl w-full py-8 sm:py-16 relative">
       <div className="mb-12 sm:mb-24">
         {/* Dark Mode Toggle */}
         <div className="flex justify-end mb-6">
@@ -154,6 +154,12 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
 
         {/* Hero Section Heading */}
         <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 mb-6 group transition-all hover:scale-105 active:scale-95 animate-in slide-in-from-bottom duration-700">
+            <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Local AI Insights Included</span>
+          </div>
           {queryType && FILE_TYPE_SEO[queryType] ? (
             <>
               <h2 className="text-4xl sm:text-7xl font-black text-zinc-950 dark:text-white mb-4 sm:mb-6 tracking-tighter leading-[1.05]">
@@ -166,11 +172,11 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
           ) : (
             <>
               <h2 className="text-4xl sm:text-7xl font-black text-zinc-950 dark:text-white mb-4 sm:mb-6 tracking-tighter leading-[1.05]">
-                The Universal File Viewer
+                The Universal AI{' '}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-400 dark:to-indigo-400">File Viewer</span>
               </h2>
-              <p className="text-base sm:text-xl text-zinc-500 dark:text-zinc-400 font-medium max-w-2xl mx-auto leading-relaxed">
-                Open and switch between multiple documents, spreadsheets, and
-                databases instantly. No installations, 100% local.
+              <p className="text-base sm:text-lg sm:text-xl text-zinc-500 dark:text-zinc-400 font-medium max-w-2xl mx-auto leading-relaxed">
+                Open multiple documents, spreadsheets, and databases instantly. No installations, get direct insights with <span className="text-zinc-900 dark:text-white font-bold underline decoration-violet-500 decoration-2 underline-offset-4">100% Private Local AI</span>.
               </p>
             </>
           )}
@@ -192,22 +198,22 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
               color: 'bg-blue-50 dark:bg-blue-900/10',
             },
             {
-              name: 'RTF',
-              type: 'rtf',
-              icon: getFileIcon('rtf'),
-              color: 'bg-amber-50 dark:bg-amber-900/10',
-            },
-            {
-              name: 'Markdown',
-              type: 'md',
-              icon: getFileIcon('md'),
-              color: 'bg-zinc-100 dark:bg-zinc-800/50',
-            },
-            {
               name: 'Excel',
               type: 'xlsx',
               icon: getFileIcon('xlsx'),
               color: 'bg-emerald-50 dark:bg-emerald-900/10',
+            },
+            {
+              name: 'PowerPoint',
+              type: 'pptx',
+              icon: getFileIcon('pptx'),
+              color: 'bg-orange-50 dark:bg-orange-900/10',
+            },
+            {
+              name: 'Images',
+              type: 'image',
+              icon: getFileIcon('image'),
+              color: 'bg-zinc-50 dark:bg-zinc-800/20',
             },
             {
               name: 'Access DB',
@@ -228,16 +234,16 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
               color: 'bg-orange-50 dark:bg-orange-900/10',
             },
             {
-              name: 'Images',
-              type: 'image',
-              icon: getFileIcon('image'),
-              color: 'bg-violet-50 dark:bg-violet-900/10',
+              name: 'Markdown',
+              type: 'md',
+              icon: getFileIcon('md'),
+              color: 'bg-zinc-100 dark:bg-zinc-800/50',
             },
             {
-              name: 'PowerPoint',
-              type: 'pptx',
-              icon: getFileIcon('pptx'),
-              color: 'bg-orange-50 dark:bg-orange-900/10',
+              name: 'RTF',
+              type: 'rtf',
+              icon: getFileIcon('rtf'),
+              color: 'bg-amber-50 dark:bg-amber-900/10',
             },
           ].map((fmt) => (
             <button
@@ -267,7 +273,7 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <span>{errorMessage}</span>
-                <button 
+                <button
                   onClick={() => setErrorMessage(null)}
                   className="ml-auto hover:bg-red-100 dark:hover:bg-red-800/50 rounded-full p-1 transition-colors"
                 >
@@ -279,7 +285,7 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
             </div>
           )}
         </div>
-        
+
         <div
           id="main-cta-section"
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12"
@@ -380,7 +386,7 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
         </div>
 
         {/* How it Works Section */}
-        <div className="bg-white dark:bg-zinc-900 rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 shadow-lg mb-12">
+        <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-md rounded-[1.5rem] sm:rounded-[2rem] p-6 sm:p-8 border border-zinc-200 dark:border-zinc-800 shadow-lg mb-12">
           <h3 className="text-xl sm:text-2xl font-black text-zinc-900 dark:text-white mb-6 text-center">
             How to Use
           </h3>
@@ -437,7 +443,7 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
         {FEATURES.map((feature, index) => (
           <div
             key={index}
-            className="p-5 sm:p-8 bg-zinc-50 dark:bg-zinc-900/50 rounded-[1.5rem] sm:rounded-[2rem] border border-zinc-100/50 dark:border-zinc-800/50 shadow-sm hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-900/30 transition-all group"
+            className="p-5 sm:p-8 bg-zinc-50/60 dark:bg-zinc-900/40 backdrop-blur-md rounded-[1.5rem] sm:rounded-[2rem] border border-zinc-100/50 dark:border-zinc-800/50 shadow-sm hover:shadow-xl hover:border-violet-200 dark:hover:border-violet-900/30 transition-all group"
           >
             <div className="w-12 h-12 sm:w-14 sm:h-14 bg-zinc-100 dark:bg-zinc-800 text-violet-600 rounded-xl sm:rounded-2xl flex items-center justify-center mb-4 sm:mb-6 group-hover:bg-violet-600 group-hover:text-white transition-all shadow-inner">
               <svg

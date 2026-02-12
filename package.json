@@ -12,15 +12,21 @@
     "lint:fix": "eslint . --ext ts,tsx --fix"
   },
   "dependencies": {
+    "@mlc-ai/web-llm": "^0.2.80",
+    "@tailwindcss/typography": "^0.5.19",
     "buffer": "^6.0.3",
     "dbf-js": "^1.2.1",
+    "jszip": "^3.10.1",
     "lucide-react": "^0.563.0",
     "mdb-reader": "^2.2.0",
     "pptx-viewer": "^0.1.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
+    "react-markdown": "^10.1.0",
     "regenerator-runtime": "^0.14.1",
-    "sql.js": "^1.13.0"
+    "remark-gfm": "^4.0.1",
+    "sql.js": "^1.13.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",

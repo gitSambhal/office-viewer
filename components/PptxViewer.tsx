@@ -43,6 +43,12 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore key events from inputs/textareas to allow typing (e.g. in AI chat)
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+
       if (viewerRef.current) {
         switch (e.key) {
           case 'ArrowRight':
@@ -114,7 +120,7 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
     const initViewer = async () => {
       setLoading(true);
       setError(null);
-      
+
       try {
         if (!containerRef.current) {
           throw new Error('Viewer container not found');
@@ -203,7 +209,7 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
 
   const handleToggleFullscreen = async () => {
     if (!containerRef.current) return;
-    
+
     if (isFullscreen) {
       if (document.exitFullscreen) {
         await document.exitFullscreen();
@@ -219,12 +225,12 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
     setIsSlideshowActive(true);
     setIsPaused(false);
     setSlideshowEnded(false);
-    
+
     // Start from first slide
     if (viewerRef.current) {
       viewerRef.current.goToSlide(0);
     }
-    
+
     // Start slide navigation (no automatic fullscreen)
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -289,47 +295,47 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
             </span>
           )}
         </div>
-         <div className="flex items-center gap-2">
-            <button
-              onClick={handlePrevious}
-              disabled={loading || currentSlide === 0}
-              className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] font-bold rounded-md transition-colors"
-            >
-              PREV
-            </button>
-            <button
-              onClick={handleNext}
-              disabled={loading || currentSlide === slideCount - 1}
-              className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] font-bold rounded-md transition-colors"
-            >
-              NEXT
-            </button>
-            <button
-              onClick={toggleSlideshow}
-              disabled={loading}
-              className="px-3 py-1 bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] font-bold text-green-700 dark:text-green-300 rounded-md transition-colors"
-            >
-              {isSlideshowActive ? 'STOP SLIDESHOW' : 'SLIDESHOW'}
-            </button>
-            <select
-              value={slideshowInterval}
-              onChange={handleIntervalChange}
-              disabled={loading || isSlideshowActive}
-              className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-md text-[10px] font-bold text-zinc-700 dark:text-zinc-300"
-            >
-              <option value={2000}>2 sec</option>
-              <option value={3000}>3 sec</option>
-              <option value={5000}>5 sec</option>
-              <option value={10000}>10 sec</option>
-            </select>
-            <button
-              onClick={handleToggleFullscreen}
-              disabled={loading}
-              className="px-3 py-1 bg-violet-100 dark:bg-violet-900 hover:bg-violet-200 dark:hover:bg-violet-800 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] font-bold text-violet-700 dark:text-violet-300 rounded-md transition-colors"
-            >
-              {isFullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN'}
-            </button>
-          </div>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handlePrevious}
+            disabled={loading || currentSlide === 0}
+            className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] font-bold rounded-md transition-colors"
+          >
+            PREV
+          </button>
+          <button
+            onClick={handleNext}
+            disabled={loading || currentSlide === slideCount - 1}
+            className="px-3 py-1 bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-200 dark:hover:bg-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] font-bold rounded-md transition-colors"
+          >
+            NEXT
+          </button>
+          <button
+            onClick={toggleSlideshow}
+            disabled={loading}
+            className="px-3 py-1 bg-green-100 dark:bg-green-900 hover:bg-green-200 dark:hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] font-bold text-green-700 dark:text-green-300 rounded-md transition-colors"
+          >
+            {isSlideshowActive ? 'STOP SLIDESHOW' : 'SLIDESHOW'}
+          </button>
+          <select
+            value={slideshowInterval}
+            onChange={handleIntervalChange}
+            disabled={loading || isSlideshowActive}
+            className="px-2 py-1 bg-zinc-100 dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700 rounded-md text-[10px] font-bold text-zinc-700 dark:text-zinc-300"
+          >
+            <option value={2000}>2 sec</option>
+            <option value={3000}>3 sec</option>
+            <option value={5000}>5 sec</option>
+            <option value={10000}>10 sec</option>
+          </select>
+          <button
+            onClick={handleToggleFullscreen}
+            disabled={loading}
+            className="px-3 py-1 bg-violet-100 dark:bg-violet-900 hover:bg-violet-200 dark:hover:bg-violet-800 disabled:opacity-50 disabled:cursor-not-allowed text-[10px] font-bold text-violet-700 dark:text-violet-300 rounded-md transition-colors"
+          >
+            {isFullscreen ? 'EXIT FULLSCREEN' : 'FULLSCREEN'}
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 bg-black relative">
@@ -355,7 +361,7 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
         )}
 
         {slideshowEnded && (
-          <div 
+          <div
             ref={slideshowEndedRef}
             className="fixed inset-0 flex flex-col items-center justify-center z-[9999] bg-black/80 backdrop-blur-sm outline-none"
             style={{ position: 'fixed', zIndex: 9999 }}
@@ -402,11 +408,10 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
             <button
               key={index}
               onClick={() => handleGoToSlide(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                index === currentSlide
+              className={`w-2 h-2 rounded-full transition-all duration-200 ${index === currentSlide
                   ? 'bg-violet-500 w-6 rounded'
                   : 'bg-white/50 hover:bg-white/80'
-              }`}
+                }`}
               title={`Go to slide ${index + 1}`}
             />
           ))}

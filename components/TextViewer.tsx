@@ -5,6 +5,7 @@ declare const marked: any;
 interface Props {
   content: string;
   isMarkdown: boolean;
+  globalSearchTerm?: string;
 }
 
 const IconExport = () => (
@@ -23,7 +24,7 @@ const IconExport = () => (
   </svg>
 );
 
-export const TextViewer: React.FC<Props> = ({ content, isMarkdown }) => {
+export const TextViewer: React.FC<Props> = ({ content, isMarkdown, globalSearchTerm }) => {
   const [fontSize, setFontSize] = useState(15);
   const [copied, setCopied] = useState(false);
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -35,6 +36,27 @@ export const TextViewer: React.FC<Props> = ({ content, isMarkdown }) => {
         : null,
     [content, isMarkdown]
   );
+
+  const highlightedContent = useMemo(() => {
+    if (!globalSearchTerm || isMarkdown || !content) return content;
+
+    try {
+      // Safe regex escape
+      const escapedTerm = globalSearchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`(${escapedTerm})`, 'gi');
+      const parts = content.split(regex);
+
+      return parts.map((part, i) =>
+        regex.test(part) ? (
+          <span key={i} className="bg-yellow-300 dark:bg-yellow-600/50 text-black dark:text-white rounded-[2px] shadow-sm">{part}</span>
+        ) : (
+          part
+        )
+      );
+    } catch (e) {
+      return content;
+    }
+  }, [content, globalSearchTerm, isMarkdown]);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(content);
@@ -125,7 +147,7 @@ export const TextViewer: React.FC<Props> = ({ content, isMarkdown }) => {
             />
           ) : (
             <pre className="whitespace-pre-wrap text-zinc-700 dark:text-zinc-300 font-mono leading-relaxed">
-              {content}
+              {highlightedContent}
             </pre>
           )}
         </div>
