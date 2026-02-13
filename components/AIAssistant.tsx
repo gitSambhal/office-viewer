@@ -57,6 +57,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [modelSearch, setModelSearch] = useState<string>('');
   const [showModelDropdown, setShowModelDropdown] = useState<boolean>(false);
+  const [modelSortBy, setModelSortBy] = useState<'name' | 'size' | 'performance'>('name');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -76,18 +77,58 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     return model || availableModels[0];
   }, [selectedModel, availableModels]);
 
-  // Filter models based on search
+  // Filter and sort models based on search and sort criteria
   const filteredModels = useMemo(() => {
-    if (!modelSearch.trim()) return availableModels;
-    const searchLower = modelSearch.toLowerCase();
-    return availableModels.filter(
-      m =>
-        m.displayName.toLowerCase().includes(searchLower) ||
-        m.description.toLowerCase().includes(searchLower) ||
-        m.size.toLowerCase().includes(searchLower) ||
-        m.id.toLowerCase().includes(searchLower)
-    );
-  }, [modelSearch, availableModels]);
+    let models = [...availableModels];
+    
+    // Apply search filter
+    if (modelSearch.trim()) {
+      const searchLower = modelSearch.toLowerCase();
+      models = models.filter(
+        m =>
+          m.displayName.toLowerCase().includes(searchLower) ||
+          m.description.toLowerCase().includes(searchLower) ||
+          m.size.toLowerCase().includes(searchLower) ||
+          m.id.toLowerCase().includes(searchLower)
+      );
+    }
+    
+    // Apply sorting
+    models.sort((a, b) => {
+      switch (modelSortBy) {
+        case 'name': {
+          return a.displayName.localeCompare(b.displayName);
+        }
+        case 'size': {
+          // Parse size strings and convert to bytes for comparison
+          const parseSize = (sizeStr: string): number => {
+            const match = sizeStr.match(/([\d.]+)\s*(GB|MB|KB|B)/i);
+            if (!match) return 0;
+            const value = parseFloat(match[1]);
+            const unit = match[2].toUpperCase();
+            switch (unit) {
+              case 'GB': return value * 1024 * 1024 * 1024;
+              case 'MB': return value * 1024 * 1024;
+              case 'KB': return value * 1024;
+              case 'B': return value;
+              default: return value;
+            }
+          };
+          return parseSize(a.size) - parseSize(b.size);
+        }
+        case 'performance': {
+          const perfOrder = ['Fastest', 'Fast', 'Medium', 'Slow'];
+          const idxA = perfOrder.indexOf(a.performance);
+          const idxB = perfOrder.indexOf(b.performance);
+          return idxA - idxB;
+        }
+        default:
+          return 0;
+      }
+    });
+    
+    return models;
+  }, [modelSearch, modelSortBy, availableModels]);
 
   // Initialize selected model from localStorage
   useEffect(() => {
@@ -380,61 +421,93 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
 
           {/* Dropdown Content */}
           {showModelDropdown && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-xl z-50 overflow-hidden">
-              {/* Search Input */}
-              <div className="p-2 border-b border-zinc-100 dark:border-zinc-800">
-                <div className="relative">
-                  <svg className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <input
-                    type="text"
-                    value={modelSearch}
-                    onChange={(e) => setModelSearch(e.target.value)}
-                    placeholder="Search models..."
-                    className="w-full pl-9 pr-3 py-1.5 bg-zinc-50 dark:bg-zinc-800 border-0 rounded-md text-xs outline-none focus:ring-1 focus:ring-violet-500 placeholder-zinc-400"
-                    autoFocus
-                  />
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in duration-200">
+              {/* Search and Filter Row */}
+              <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30">
+                <div className="flex gap-2">
+                  {/* Search Input */}
+                  <div className="relative flex-1">
+                    <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input
+                      type="text"
+                      value={modelSearch}
+                      onChange={(e) => setModelSearch(e.target.value)}
+                      placeholder="Search models..."
+                      className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent placeholder-zinc-400 transition-all"
+                      autoFocus
+                    />
+                  </div>
+                  {/* Sort Dropdown */}
+                  <div className="relative w-32">
+                    <select
+                      value={modelSortBy}
+                      onChange={(e) => setModelSortBy(e.target.value as 'name' | 'size' | 'performance')}
+                      className="w-full appearance-none px-3 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer transition-all"
+                    >
+                      <option value="name">Sort: Name</option>
+                      <option value="size">Sort: Size</option>
+                      <option value="performance">Sort: Speed</option>
+                    </select>
+                    <svg className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
                 </div>
               </div>
 
               {/* Model List */}
-              <div className="max-h-60 overflow-y-auto custom-scrollbar">
+              <div className="max-h-80 overflow-y-auto custom-scrollbar p-2">
                 {filteredModels.map((model) => {
                   const isDownloaded = isModelDownloaded(model.id);
                   const isSelected = model.id === selectedModel;
+
+                  // Performance badge colors
+                  const perfColors: Record<string, string> = {
+                    'Fastest': 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+                    'Fast': 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+                    'Medium': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+                    'Slow': 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
+                  };
+                  const perfColor = perfColors[model.performance] || 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400';
 
                   return (
                     <button
                       key={model.id}
                       onClick={() => handleModelSelect(model.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-colors ${isSelected ? 'bg-violet-50 dark:bg-violet-900/10 border-l-2 border-violet-500' : ''
-                        }`}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all ${isSelected ? 'bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800' : 'border border-transparent'}`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 bg-zinc-100 dark:bg-zinc-800 rounded-md flex items-center justify-center shrink-0">
+                        <div className="w-9 h-9 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center shrink-0">
                           {isDownloaded ? (
                             <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                             </svg>
                           ) : (
-                            <svg className="w-4 h-4 text-zinc-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-4 h-4 text-zinc-300 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                             </svg>
                           )}
                         </div>
-                        <div className="text-left min-w-0">
-                          <div className="flex items-center gap-2">
+                        <div className="text-left min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <p className="text-xs font-bold text-zinc-700 dark:text-zinc-200 truncate">{model.displayName}</p>
                             {model.isDefault && (
-                              <span className="px-1 py-0.5 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-[8px] font-black uppercase rounded">
-                                Def
-                              </span>
+                              <span className="px-1.5 py-0.5 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-[8px] font-black uppercase rounded">Default</span>
                             )}
                           </div>
-                          <p className="text-[9px] text-zinc-400 truncate">{model.size} • {model.minMemory}</p>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${perfColor}`}>
+                              {model.performance}
+                            </span>
+                            <span className="text-[9px] text-zinc-400">{model.size}</span>
+                          </div>
                         </div>
                       </div>
+                      <svg className={`w-4 h-4 transition-transform ${isSelected ? 'text-violet-500' : 'text-zinc-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                      </svg>
                     </button>
                   );
                 })}
