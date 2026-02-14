@@ -646,24 +646,56 @@ const MdbViewer: React.FC<MdbViewerProps> = ({
           </div>
         )}
       </div>
-      <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center p-1.5 z-20 overflow-x-auto no-scrollbar">
-        <div className="flex gap-1 px-1">
+      <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center px-4 py-2 z-20 shrink-0">
+        <div className="flex items-center gap-3 mr-4 shrink-0">
+          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+            {filteredData.length}{' '}
+            <span className="text-[10px] opacity-60">records</span>
+          </span>
+        </div>
+        {tables.length > 5 && (
+          <button
+            className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors shrink-0 mr-1 touch-manipulation"
+            title="Scroll left"
+            onClick={() => {
+              const container = document.getElementById('tables-tabs-container');
+              if (container) container.scrollBy({ left: -200, behavior: 'smooth' });
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+        <div id="tables-tabs-container" className="flex gap-0 overflow-x-auto no-scrollbar flex-1">
           {tables.map((table) => (
             <button
               key={table.id}
               title={`Switch to ${table.name}`}
               onClick={() => setActiveTableId(table.id)}
-              className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border whitespace-nowrap ${activeTableId === table.id ? 'bg-violet-600 text-white border-violet-600 shadow-md scale-105' : 'text-zinc-500 border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}
+              className={`px-6 py-2 text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border-b-2 relative ${activeTableId === table.id ? 'border-violet-600 text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/10' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
             >
               {table.name}
+              {activeTableId === table.id && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 rounded-t"></div>
+              )}
             </button>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-4 px-4 border-l border-zinc-200 dark:border-zinc-800">
-          <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">
-            {filteredData.length} Records
-          </span>
-        </div>
+        {tables.length > 5 && (
+          <button
+            className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors shrink-0 ml-1 touch-manipulation"
+            title="Scroll right"
+            onClick={() => {
+              const container = document.getElementById('tables-tabs-container');
+              if (container) container.scrollBy({ left: 200, behavior: 'smooth' });
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );

@@ -372,7 +372,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
       return (
         <textarea
           autoFocus
-          className="w-full h-full p-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white outline-none ring-2 ring-violet-500 font-medium resize-none min-h-[44px]"
+          className="w-full h-full p-3 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white outline-none ring-2 ring-violet-500 font-medium resize-none min-h-[44px]"
           defaultValue={value}
           onBlur={(e) => {
             if (e.target.value !== String(value ?? '')) {
@@ -409,11 +409,11 @@ export const SpreadsheetViewer: React.FC<Props> = ({
 
     return (
       <div
-        className={`px-3 py-2 cursor-text hover:bg-zinc-100/50 dark:hover:bg-zinc-800/50 text-zinc-800 dark:text-zinc-100 flex relative transition-colors whitespace-nowrap overflow-hidden text-ellipsis text-sm leading-normal ${isNumber ? 'justify-end font-mono font-bold text-violet-600 dark:text-violet-400' : ''} ${isBoolean ? 'justify-center' : ''} ${isNull ? 'italic text-zinc-300 dark:text-zinc-700' : ''}`}
+        className={`px-3 py-2.5 cursor-text hover:bg-violet-50/70 dark:hover:bg-violet-900/30 text-zinc-700 dark:text-zinc-200 flex relative transition-all whitespace-nowrap overflow-hidden text-ellipsis text-sm leading-normal ${isNumber ? 'justify-end font-mono font-semibold text-violet-600 dark:text-violet-400' : ''} ${isBoolean ? 'justify-center' : ''} ${isNull ? 'italic text-zinc-300 dark:text-zinc-600' : ''}`}
         onDoubleClick={() => setEditingCell({ r: originalRowIndex, c: cIdx })}
       >
         {isBoolean ? (
-          <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 self-start mt-0.5">
+          <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 self-center">
             {String(value)}
           </span>
         ) : (
@@ -424,7 +424,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
         {history && (
           <div
             title={`Original: ${history.oldValue}`}
-            className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-amber-500"
+            className="absolute top-1 right-1 w-2 h-2 border-t-2 border-r-2 border-amber-500 rounded-tr"
           />
         )}
       </div>
@@ -613,8 +613,8 @@ export const SpreadsheetViewer: React.FC<Props> = ({
           >
             <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0">
               <thead className="sticky top-0 z-20 shadow-sm">
-                <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
-                  <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] text-zinc-400 font-black uppercase py-2">
+                <tr className="bg-gradient-to-r from-zinc-100 to-zinc-50 dark:from-zinc-900 dark:to-zinc-800 border-b border-zinc-200 dark:border-zinc-700">
+                  <th className="w-12 border-r border-zinc-200 dark:border-zinc-700 text-[9px] text-zinc-500 dark:text-zinc-400 font-black uppercase py-3 bg-zinc-200/50 dark:bg-zinc-800/50">
                     #
                   </th>
                   {data.headers.map(
@@ -623,18 +623,19 @@ export const SpreadsheetViewer: React.FC<Props> = ({
                         <th
                           key={i}
                           style={{ width: columnWidths[i] || 150 }}
-                          className={`relative px-3 py-2 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-800 cursor-pointer hover:bg-zinc-200 dark:hover:bg-zinc-800 group transition-colors uppercase select-none ${sortConfig.key === i ? 'text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/20' : 'text-zinc-500'}`}
+                          className={`relative px-3 py-3 text-left text-[10px] font-black border-r border-zinc-200 dark:border-zinc-700 cursor-pointer hover:bg-violet-100/50 dark:hover:bg-violet-900/20 group transition-all select-none ${sortConfig.key === i ? 'text-violet-700 dark:text-violet-300 bg-violet-50/80 dark:bg-violet-900/30' : 'text-zinc-600 dark:text-zinc-300'}`}
                         >
                           <div
-                            className="flex items-center justify-between h-full"
+                            className="flex items-center justify-between h-full gap-2"
                             title={`Sort by ${header || 'Column'}`}
                             onClick={() => handleToggleSort(i)}
                           >
-                            <span className="truncate pr-4">
+                            <span className="truncate pr-2 flex items-center gap-2">
+                              <span className={`w-1.5 h-1.5 rounded-full ${hiddenColumns.has(i) ? 'bg-zinc-300 dark:bg-zinc-600' : 'bg-violet-500 shadow-sm shadow-violet-500/50'}`} />
                               {header || `Col ${i + 1}`}
                             </span>
                             <div
-                              className={`${sortConfig.key === i ? 'opacity-100' : 'opacity-0 group-hover:opacity-40'} transition-opacity`}
+                              className={`${sortConfig.key === i ? 'opacity-100 text-violet-600 dark:text-violet-400' : 'opacity-0 group-hover:opacity-50'} transition-all flex-shrink-0`}
                             >
                               <IconSort />
                             </div>
@@ -642,7 +643,7 @@ export const SpreadsheetViewer: React.FC<Props> = ({
                           <div
                             onMouseDown={(e) => handleResizeStart(e, i)}
                             title="Drag to resize column"
-                            className="absolute right-0 top-0 bottom-0 w-1.5 cursor-col-resize hover:bg-violet-500 transition-colors z-30"
+                            className="absolute right-0 top-0 bottom-0 w-2 cursor-col-resize hover:bg-violet-500/30 transition-colors rounded-l"
                           />
                         </th>
                       )
@@ -656,56 +657,61 @@ export const SpreadsheetViewer: React.FC<Props> = ({
                 />
                 {visibleRows.length > 0
                   ? visibleRows.map(({ row, originalIndex }) => (
-                    <tr
-                      key={originalIndex}
-                      className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors"
-                      style={{ height: ROW_HEIGHT }}
-                    >
-                      <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">
-                        {originalIndex + 1}
-                      </td>
-                      {row.map(
-                        (cell, cIdx) =>
-                          !hiddenColumns.has(cIdx) && (
-                            <td
-                              key={cIdx}
-                              className="p-0 border-r border-zinc-200 dark:border-zinc-800 align-top"
-                            >
-                              {renderCell(cell, originalIndex, cIdx)}
-                            </td>
-                          )
-                      )}
-                    </tr>
-                  ))
-                  : filteredData.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={data.headers.length + 1}
-                        className="py-32 text-center"
+                      <tr
+                        key={originalIndex}
+                        className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-violet-50/50 dark:hover:bg-violet-900/20 transition-all duration-150"
+                        style={{ height: ROW_HEIGHT }}
                       >
-                        <div className="flex flex-col items-center gap-4">
-                          <p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">
-                            No records found
-                          </p>
-                          <button
-                            onClick={() => {
-                              setSortConfig({ key: -1, direction: null });
-                              setSlicer({
-                                mode: 'all',
-                                value: 100,
-                                endValue: 200,
-                              });
-                              setHiddenColumns(new Set());
-                              dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
-                            }}
-                            className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all"
-                          >
-                            Clear Filters
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
+                        <td className="text-center text-[10px] text-zinc-500 dark:text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30 group-hover:bg-violet-100/30 dark:group-hover:bg-violet-900/20 transition-colors">
+                          {originalIndex + 1}
+                        </td>
+                        {row.map(
+                          (cell, cIdx) =>
+                            !hiddenColumns.has(cIdx) && (
+                              <td
+                                key={cIdx}
+                                className="p-0 border-r border-zinc-100 dark:border-zinc-800 align-top relative overflow-hidden"
+                              >
+                                {renderCell(cell, originalIndex, cIdx)}
+                              </td>
+                            )
+                        )}
+                      </tr>
+                    ))
+                  : filteredData.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={data.headers.length + 1}
+                          className="py-32 text-center"
+                        >
+                          <div className="flex flex-col items-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
+                              <svg className="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121zM12 9V5a3 3 0 00-3-3 3 3 0 00-3 3v4m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                            </div>
+                            <p className="text-[11px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
+                              No records found
+                            </p>
+                            <button
+                              onClick={() => {
+                                setSortConfig({ key: -1, direction: null });
+                                setSlicer({
+                                  mode: 'all',
+                                  value: 100,
+                                  endValue: 200,
+                                });
+                                setHiddenColumns(new Set());
+                                dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
+                              }}
+                              className="px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-full text-[10px] font-black uppercase tracking-wider transition-all shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
+                            >
+                              Clear Filters
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
                 <tr
                   style={{
                     height: Math.max(
@@ -721,25 +727,56 @@ export const SpreadsheetViewer: React.FC<Props> = ({
         )}
       </div>
 
-      <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center p-1.5 overflow-x-auto no-scrollbar z-20 shrink-0">
-        <div className="flex gap-1 px-1">
+      <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center px-4 py-2 z-20 shrink-0">
+        <div className="flex items-center gap-3 mr-4 shrink-0">
+          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+            {filteredData.length}{' '}
+            <span className="text-[10px] opacity-60">rows</span>
+          </span>
+        </div>
+        {Object.keys(sheets).length > 5 && (
+          <button
+            className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors shrink-0 mr-1 touch-manipulation"
+            title="Scroll left"
+            onClick={() => {
+              const container = document.getElementById('sheets-tabs-container');
+              if (container) container.scrollBy({ left: -200, behavior: 'smooth' });
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+        )}
+        <div id="sheets-tabs-container" className="flex gap-0 overflow-x-auto no-scrollbar flex-1">
           {Object.keys(sheets).map((name) => (
             <button
               key={name}
               title={`Switch to ${name}`}
               onClick={() => onSheetChange(name)}
-              className={`px-4 py-1.5 text-[10px] font-black uppercase tracking-widest rounded-lg transition-all border whitespace-nowrap ${activeSheet === name ? 'bg-violet-600 text-white border-violet-600 shadow-md scale-105' : 'text-zinc-500 border-transparent hover:bg-zinc-50 dark:hover:bg-zinc-800'}`}
+              className={`px-6 py-2 text-xs font-bold uppercase tracking-wider transition-all whitespace-nowrap border-b-2 relative ${activeSheet === name ? 'border-violet-600 text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/10' : 'border-transparent text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/50'}`}
             >
               {name}
+              {activeSheet === name && (
+                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-violet-600 rounded-t"></div>
+              )}
             </button>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-4 px-4 border-l border-zinc-200 dark:border-zinc-800">
-          <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">
-            {filteredData.length}{' '}
-            <span className="text-[8px] opacity-60">Records</span>
-          </span>
-        </div>
+        {Object.keys(sheets).length > 5 && (
+          <button
+            className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors shrink-0 ml-1 touch-manipulation"
+            title="Scroll right"
+            onClick={() => {
+              const container = document.getElementById('sheets-tabs-container');
+              if (container) container.scrollBy({ left: 200, behavior: 'smooth' });
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        )}
       </div>
     </div>
   );

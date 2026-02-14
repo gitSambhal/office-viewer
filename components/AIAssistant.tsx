@@ -424,35 +424,33 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
             <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in duration-200">
               {/* Search and Filter Row */}
               <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30">
-                <div className="flex gap-2">
-                  {/* Search Input */}
-                  <div className="relative flex-1">
-                    <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input
-                      type="text"
-                      value={modelSearch}
-                      onChange={(e) => setModelSearch(e.target.value)}
-                      placeholder="Search models..."
-                      className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent placeholder-zinc-400 transition-all"
-                      autoFocus
-                    />
-                  </div>
-                  {/* Sort Dropdown */}
-                  <div className="relative w-32">
-                    <select
-                      value={modelSortBy}
-                      onChange={(e) => setModelSortBy(e.target.value as 'name' | 'size' | 'performance')}
-                      className="w-full appearance-none px-3 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-violet-500 cursor-pointer transition-all"
-                    >
-                      <option value="name">Sort: Name</option>
-                      <option value="size">Sort: Size</option>
-                      <option value="performance">Sort: Speed</option>
-                    </select>
-                    <svg className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
+                {/* Search Input */}
+                <div className="relative mb-3">
+                  <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    value={modelSearch}
+                    onChange={(e) => setModelSearch(e.target.value)}
+                    placeholder="Search models..."
+                    className="w-full pl-10 pr-4 py-2.5 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg text-sm outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent placeholder-zinc-400 transition-all"
+                    autoFocus
+                  />
+                </div>
+                {/* Sort Buttons with Default Label */}
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-zinc-400">Sort:</span>
+                  <div className="flex gap-1 flex-1">
+                    {(['name', 'size', 'performance'] as const).map((key) => (
+                      <button
+                        key={key}
+                        onClick={() => setModelSortBy(key)}
+                        className={`flex-1 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide rounded transition-all ${modelSortBy === key ? 'bg-violet-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
+                      >
+                        {key === 'name' ? 'Name' : key === 'size' ? 'Size' : 'Speed'}
+                      </button>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -476,11 +474,15 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                     <button
                       key={model.id}
                       onClick={() => handleModelSelect(model.id)}
-                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all ${isSelected ? 'bg-violet-50 dark:bg-violet-900/10 border border-violet-200 dark:border-violet-800' : 'border border-transparent'}`}
+                      className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all ${isSelected ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800' : 'border border-transparent'}`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-9 h-9 bg-zinc-100 dark:bg-zinc-800 rounded-lg flex items-center justify-center shrink-0">
-                          {isDownloaded ? (
+                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? 'bg-violet-100 dark:bg-violet-900/30' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
+                          {isSelected ? (
+                            <svg className="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                          ) : isDownloaded ? (
                             <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
                             </svg>
@@ -491,23 +493,20 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                           )}
                         </div>
                         <div className="text-left min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-xs font-bold text-zinc-700 dark:text-zinc-200 truncate">{model.displayName}</p>
-                            {model.isDefault && (
-                              <span className="px-1.5 py-0.5 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 text-[8px] font-black uppercase rounded">Default</span>
-                            )}
-                          </div>
+                          <p className={`text-xs font-bold truncate ${isSelected ? 'text-violet-700 dark:text-violet-300' : 'text-zinc-700 dark:text-zinc-200'}`}>{model.displayName}</p>
                           <div className="flex items-center gap-2 mt-0.5">
                             <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${perfColor}`}>
                               {model.performance}
                             </span>
                             <span className="text-[9px] text-zinc-400">{model.size}</span>
+                            {(isSelected || model.isDefault) && (
+                              <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${isSelected ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'}`}>
+                                {isSelected ? 'Selected' : 'Default'}
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
-                      <svg className={`w-4 h-4 transition-transform ${isSelected ? 'text-violet-500' : 'text-zinc-300'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                      </svg>
                     </button>
                   );
                 })}

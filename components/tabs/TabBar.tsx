@@ -132,10 +132,10 @@ export const TabBar: React.FC = () => {
         {showScrollArrows && (
           <button
             onClick={() => handleScrollTabs('left')}
-            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors touch-manipulation"
           >
             <svg
-              className="w-3.5 h-3.5"
+              className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -239,10 +239,10 @@ export const TabBar: React.FC = () => {
         {showScrollArrows && (
           <button
             onClick={() => handleScrollTabs('right')}
-            className="p-1.5 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full"
+            className="p-2 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded transition-colors touch-manipulation"
           >
             <svg
-              className="w-3.5 h-3.5"
+              className="w-4 h-4"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"

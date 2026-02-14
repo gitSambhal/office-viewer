@@ -3,7 +3,7 @@ import { CreateMLCEngine, MLCEngineInterface, InitProgressCallback, prebuiltAppC
 // AI Model configurations - using smaller models for faster downloads
 // AI Model configurations - dynamically loaded from WebLLM prebuilt config
 // Filter out embedding models - they cannot be used for chat completion
-export const AI_MODELS = prebuiltAppConfig.model_list
+const processedModels = prebuiltAppConfig.model_list
   .filter((model) => {
     // Exclude embedding models (they use EmbeddingPipeline, not LLMChatPipeline)
     const isEmbeddingModel = model.model_id.toLowerCase().includes('embed');
@@ -14,9 +14,7 @@ export const AI_MODELS = prebuiltAppConfig.model_list
     const sizeStr = vram > 1024 ? `${(vram / 1024).toFixed(1)} GB` : `${Math.round(vram)} MB`;
 
     // Format display name
-    let name = model.model_id
-      .replace(/-q4f16_1-MLC|-q4f32_1-MLC|-q0f16-MLC|-q0f32-MLC/g, '')
-      .replace(/-/g, ' ');
+    let name = model.model_id.replace(/-MLC/g, '').replace(/-/g, ' ');
 
     // Heuristic for performance
     let perf = 'Medium';
@@ -31,9 +29,14 @@ export const AI_MODELS = prebuiltAppConfig.model_list
       size: sizeStr,
       minMemory: sizeStr,
       performance: perf,
-      isDefault: model.model_id === 'Llama-3.2-3B-Instruct-q4f16_1-MLC', // Set a reasonable default
+      isDefault: model.model_id === 'smollm2-135m-MLC', // Set smollm2-135m as default
     };
   });
+
+// Ensure only unique models are kept, based on their ID
+const uniqueModels = Array.from(new Map(processedModels.map(model => [model.id, model])).values());
+
+export const AI_MODELS = uniqueModels;
 
 // Fallback default if specific one not found
 if (!AI_MODELS.some(m => m.isDefault) && AI_MODELS.length > 0) {
