@@ -2,6 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { TableData, TabStateChange } from '../types';
 import { ActionButton } from './ActionButton';
 import { ExportButton } from './ExportButton';
+import { DatabaseActionButtons } from './DatabaseActionButtons';
 import { useAppContext } from '../context/AppContext';
 
 // Icons
@@ -142,6 +143,8 @@ const DbfViewer: React.FC<DbfViewerProps> = ({
   const [filteredData, setFilteredData] = useState<
     { row: any[]; originalIndex: number }[]
   >([]);
+  const [wrapText, setWrapText] = useState(false);
+  const [fillWidth, setFillWidth] = useState(true);
 
   // Async filtering
   useEffect(() => {
@@ -335,7 +338,7 @@ const DbfViewer: React.FC<DbfViewerProps> = ({
 
     return (
       <div
-        className={`px-3 py-2 text-zinc-800 dark:text-zinc-100 whitespace-nowrap overflow-hidden text-ellipsis text-sm ${isNumber ? 'justify-end font-mono font-bold text-violet-600 dark:text-violet-400' : ''} ${isBoolean ? 'justify-center' : ''} ${isNull ? 'italic text-zinc-300 dark:text-zinc-700' : ''}`}
+        className={`px-3 py-2 text-zinc-800 dark:text-zinc-100 whitespace-nowrap overflow-hidden text-ellipsis text-sm ${isNumber ? 'justify-end font-mono font-bold text-violet-600 dark:text-violet-400' : ''} ${isBoolean ? 'justify-center' : ''} ${isNull ? 'italic text-zinc-200 dark:text-zinc-700' : ''}`}
       >
         {isBoolean ? (
           <span className="px-1.5 py-0.5 rounded-md text-[9px] font-black uppercase tracking-tighter bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 self-start mt-0.5">
@@ -354,164 +357,31 @@ const DbfViewer: React.FC<DbfViewerProps> = ({
 
   return (
     <div className="flex-1 flex flex-col min-w-0 h-full bg-zinc-50 dark:bg-zinc-950">
-      <div className="flex items-center gap-3 p-2.5 border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm z-30">
-        <div className="flex items-center gap-1 shrink-0">
-          <ActionButton
-            icon={<IconSlicer />}
-            title="Filter and Slice Dataset"
-            isActive={slicer.mode !== 'all'}
-            onClick={() => {
-              setIsColumnManagerOpen(false);
-              setIsExportOpen(false);
-            }}
-            registerCloseActionPopups={registerCloseActionPopups}
-          >
-            <div className="absolute left-0 mt-2 w-56 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl p-4 z-40 animate-in fade-in slide-in-from-top-2">
-              <h4 className="text-[10px] font-black uppercase tracking-widest mb-3 text-zinc-400">
-                View Slicer
-              </h4>
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {['all', 'first', 'last', 'range'].map((mode) => (
-                  <button
-                    key={mode}
-                    onClick={() =>
-                      setSlicer((s) => ({ ...s, mode: mode as any }))
-                    }
-                    className={`text-[10px] font-black uppercase tracking-tighter py-2 rounded-md transition-all ${slicer.mode === mode ? 'bg-violet-600 text-white' : 'bg-zinc-100 dark:bg-zinc-700 text-zinc-500 hover:text-zinc-800 dark:hover:text-white'}`}
-                  >
-                    {mode}
-                  </button>
-                ))}
-              </div>
-              {slicer.mode !== 'all' && (
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[9px] font-black uppercase text-zinc-400">
-                      {slicer.mode === 'range' ? 'Start' : 'Count'}
-                    </span>
-                    <input
-                      type="number"
-                      className="w-16 p-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs font-bold"
-                      value={slicer.value}
-                      onChange={(e) =>
-                        setSlicer((s) => ({
-                          ...s,
-                          value: parseInt(e.target.value) || 0,
-                        }))
-                      }
-                    />
-                  </div>
-                  {slicer.mode === 'range' && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-black uppercase text-zinc-400">
-                        End
-                      </span>
-                      <input
-                        type="number"
-                        className="w-16 p-1 bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded text-xs font-bold"
-                        value={slicer.endValue}
-                        onChange={(e) =>
-                          setSlicer((s) => ({
-                            ...s,
-                            endValue: parseInt(e.target.value) || 0,
-                          }))
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </ActionButton>
-
-          <ActionButton
-            icon={<IconColumns />}
-            title="Show / Hide Columns"
-            isActive={hiddenColumns.size > 0}
-            onClick={() => {
-              setIsSlicerOpen(false);
-              setIsExportOpen(false);
-            }}
-            registerCloseActionPopups={registerCloseActionPopups}
-          >
-            <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl p-4 z-40 max-h-80 overflow-y-auto animate-in fade-in slide-in-from-top-2">
-              <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100 dark:border-zinc-700">
-                <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">
-                  Layout
-                </h4>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setHiddenColumns(new Set())}
-                    className="text-[8px] font-black uppercase text-violet-500 hover:text-violet-600"
-                  >
-                    Show All
-                  </button>
-                  <button
-                    onClick={() =>
-                      setHiddenColumns(
-                        new Set(tableData.columns.map((_, i) => i))
-                      )
-                    }
-                    className="text-[8px] font-black uppercase text-rose-500 hover:text-rose-600"
-                  >
-                    Hide All
-                  </button>
-                </div>
-              </div>
-              <div className="space-y-1">
-                {tableData.columns.map((h, i) => (
-                  <button
-                    key={i}
-                    onClick={() => toggleColumnVisibility(i)}
-                    className="w-full flex items-center justify-between px-2.5 py-2 hover:bg-zinc-50 dark:hover:bg-zinc-700 rounded-lg transition-all"
-                  >
-                    <span
-                      className={`text-[10px] font-bold uppercase truncate max-w-[150px] ${hiddenColumns.has(i) ? 'text-zinc-300 line-through' : 'text-zinc-700 dark:text-zinc-200'}`}
-                    >
-                      {h || `Col ${i + 1}`}
-                    </span>
-                    <div
-                      className={`w-2.5 h-2.5 rounded-full ${!hiddenColumns.has(i) ? 'bg-emerald-500 shadow-sm shadow-emerald-500/20' : 'bg-zinc-200 dark:bg-zinc-700'}`}
-                    />
-                  </button>
-                ))}
-              </div>
-            </div>
-          </ActionButton>
-
-          <button
-            title="Clear all filters and sorts"
-            onClick={() => {
-              setSortConfig({ key: '', direction: null });
-              setSlicer({ mode: 'all', value: 100, endValue: 200 });
-              setHiddenColumns(new Set());
-              dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
-            }}
-            className="p-1.5 rounded-lg border bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-zinc-700 transition-all"
-          >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
-          </button>
-        </div>
-
-        <ExportButton
-          tableName={tableData.name}
-          columns={tableData.columns}
-          data={filteredData.map((d) => d.row)}
-          registerCloseActionPopups={registerCloseActionPopups}
-        />
-      </div>
+      <DatabaseActionButtons
+        slicer={slicer}
+        setSlicer={setSlicer}
+        isSlicerOpen={isSlicerOpen}
+        setIsSlicerOpen={setIsSlicerOpen}
+        hiddenColumns={hiddenColumns}
+        toggleColumnVisibility={toggleColumnVisibility}
+        setHiddenColumns={setHiddenColumns}
+        columns={tableData.columns}
+        onClearFilters={() => {
+          setSortConfig({ key: '', direction: null });
+          setSlicer({ mode: 'all', value: 100, endValue: 200 });
+          setHiddenColumns(new Set());
+          dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
+        }}
+        wrapText={wrapText}
+        setWrapText={setWrapText}
+        exportTableName={tableData.name}
+        exportColumns={tableData.columns}
+        exportData={filteredData.map((d) => d.row)}
+        registerCloseActionPopups={registerCloseActionPopups}
+        dispatch={dispatch}
+        fillWidth={fillWidth}
+        setFillWidth={setFillWidth}
+      />
 
       <div
         ref={scrollContainerRef}
@@ -534,7 +404,7 @@ const DbfViewer: React.FC<DbfViewerProps> = ({
               position: 'relative',
             }}
           >
-            <table className="w-full border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0">
+            <table className={`${fillWidth ? 'w-full' : 'w-min'} border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0`}>
               <thead className="sticky top-0 z-20 shadow-sm">
                 <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
                   <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] font-black uppercase py-2 text-zinc-400">
@@ -582,7 +452,7 @@ const DbfViewer: React.FC<DbfViewerProps> = ({
                       className="group border-b border-zinc-100 dark:border-zinc-900 hover:bg-zinc-50/40 dark:hover:bg-zinc-900/40 transition-colors"
                       style={{ height: ROW_HEIGHT }}
                     >
-                      <td className="text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">
+                      <td className="w-12 text-center text-[10px] text-zinc-400 font-mono font-black border-r border-zinc-200 dark:border-zinc-800 py-2 select-none bg-zinc-50/50 dark:bg-zinc-900/30">
                         {startIndex + rowIndex + 1}
                       </td>
                       {rowData.row.map(

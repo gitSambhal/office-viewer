@@ -149,68 +149,36 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
   ];
 
   return (
-    <div className="relative ml-auto shrink-0">
+    <div className="relative shrink-0">
       <button
         ref={buttonRef}
         title="Download current view"
         onClick={() => setIsExportOpen(!isExportOpen)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-violet-100 hover:text-violet-700 dark:hover:bg-violet-900/30 dark:hover:text-violet-300 transition-all border border-zinc-200 dark:border-zinc-700"
+        className="p-1.5 rounded-lg border bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:text-violet-500 hover:bg-violet-50 dark:hover:bg-zinc-700 transition-all"
       >
         <IconExport className="w-4 h-4" />
-        <span>Export</span>
-        <IconChevron
-          className={`w-3 h-3 transition-transform ${isExportOpen ? 'rotate-180' : ''}`}
-        />
       </button>
 
       {isExportOpen && (
         <div
           ref={menuRef}
-          className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl shadow-2xl shadow-violet-500/10 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden"
+          className="absolute right-0 mt-2 w-40 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-xl shadow-2xl p-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-200"
         >
-          <div className="px-4 py-2 border-b border-zinc-100 dark:border-zinc-800">
-            <p className="text-xs font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-              Export Format
-            </p>
-            <p className="text-[10px] text-zinc-400 mt-0.5">
-              Choose how you want to export "{tableName}"
-            </p>
-          </div>
-
-          <div className="py-1">
+          <div className="flex flex-col gap-0.5">
             {exportOptions.map((option) => (
               <button
                 key={option.type}
                 onClick={() => handleExport(option.type)}
-                className={`w-full flex items-center gap-3 px-4 py-3 ${option.hoverBg} transition-all duration-200 group`}
+                className={`flex items-center gap-2 px-2.5 py-2 rounded-lg ${option.hoverBg} transition-all duration-150 group text-left`}
               >
-                <div
-                  className={`w-10 h-10 rounded-lg ${option.bgColor} bg-opacity-10 flex items-center justify-center text-${option.bgColor.replace('bg-', '')} group-hover:scale-110 transition-transform`}
-                >
-                  {option.icon}
-                </div>
-                <div className="flex-1 text-left">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-zinc-700 dark:text-zinc-200 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
-                      {option.label}
-                    </span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-400">
-                      {option.extension}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-zinc-400 dark:text-zinc-500 mt-0.5">
-                    {option.description}
-                  </p>
-                </div>
-                <IconArrowRight className="w-4 h-4 text-zinc-300 dark:text-zinc-600 group-hover:text-violet-500 group-hover:translate-x-1 transition-all opacity-0 group-hover:opacity-100" />
+                <span className="text-xs font-bold text-zinc-600 dark:text-zinc-300 group-hover:text-violet-600 dark:group-hover:text-violet-400 transition-colors">
+                  {option.label}
+                </span>
+                <span className="text-[9px] text-zinc-400 dark:text-zinc-500 font-mono ml-auto">
+                  {option.extension}
+                </span>
               </button>
             ))}
-          </div>
-
-          <div className="px-4 py-2 bg-zinc-50 dark:bg-zinc-800/50 border-t border-zinc-100 dark:border-zinc-800">
-            <p className="text-[10px] text-zinc-400 dark:text-zinc-500 text-center">
-              Press <kbd className="px-1.5 py-0.5 rounded bg-zinc-200 dark:bg-zinc-700 font-mono text-[10px]">ESC</kbd> to close
-            </p>
           </div>
         </div>
       )}

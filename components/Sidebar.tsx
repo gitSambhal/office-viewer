@@ -22,14 +22,14 @@ export const Sidebar: React.FC = () => {
       badge?: boolean;
     }[] = [{ label: 'File Name', value: activeTab.name }];
 
-    // Format badge
+    // Format badge - using violet for XLSX to match the app theme
     meta.push({
       label: 'Format',
       value: activeTab.type.toUpperCase(),
       badge: true,
       color:
         activeTab.type === 'xlsx'
-          ? 'emerald'
+          ? 'violet'
           : activeTab.type === 'docx'
             ? 'blue'
             : activeTab.type === 'pdf'
@@ -156,9 +156,21 @@ export const Sidebar: React.FC = () => {
     <aside
       className={`hide-in-zen w-72 bg-white dark:bg-zinc-900 border-r border-zinc-200 dark:border-zinc-800 transition-all duration-500 ease-in-out shadow-2xl z-40 ${state.isSidebarOpen ? 'translate-x-0' : '-translate-x-full absolute h-full'}`}
     >
-      <div className="p-6 space-y-8 h-full overflow-y-auto custom-scrollbar">
+      <div className="p-6 space-y-6 h-full overflow-y-auto custom-scrollbar">
+        {/* Compact File Info Bar */}
+        <div className="flex items-center gap-2 pb-4 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-black text-zinc-700 dark:text-zinc-200 truncate">
+              {activeTab.name}
+            </p>
+            <p className="text-[10px] text-zinc-400">
+              {formatBytes(activeTab.size)} • {activeTab.type.toUpperCase()}
+            </p>
+          </div>
+        </div>
+
         <section>
-          <div className="flex items-center justify-between mb-6 pb-2 border-b border-zinc-100 dark:border-zinc-800">
+          <div className="flex items-center justify-between mb-4 pb-2 border-b border-zinc-100 dark:border-zinc-800">
             <h3 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em]">
               Properties
             </h3>

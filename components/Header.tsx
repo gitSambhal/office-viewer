@@ -134,7 +134,7 @@ export const Header: React.FC = () => {
                 localStorage.setItem(STORAGE_KEYS.TYPE_AWARE, String(newValue));
                 dispatch({ type: 'SET_TYPE_AWARE_ENABLED', payload: newValue });
               }}
-              className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all border ${state.isTypeAwareEnabled ? 'bg-violet-50 border-violet-200 text-violet-600 dark:bg-violet-900/30 dark:border-violet-800 dark:text-violet-400' : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400 hover:bg-white/50'}`}
+              className={`p-1.5 sm:p-2 rounded-md sm:rounded-lg transition-all duration-300 ease-in-out ${state.isTypeAwareEnabled ? 'bg-white dark:bg-zinc-700 shadow-md text-violet-600' : 'text-zinc-500 hover:bg-white/50 dark:hover:bg-zinc-700/50'}`}
             >
               <svg
                 className="w-4 h-4 sm:w-5 sm:h-5"
