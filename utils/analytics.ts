@@ -17,8 +17,9 @@ const ANALYTICS_CONFIG = {
 // Check if analytics should be enabled (respects Do Not Track)
 const isAnalyticsEnabled = (): boolean => {
   // Check if Do Not Track is enabled
-  const doNotTrack = navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
-  
+  const doNotTrack =
+    navigator.doNotTrack || window.doNotTrack || navigator.msDoNotTrack;
+
   if (doNotTrack === '1' || doNotTrack === 'yes') {
     console.log('[Analytics] Tracking disabled by Do Not Track');
     return false;
@@ -39,12 +40,19 @@ const isAnalyticsEnabled = (): boolean => {
 };
 
 // Google Analytics 4 tracking
-export const trackGA4Event = (eventName: string, eventParams?: Record<string, any>) => {
+export const trackGA4Event = (
+  eventName: string,
+  eventParams?: Record<string, any>
+) => {
   if (!isAnalyticsEnabled()) return;
 
   const measurementId = ANALYTICS_CONFIG.googleAnalytics.measurementId;
-  
-  if (measurementId && measurementId !== 'G-XXXXXXXXXX' && (window as any).gtag) {
+
+  if (
+    measurementId &&
+    measurementId !== 'G-XXXXXXXXXX' &&
+    (window as any).gtag
+  ) {
     try {
       (window as any).gtag('event', eventName, eventParams || {});
       console.log('[Analytics] GA4 event tracked:', eventName, eventParams);
@@ -59,7 +67,7 @@ export const trackClarityEvent = (eventName: string, eventData?: any) => {
   if (!isAnalyticsEnabled()) return;
 
   const projectId = ANALYTICS_CONFIG.microsoftClarity.projectId;
-  
+
   if (projectId && projectId !== 'XXXXXXXXXX' && (window as any).clarity) {
     try {
       (window as any).clarity('set', eventName, eventData);
@@ -187,7 +195,9 @@ export const trackPerformance = (
 // Initialize analytics
 export const initializeAnalytics = () => {
   if (!isAnalyticsEnabled()) {
-    console.log('[Analytics] Analytics initialization skipped (tracking disabled)');
+    console.log(
+      '[Analytics] Analytics initialization skipped (tracking disabled)'
+    );
     return;
   }
 
@@ -210,7 +220,9 @@ export const initializeAnalytics = () => {
     user_agent: navigator.userAgent,
     screen_resolution: `${window.screen.width}x${window.screen.height}`,
     viewport: `${window.innerWidth}x${window.innerHeight}`,
-    device_type: /Mobi|Android|iPhone/i.test(navigator.userAgent) ? 'mobile' : 'desktop',
+    device_type: /Mobi|Android|iPhone/i.test(navigator.userAgent)
+      ? 'mobile'
+      : 'desktop',
   });
 };
 
@@ -219,7 +231,7 @@ export const setAnalyticsEnabled = (enabled: boolean) => {
   try {
     localStorage.setItem('analytics_disabled', String(!enabled));
     console.log('[Analytics] Tracking', enabled ? 'enabled' : 'disabled');
-    
+
     if (enabled) {
       initializeAnalytics();
     }
@@ -244,14 +256,14 @@ export const analyticsHelpers = {
   // Track time spent on page
   trackTimeOnPage: (pageName: string) => {
     const startTime = Date.now();
-    
+
     const handleBeforeUnload = () => {
       const timeOnPage = Date.now() - startTime;
       trackPerformance('time_on_page', timeOnPage, { page_name: pageName });
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
-    
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
@@ -260,9 +272,11 @@ export const analyticsHelpers = {
   // Track scroll depth
   trackScrollDepth: () => {
     const scrollDepth = Math.round(
-      (window.scrollY / (document.documentElement.scrollHeight - window.innerHeight)) * 100
+      (window.scrollY /
+        (document.documentElement.scrollHeight - window.innerHeight)) *
+        100
     );
-    
+
     if (scrollDepth >= 0 && scrollDepth <= 100) {
       trackPerformance('scroll_depth', scrollDepth);
     }
@@ -271,11 +285,11 @@ export const analyticsHelpers = {
   // Track file type distribution
   trackFileTypeDistribution: (fileTypes: string[]) => {
     const typeCounts: Record<string, number> = {};
-    
-    fileTypes.forEach(type => {
+
+    fileTypes.forEach((type) => {
       typeCounts[type] = (typeCounts[type] || 0) + 1;
     });
-    
+
     trackGA4Event('file_type_distribution', typeCounts);
   },
 };

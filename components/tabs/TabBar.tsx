@@ -183,13 +183,16 @@ export const TabBar: React.FC = () => {
                   getFileIcon(tab.type)
                 )}
                 <span
-                  className={`text-[10px] sm:text-[11px] truncate font-black uppercase tracking-tight flex-1 ${state.activeTabId === tab.id
-                    ? 'text-zinc-900 dark:text-zinc-100'
-                    : 'text-zinc-500 dark:text-zinc-400'
-                    } ${tab.isLoading ? 'opacity-70' : ''}`}
+                  className={`text-[10px] sm:text-[11px] truncate font-black uppercase tracking-tight flex-1 ${
+                    state.activeTabId === tab.id
+                      ? 'text-zinc-900 dark:text-zinc-100'
+                      : 'text-zinc-500 dark:text-zinc-400'
+                  } ${tab.isLoading ? 'opacity-70' : ''}`}
                 >
                   {tab.name}
-                  {tab.isLoading && <span className="ml-1 text-zinc-400">...</span>}
+                  {tab.isLoading && (
+                    <span className="ml-1 text-zinc-400">...</span>
+                  )}
                 </span>
                 <button
                   title="Close Tab"
@@ -209,8 +212,18 @@ export const TabBar: React.FC = () => {
             className="flex items-center justify-center w-8 h-8 ml-1 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-400 hover:text-violet-600 transition-colors shrink-0"
             title="Open New File"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 4v16m8-8H4"
+              />
             </svg>
             <input
               ref={fileInputRef}

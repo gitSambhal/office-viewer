@@ -34,7 +34,10 @@ export class FileProcessor {
       try {
         return await this.processWithWorker(file);
       } catch (workerError) {
-        console.warn('Web worker processing failed, falling back to main thread:', workerError);
+        console.warn(
+          'Web worker processing failed, falling back to main thread:',
+          workerError
+        );
         return this.processInMainThread(file);
       }
     }
@@ -46,14 +49,22 @@ export class FileProcessor {
   /**
    * Process file in web worker to avoid blocking the main thread
    */
-  private static async processWithWorker(file: File): Promise<{ type: FileType; data: any }> {
+  private static async processWithWorker(
+    file: File
+  ): Promise<{ type: FileType; data: any }> {
     return new Promise((resolve, reject) => {
-      const worker = new Worker(new URL('./fileProcessor.worker.ts', import.meta.url));
+      const worker = new Worker(
+        new URL('./fileProcessor.worker.ts', import.meta.url)
+      );
 
       // Set timeout for worker processing to prevent hanging
       const timeout = setTimeout(() => {
         worker.terminate();
-        reject(new Error(`File processing timed out. "${file.name}" may be too large or corrupt.`));
+        reject(
+          new Error(
+            `File processing timed out. "${file.name}" may be too large or corrupt.`
+          )
+        );
       }, 30000); // 30 second timeout
 
       worker.postMessage({ file, fileName: file.name });
@@ -80,7 +91,9 @@ export class FileProcessor {
   /**
    * Process file directly in main thread (fallback option)
    */
-  private static async processInMainThread(file: File): Promise<{ type: FileType; data: any }> {
+  private static async processInMainThread(
+    file: File
+  ): Promise<{ type: FileType; data: any }> {
     const type = this.getFileType(file.name);
 
     try {
@@ -89,7 +102,12 @@ export class FileProcessor {
         return { type, data: this.processExcel(buffer) };
       }
 
-      if (type === 'docx' || type === 'pdf' || type === 'rtf' || type === 'pptx') {
+      if (
+        type === 'docx' ||
+        type === 'pdf' ||
+        type === 'rtf' ||
+        type === 'pptx'
+      ) {
         const buffer = await file.arrayBuffer();
         return { type, data: buffer };
       }

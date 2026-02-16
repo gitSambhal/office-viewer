@@ -20,9 +20,15 @@ export default defineConfig(({ mode }) => {
     name: 'replace-env-in-html',
     transformIndexHtml(html: string) {
       return html
-        .replace(/%VITE_GA4_MEASUREMENT_ID%/g, env.VITE_GA4_MEASUREMENT_ID || 'G-XXXXXXXXXX')
-        .replace(/%VITE_CLARITY_PROJECT_ID%/g, env.VITE_CLARITY_PROJECT_ID || 'XXXXXXXXXX');
-    }
+        .replace(
+          /%VITE_GA4_MEASUREMENT_ID%/g,
+          env.VITE_GA4_MEASUREMENT_ID || 'G-XXXXXXXXXX'
+        )
+        .replace(
+          /%VITE_CLARITY_PROJECT_ID%/g,
+          env.VITE_CLARITY_PROJECT_ID || 'XXXXXXXXXX'
+        );
+    },
   };
 
   return {
@@ -34,8 +40,12 @@ export default defineConfig(({ mode }) => {
     define: {
       'process.version': JSON.stringify('1.0.0'),
       'process.env': {},
-      'import.meta.env.VITE_GA4_MEASUREMENT_ID': JSON.stringify(env.VITE_GA4_MEASUREMENT_ID || 'G-XXXXXXXXXX'),
-      'import.meta.env.VITE_CLARITY_PROJECT_ID': JSON.stringify(env.VITE_CLARITY_PROJECT_ID || 'XXXXXXXXXX'),
+      'import.meta.env.VITE_GA4_MEASUREMENT_ID': JSON.stringify(
+        env.VITE_GA4_MEASUREMENT_ID || 'G-XXXXXXXXXX'
+      ),
+      'import.meta.env.VITE_CLARITY_PROJECT_ID': JSON.stringify(
+        env.VITE_CLARITY_PROJECT_ID || 'XXXXXXXXXX'
+      ),
     },
     plugins: [
       replaceEnvInHtml,
@@ -98,7 +108,7 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
-        'react': path.resolve(__dirname, './node_modules/react'),
+        react: path.resolve(__dirname, './node_modules/react'),
         'react-dom': path.resolve(__dirname, './node_modules/react-dom'),
       },
     },

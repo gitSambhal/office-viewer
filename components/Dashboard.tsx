@@ -30,10 +30,7 @@ export const Dashboard: React.FC<Props> = ({ deferredPrompt, onInstall }) => {
       </div>
 
       <div className="relative z-10 w-full flex justify-center">
-        <DashboardHero
-          deferredPrompt={deferredPrompt}
-          onInstall={onInstall}
-        />
+        <DashboardHero deferredPrompt={deferredPrompt} onInstall={onInstall} />
       </div>
     </div>
   );

@@ -6,16 +6,37 @@ const getQueryType = (query: string): FileType | null => {
   const lowerQuery = query.toLowerCase().trim();
 
   // Check for document type keywords
-  if (lowerQuery.includes('pdf') || lowerQuery.includes('pdf viewer') || lowerQuery.includes('pdf reader')) {
+  if (
+    lowerQuery.includes('pdf') ||
+    lowerQuery.includes('pdf viewer') ||
+    lowerQuery.includes('pdf reader')
+  ) {
     return 'pdf';
   }
-  if (lowerQuery.includes('excel') || lowerQuery.includes('sheet') || lowerQuery.includes('xlsx') || lowerQuery.includes('xls') || lowerQuery.includes('spreadsheet')) {
+  if (
+    lowerQuery.includes('excel') ||
+    lowerQuery.includes('sheet') ||
+    lowerQuery.includes('xlsx') ||
+    lowerQuery.includes('xls') ||
+    lowerQuery.includes('spreadsheet')
+  ) {
     return 'xlsx';
   }
-  if (lowerQuery.includes('word') || lowerQuery.includes('doc') || lowerQuery.includes('docx') || lowerQuery.includes('document')) {
+  if (
+    lowerQuery.includes('word') ||
+    lowerQuery.includes('doc') ||
+    lowerQuery.includes('docx') ||
+    lowerQuery.includes('document')
+  ) {
     return 'docx';
   }
-  if (lowerQuery.includes('image') || lowerQuery.includes('photo') || lowerQuery.includes('jpg') || lowerQuery.includes('png') || lowerQuery.includes('gif')) {
+  if (
+    lowerQuery.includes('image') ||
+    lowerQuery.includes('photo') ||
+    lowerQuery.includes('jpg') ||
+    lowerQuery.includes('png') ||
+    lowerQuery.includes('gif')
+  ) {
     return 'image';
   }
   if (lowerQuery.includes('rtf') || lowerQuery.includes('rich text')) {
@@ -27,16 +48,29 @@ const getQueryType = (query: string): FileType | null => {
   if (lowerQuery.includes('txt') || lowerQuery.includes('text file')) {
     return 'txt';
   }
-  if (lowerQuery.includes('access') || lowerQuery.includes('mdb') || lowerQuery.includes('accdb')) {
+  if (
+    lowerQuery.includes('access') ||
+    lowerQuery.includes('mdb') ||
+    lowerQuery.includes('accdb')
+  ) {
     return 'mdb';
   }
-  if (lowerQuery.includes('sqlite') || lowerQuery.includes('db') || lowerQuery.includes('sql')) {
+  if (
+    lowerQuery.includes('sqlite') ||
+    lowerQuery.includes('db') ||
+    lowerQuery.includes('sql')
+  ) {
     return 'sqlite';
   }
   if (lowerQuery.includes('dbf') || lowerQuery.includes('dbase')) {
     return 'dbf';
   }
-  if (lowerQuery.includes('powerpoint') || lowerQuery.includes('pptx') || lowerQuery.includes('presentation') || lowerQuery.includes('slide')) {
+  if (
+    lowerQuery.includes('powerpoint') ||
+    lowerQuery.includes('pptx') ||
+    lowerQuery.includes('presentation') ||
+    lowerQuery.includes('slide')
+  ) {
     return 'pptx';
   }
 
@@ -44,7 +78,11 @@ const getQueryType = (query: string): FileType | null => {
 };
 
 // SEO optimization utility
-export const updateSEO = (fileType: FileType | null, fileName?: string, viewerType?: string) => {
+export const updateSEO = (
+  fileType: FileType | null,
+  fileName?: string,
+  viewerType?: string
+) => {
   // Check if we have a viewer type to optimize for
   if (viewerType) {
     const queryType = getQueryType(viewerType);
@@ -54,7 +92,8 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
   }
   if (!fileType) {
     // Reset to default SEO when no file is open
-    document.title = 'Suhail Viewer - AI-Powered Local Document & Database Viewer';
+    document.title =
+      'Suhail Viewer - AI-Powered Local Document & Database Viewer';
     const metaDescription = document.querySelector('meta[name="description"]');
     if (metaDescription) {
       metaDescription.setAttribute(
@@ -76,7 +115,9 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
         'Suhail Viewer - Professional Document & Database Viewer'
       );
     }
-    const ogDescription = document.querySelector('meta[property="og:description"]');
+    const ogDescription = document.querySelector(
+      'meta[property="og:description"]'
+    );
     if (ogDescription) {
       ogDescription.setAttribute(
         'content',
@@ -90,7 +131,9 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
         'Suhail Viewer - Professional Document & Database Viewer'
       );
     }
-    const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+    const twitterDescription = document.querySelector(
+      'meta[name="twitter:description"]'
+    );
     if (twitterDescription) {
       twitterDescription.setAttribute(
         'content',
@@ -108,9 +151,7 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
   }
 
   // Update page title
-  const pageTitle = fileName
-    ? `${fileName} - ${seoData.title}`
-    : seoData.title;
+  const pageTitle = fileName ? `${fileName} - ${seoData.title}` : seoData.title;
   document.title = pageTitle;
 
   // Update meta description
@@ -131,7 +172,9 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
     ogTitle.setAttribute('content', pageTitle);
   }
 
-  const ogDescription = document.querySelector('meta[property="og:description"]');
+  const ogDescription = document.querySelector(
+    'meta[property="og:description"]'
+  );
   if (ogDescription) {
     ogDescription.setAttribute('content', seoData.description);
   }
@@ -142,7 +185,9 @@ export const updateSEO = (fileType: FileType | null, fileName?: string, viewerTy
     twitterTitle.setAttribute('content', pageTitle);
   }
 
-  const twitterDescription = document.querySelector('meta[name="twitter:description"]');
+  const twitterDescription = document.querySelector(
+    'meta[name="twitter:description"]'
+  );
   if (twitterDescription) {
     twitterDescription.setAttribute('content', seoData.description);
   }

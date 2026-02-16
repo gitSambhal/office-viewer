@@ -311,7 +311,10 @@ export const SpreadsheetViewer: React.FC<Props> = ({
       }
 
       // 3. Map to object structure for view
-      const result = indices.map((idx) => ({ row: rows[idx], originalIndex: idx }));
+      const result = indices.map((idx) => ({
+        row: rows[idx],
+        originalIndex: idx,
+      }));
       setFilteredData(result);
       dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
     }, 150); // 150ms debounce for responsive typing
@@ -470,14 +473,16 @@ export const SpreadsheetViewer: React.FC<Props> = ({
         onDoubleClick={() => setEditingCell({ r: originalRowIndex, c: cIdx })}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
-        title={wrapText ? undefined : (isNull ? '' : String(value ?? ''))}
+        title={wrapText ? undefined : isNull ? '' : String(value ?? '')}
       >
         {isBoolean ? (
           <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400 self-center">
             {String(value)}
           </span>
         ) : (
-          <span className={`w-full block ${wrapText ? 'whitespace-normal break-words' : 'truncate'}`}>
+          <span
+            className={`w-full block ${wrapText ? 'whitespace-normal break-words' : 'truncate'}`}
+          >
             {isNull ? '—' : String(value ?? '')}
           </span>
         )}
@@ -540,7 +545,9 @@ export const SpreadsheetViewer: React.FC<Props> = ({
               position: 'relative',
             }}
           >
-            <table className={`${fillWidth ? 'w-full' : 'w-min'} border-collapse table-fixed absolute top-0 left-0`}>
+            <table
+              className={`${fillWidth ? 'w-full' : 'w-min'} border-collapse table-fixed absolute top-0 left-0`}
+            >
               <thead className="sticky top-0 z-20 shadow-sm">
                 <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
                   <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] text-zinc-400 font-black uppercase py-2">
@@ -614,8 +621,18 @@ export const SpreadsheetViewer: React.FC<Props> = ({
                         >
                           <div className="flex flex-col items-center gap-4">
                             <div className="w-16 h-16 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center">
-                              <svg className="w-8 h-8 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121zM12 9V5a3 3 0 00-3-3 3 3 0 00-3 3v4m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              <svg
+                                className="w-8 h-8 text-zinc-400"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="1.5"
+                                  d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121zM12 9V5a3 3 0 00-3-3 3 3 0 00-3 3v4m12 0a9 9 0 11-18 0 9 9 0 0118 0z"
+                                />
                               </svg>
                             </div>
                             <p className="text-[11px] font-black uppercase tracking-widest text-zinc-500 dark:text-zinc-400">
@@ -630,7 +647,10 @@ export const SpreadsheetViewer: React.FC<Props> = ({
                                   endValue: 200,
                                 });
                                 setHiddenColumns(new Set());
-                                dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
+                                dispatch({
+                                  type: 'SET_GLOBAL_SEARCH_TERM',
+                                  payload: '',
+                                });
                               }}
                               className="px-6 py-2.5 bg-violet-600 hover:bg-violet-700 text-white rounded-full text-[10px] font-black uppercase tracking-wider transition-all shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40"
                             >
@@ -655,30 +675,44 @@ export const SpreadsheetViewer: React.FC<Props> = ({
         )}
       </div>
 
-      <div
-          className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center px-4 py-2 z-20 shrink-0"
-        >
-          <div className="flex items-center gap-3 mr-4 shrink-0">
-            <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
-              {filteredData.length}{' '}
-              <span className="text-[10px] opacity-60">rows</span>
-            </span>
-          </div>
+      <div className="bg-white dark:bg-zinc-900 border-t border-zinc-200 dark:border-zinc-800 flex items-center px-4 py-2 z-20 shrink-0">
+        <div className="flex items-center gap-3 mr-4 shrink-0">
+          <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider">
+            {filteredData.length}{' '}
+            <span className="text-[10px] opacity-60">rows</span>
+          </span>
+        </div>
         {Object.keys(sheets).length > 5 && (
           <button
             className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors shrink-0 mr-1 touch-manipulation"
             title="Scroll left"
             onClick={() => {
-              const container = document.getElementById('sheets-tabs-container');
-              if (container) container.scrollBy({ left: -200, behavior: 'smooth' });
+              const container = document.getElementById(
+                'sheets-tabs-container'
+              );
+              if (container)
+                container.scrollBy({ left: -200, behavior: 'smooth' });
             }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
         )}
-        <div id="sheets-tabs-container" className="flex gap-0 overflow-x-auto no-scrollbar flex-1">
+        <div
+          id="sheets-tabs-container"
+          className="flex gap-0 overflow-x-auto no-scrollbar flex-1"
+        >
           {Object.keys(sheets).map((name) => (
             <button
               key={name}
@@ -698,12 +732,25 @@ export const SpreadsheetViewer: React.FC<Props> = ({
             className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors shrink-0 ml-1 touch-manipulation"
             title="Scroll right"
             onClick={() => {
-              const container = document.getElementById('sheets-tabs-container');
-              if (container) container.scrollBy({ left: 200, behavior: 'smooth' });
+              const container = document.getElementById(
+                'sheets-tabs-container'
+              );
+              if (container)
+                container.scrollBy({ left: 200, behavior: 'smooth' });
             }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         )}

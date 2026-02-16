@@ -27,13 +27,24 @@ const ActionToolbar: React.FC<{
     <div className="flex items-center gap-2">
       <button
         onClick={onOpenAI}
-        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${isAIOpen
-          ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20'
-          : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 hover:text-violet-600 dark:hover:text-violet-400'
-          }`}
+        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+          isAIOpen
+            ? 'bg-violet-600 text-white shadow-lg shadow-violet-500/20'
+            : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-violet-50 dark:hover:bg-violet-900/30 hover:text-violet-600 dark:hover:text-violet-400'
+        }`}
       >
-        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z" />
+        <svg
+          className="w-4 h-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 002.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 00-2.456 2.456z"
+          />
         </svg>
         {isAIOpen ? 'AI Open' : 'AI Insights'}
       </button>
@@ -59,7 +70,6 @@ export const FileContentViewer: React.FC = () => {
     previousTabIdRef.current = activeTab.id;
 
     updateSEO(activeTab.type, activeTab.name);
-
   }, [activeTab?.id, activeTab?.type, activeTab?.name]);
 
   // Handle opening AI insights
@@ -81,11 +91,16 @@ export const FileContentViewer: React.FC = () => {
     setIsExtracting(true);
     try {
       const activeKey = activeTab.activeSheet || activeTab.activeTable;
-      const text = await TextExtractor.extractText(activeTab.type, activeTab.data, activeKey, {
-        fileName: activeTab.name,
-        fileSize: activeTab.size,
-        lastModified: activeTab.lastModified
-      });
+      const text = await TextExtractor.extractText(
+        activeTab.type,
+        activeTab.data,
+        activeKey,
+        {
+          fileName: activeTab.name,
+          fileSize: activeTab.size,
+          lastModified: activeTab.lastModified,
+        }
+      );
 
       dispatch({
         type: 'UPDATE_TAB',
@@ -117,37 +132,40 @@ export const FileContentViewer: React.FC = () => {
   }, [activeTab, dispatch]);
 
   // Handle AI summary update
-  const handleSummaryUpdate = useCallback((summary: string) => {
-    if (!activeTab) return;
-    dispatch({
-      type: 'UPDATE_TAB',
-      payload: {
-        id: activeTab.id,
-        updates: { aiSummary: summary },
-      },
-    });
-  }, [activeTab, dispatch]);
+  const handleSummaryUpdate = useCallback(
+    (summary: string) => {
+      if (!activeTab) return;
+      dispatch({
+        type: 'UPDATE_TAB',
+        payload: {
+          id: activeTab.id,
+          updates: { aiSummary: summary },
+        },
+      });
+    },
+    [activeTab, dispatch]
+  );
 
   // Handle AI messages update
-  const handleMessagesUpdate = useCallback((messages: Array<{ role: 'user' | 'assistant'; content: string }>) => {
-    if (!activeTab) return;
-    dispatch({
-      type: 'UPDATE_TAB',
-      payload: {
-        id: activeTab.id,
-        updates: { aiMessages: messages },
-      },
-    });
-  }, [activeTab, dispatch]);
+  const handleMessagesUpdate = useCallback(
+    (messages: Array<{ role: 'user' | 'assistant'; content: string }>) => {
+      if (!activeTab) return;
+      dispatch({
+        type: 'UPDATE_TAB',
+        payload: {
+          id: activeTab.id,
+          updates: { aiMessages: messages },
+        },
+      });
+    },
+    [activeTab, dispatch]
+  );
 
   // Callback to close action popups
   const closeActionPopupsRef = React.useRef<(() => void) | null>(null);
-  const registerCloseActionPopups = useCallback(
-    (callback: () => void) => {
-      closeActionPopupsRef.current = callback;
-    },
-    []
-  );
+  const registerCloseActionPopups = useCallback((callback: () => void) => {
+    closeActionPopupsRef.current = callback;
+  }, []);
 
   if (!activeTab) {
     return null;
@@ -205,7 +223,9 @@ export const FileContentViewer: React.FC = () => {
                 },
               });
             }}
-            columnWidths={(activeTab.columnSettings || {})[activeTab.activeSheet!] || {}}
+            columnWidths={
+              (activeTab.columnSettings || {})[activeTab.activeSheet!] || {}
+            }
             onResizeColumn={(sheetName, colIdx, width) => {
               dispatch({
                 type: 'UPDATE_TAB',
@@ -245,13 +265,33 @@ export const FileContentViewer: React.FC = () => {
       case 'pdf':
         return <PdfViewer key={activeTab.id} data={activeTab.data} />;
       case 'docx':
-        return <DocxViewer key={activeTab.id} data={activeTab.data} name={activeTab.name} />;
+        return (
+          <DocxViewer
+            key={activeTab.id}
+            data={activeTab.data}
+            name={activeTab.name}
+          />
+        );
       case 'rtf':
         return <RtfViewer key={activeTab.id} data={activeTab.data} />;
       case 'txt':
-        return <TextViewer key={activeTab.id} content={activeTab.data} isMarkdown={false} globalSearchTerm={state.globalSearchTerm} />;
+        return (
+          <TextViewer
+            key={activeTab.id}
+            content={activeTab.data}
+            isMarkdown={false}
+            globalSearchTerm={state.globalSearchTerm}
+          />
+        );
       case 'md':
-        return <TextViewer key={activeTab.id} content={activeTab.data} isMarkdown={true} globalSearchTerm={state.globalSearchTerm} />;
+        return (
+          <TextViewer
+            key={activeTab.id}
+            content={activeTab.data}
+            isMarkdown={true}
+            globalSearchTerm={state.globalSearchTerm}
+          />
+        );
       case 'image':
         return <ImageViewer key={activeTab.id} src={activeTab.data} />;
       case 'mdb':
@@ -350,8 +390,12 @@ export const FileContentViewer: React.FC = () => {
           <div className="flex flex-col items-center gap-4 p-8 bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-zinc-200 dark:border-zinc-800">
             <div className="w-12 h-12 border-4 border-violet-600 border-t-transparent rounded-full animate-spin"></div>
             <div className="text-center">
-              <p className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-widest">Digitalizing Document</p>
-              <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-widest">Preparing context for AI Analysis...</p>
+              <p className="text-sm font-black text-zinc-900 dark:text-white uppercase tracking-widest">
+                Digitalizing Document
+              </p>
+              <p className="text-[10px] font-bold text-zinc-500 dark:text-zinc-400 mt-1 uppercase tracking-widest">
+                Preparing context for AI Analysis...
+              </p>
             </div>
           </div>
         </div>
@@ -380,13 +424,18 @@ export const FileContentViewer: React.FC = () => {
         {/* Split view: content + AI panel */}
         <div className="flex-1 flex overflow-hidden">
           {/* File content */}
-          <div className={`flex-1 overflow-hidden ${isAIOpen ? 'hidden lg:block lg:w-[60%]' : 'w-full'}`}>
+          <div
+            className={`flex-1 overflow-hidden ${isAIOpen ? 'hidden lg:block lg:w-[60%]' : 'w-full'}`}
+          >
             {renderContent()}
           </div>
 
           {/* AI Assistant panel - embedded in viewer, moves with tab */}
           {isAIOpen && activeTab && activeTab.aiExtractedText && (
-            <div key={activeTab.id} className="w-full lg:w-[40%] h-full border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden animate-in slide-in-from-right duration-300">
+            <div
+              key={activeTab.id}
+              className="w-full lg:w-[40%] h-full border-l border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 overflow-hidden animate-in slide-in-from-right duration-300"
+            >
               <AIAssistant
                 content={activeTab.aiExtractedText}
                 fileName={activeTab.name}

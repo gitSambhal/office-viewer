@@ -22,25 +22,16 @@
       "purpose": "any maskable"
     }
   ],
-  "categories": [
-    "productivity",
-    "utilities",
-    "business"
-  ],
+  "categories": ["productivity", "utilities", "business"],
   "file_handlers": [
     {
       "action": "/",
       "accept": {
-        "application/pdf": [
-          ".pdf"
-        ],
+        "application/pdf": [".pdf"],
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
           ".xlsx"
         ],
-        "application/vnd.ms-excel": [
-          ".xls",
-          ".csv"
-        ],
+        "application/vnd.ms-excel": [".xls", ".csv"],
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [
           ".docx"
         ],
@@ -56,7 +47,9 @@
         "application/x-msaccess": [".mdb", ".accdb"],
         "application/x-sqlite3": [".sqlite", ".db", ".db3"],
         "application/x-dbf": [".dbf"],
-        "application/vnd.openxmlformats-officedocument.presentationml.presentation": [".pptx"]
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation": [
+          ".pptx"
+        ]
       }
     }
   ],

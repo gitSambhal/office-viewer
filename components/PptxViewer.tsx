@@ -45,7 +45,11 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ignore key events from inputs/textareas to allow typing (e.g. in AI chat)
       const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+      if (
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.isContentEditable
+      ) {
         return;
       }
 
@@ -145,7 +149,9 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
           onError: (err) => {
             if (isMounted) {
               console.error('PPTX Viewer Error:', err);
-              setError(`Failed to process PowerPoint file: ${err.message || 'Unknown error'}`);
+              setError(
+                `Failed to process PowerPoint file: ${err.message || 'Unknown error'}`
+              );
               setLoading(false);
             }
           },
@@ -163,7 +169,8 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
           // Handle specific error types
           let errorMessage = 'Failed to process PowerPoint file';
           if (err.message && err.message.includes('invalid magic number')) {
-            errorMessage = 'This file is in an unsupported PowerPoint format. Please use modern .pptx files.';
+            errorMessage =
+              'This file is in an unsupported PowerPoint format. Please use modern .pptx files.';
           } else if (err.message) {
             errorMessage = err.message;
           }
@@ -351,10 +358,22 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
         {error && (
           <div className="absolute inset-0 flex items-center justify-center z-10">
             <div className="max-w-xl p-8 bg-rose-50 dark:bg-rose-950/20 text-rose-700 dark:text-rose-400 rounded-2xl border border-rose-200 dark:border-rose-900/50 text-center shadow-xl">
-              <svg className="w-12 h-12 mx-auto mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              <svg
+                className="w-12 h-12 mx-auto mb-4 opacity-50"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
               </svg>
-              <p className="text-sm font-bold mb-2 uppercase tracking-wide">Unsupported Format</p>
+              <p className="text-sm font-bold mb-2 uppercase tracking-wide">
+                Unsupported Format
+              </p>
               <p className="text-xs opacity-80">{error}</p>
             </div>
           </div>
@@ -366,7 +385,7 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
             className="fixed inset-0 flex flex-col items-center justify-center z-[9999] bg-black/80 backdrop-blur-sm outline-none"
             style={{ position: 'fixed', zIndex: 9999 }}
             onKeyDown={(e) => {
-              console.log("🚀 ~ :363 ~ PptxViewer ~ e:", e);
+              console.log('🚀 ~ :363 ~ PptxViewer ~ e:', e);
               if (e.key === 'Escape') {
                 e.preventDefault();
                 stopSlideshow();
@@ -375,11 +394,25 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
             tabIndex={0}
           >
             <div className="text-center">
-              <svg className="w-16 h-16 mx-auto mb-4 text-violet-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              <svg
+                className="w-16 h-16 mx-auto mb-4 text-violet-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
               </svg>
-              <p className="text-lg font-bold text-white mb-2">Slideshow Complete!</p>
-              <p className="text-sm text-zinc-400 mb-6">You have reached the end of the presentation</p>
+              <p className="text-lg font-bold text-white mb-2">
+                Slideshow Complete!
+              </p>
+              <p className="text-sm text-zinc-400 mb-6">
+                You have reached the end of the presentation
+              </p>
               <div className="flex gap-3">
                 <button
                   onClick={startSlideshow}
@@ -408,10 +441,11 @@ export const PptxViewer: React.FC<Props> = ({ data }) => {
             <button
               key={index}
               onClick={() => handleGoToSlide(index)}
-              className={`w-2 h-2 rounded-full transition-all duration-200 ${index === currentSlide
+              className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                index === currentSlide
                   ? 'bg-violet-500 w-6 rounded'
                   : 'bg-white/50 hover:bg-white/80'
-                }`}
+              }`}
               title={`Go to slide ${index + 1}`}
             />
           ))}

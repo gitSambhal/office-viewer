@@ -14,14 +14,14 @@ export const useFileHandler = () => {
   const handleFiles = useCallback(
     async (files: FileList | File[] | null) => {
       if (!files || files.length === 0) return;
-      
+
       setIsProcessing(true);
       setErrorMessage(null);
       setProcessingProgress(0);
       const newTabs: Tab[] = [];
-      
+
       // Track file opening
-      Array.from(files).forEach(file => {
+      Array.from(files).forEach((file) => {
         analytics.trackFileOpen(file.name, file.type, file.size);
       });
 
@@ -86,11 +86,11 @@ export const useFileHandler = () => {
 
       // Process files in parallel with progress tracking
       const processingPromises = [];
-      
+
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         const tempTab = loadingTabs[i];
-        
+
         const processPromise = (async () => {
           try {
             // Update progress
@@ -157,7 +157,8 @@ export const useFileHandler = () => {
                   : 0;
               const firstSheetCols =
                 result.type === 'xlsx' && Object.keys(sheets).length > 0
-                  ? Object.keys(sheets[Object.keys(sheets)[0]]?.rows?.[0] || {}).length
+                  ? Object.keys(sheets[Object.keys(sheets)[0]]?.rows?.[0] || {})
+                      .length
                   : 0;
               return {
                 ...tempTab,
@@ -182,9 +183,9 @@ export const useFileHandler = () => {
             return null;
           }
         })();
-        
+
         processingPromises.push(processPromise);
-        
+
         // Update tab when processing completes
         processPromise.then((processedTab) => {
           if (processedTab) {
@@ -208,11 +209,11 @@ export const useFileHandler = () => {
     [dispatch]
   );
 
-  return { 
-    handleFiles, 
-    isProcessing, 
-    errorMessage, 
+  return {
+    handleFiles,
+    isProcessing,
+    errorMessage,
     setErrorMessage,
-    processingProgress 
+    processingProgress,
   };
 };

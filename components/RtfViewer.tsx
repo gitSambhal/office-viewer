@@ -48,13 +48,21 @@ export const RtfViewer: React.FC<Props> = ({ data }) => {
                 containerRef.current?.appendChild(textNode);
               }
             });
-          } else if (elements && typeof elements === 'object' && 'nodeType' in elements) {
+          } else if (
+            elements &&
+            typeof elements === 'object' &&
+            'nodeType' in elements
+          ) {
             containerRef.current.appendChild(elements);
           } else if (typeof elements === 'string') {
             const textNode = document.createTextNode(elements);
             containerRef.current?.appendChild(textNode);
           } else {
-            console.warn('RTF render returned unexpected type:', typeof elements, elements);
+            console.warn(
+              'RTF render returned unexpected type:',
+              typeof elements,
+              elements
+            );
             setError('Failed to render RTF content');
           }
         }

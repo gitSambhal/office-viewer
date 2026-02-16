@@ -16,19 +16,19 @@ import analytics from './utils/analytics';
 const AppContent: React.FC = () => {
   const { state, dispatch } = useAppContext();
   const [deferredPrompt, setDeferredPrompt] = useState<Event | null>(null);
-  
+
   // Initialize analytics
   useEffect(() => {
     analytics.initializeAnalytics();
-    
+
     // Track scroll depth
     window.addEventListener('scroll', analytics.trackScrollDepth);
-    
+
     return () => {
       window.removeEventListener('scroll', analytics.trackScrollDepth);
     };
   }, []);
-  
+
   // Parse URL search parameters for SEO optimization
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -54,7 +54,7 @@ const AppContent: React.FC = () => {
     } else if (!isMobile && !state.isSidebarOpen) {
       dispatch({ type: 'SET_SIDEBAR_OPEN', payload: true });
     }
-    
+
     return () => window.removeEventListener('resize', handleResize);
   }, []); // Empty dependency array to run only once on initial load
 
@@ -76,7 +76,10 @@ const AppContent: React.FC = () => {
     window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener(
+        'beforeinstallprompt',
+        handleBeforeInstallPrompt
+      );
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
@@ -686,9 +689,9 @@ const AppContent: React.FC = () => {
             {activeTab ? (
               <FileContentViewer />
             ) : (
-              <Dashboard 
-                deferredPrompt={deferredPrompt} 
-                onInstall={handleInstall} 
+              <Dashboard
+                deferredPrompt={deferredPrompt}
+                onInstall={handleInstall}
               />
             )}
           </div>

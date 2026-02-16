@@ -1,4 +1,9 @@
-import { CreateMLCEngine, MLCEngineInterface, InitProgressCallback, prebuiltAppConfig } from '@mlc-ai/web-llm';
+import {
+  CreateMLCEngine,
+  MLCEngineInterface,
+  InitProgressCallback,
+  prebuiltAppConfig,
+} from '@mlc-ai/web-llm';
 
 // AI Model configurations - using smaller models for faster downloads
 // AI Model configurations - dynamically loaded from WebLLM prebuilt config
@@ -11,7 +16,8 @@ const processedModels = prebuiltAppConfig.model_list
   })
   .map((model) => {
     const vram = model.vram_required_MB || 2500;
-    const sizeStr = vram > 1024 ? `${(vram / 1024).toFixed(1)} GB` : `${Math.round(vram)} MB`;
+    const sizeStr =
+      vram > 1024 ? `${(vram / 1024).toFixed(1)} GB` : `${Math.round(vram)} MB`;
 
     // Format display name
     let name = model.model_id.replace(/-MLC/g, '').replace(/-/g, ' ');
@@ -34,12 +40,14 @@ const processedModels = prebuiltAppConfig.model_list
   });
 
 // Ensure only unique models are kept, based on their ID
-const uniqueModels = Array.from(new Map(processedModels.map(model => [model.id, model])).values());
+const uniqueModels = Array.from(
+  new Map(processedModels.map((model) => [model.id, model])).values()
+);
 
 export const AI_MODELS = uniqueModels;
 
 // Fallback default if specific one not found
-if (!AI_MODELS.some(m => m.isDefault) && AI_MODELS.length > 0) {
+if (!AI_MODELS.some((m) => m.isDefault) && AI_MODELS.length > 0) {
   AI_MODELS[0].isDefault = true;
 }
 
@@ -49,14 +57,14 @@ const DOWNLOADED_MODELS_KEY = 'ai-downloaded-models';
 
 // Get the default model (first one marked as default)
 export function getDefaultModel(): string {
-  const defaultModel = AI_MODELS.find(m => m.isDefault);
+  const defaultModel = AI_MODELS.find((m) => m.isDefault);
   return defaultModel?.id || AI_MODELS[0].id;
 }
 
 // Get saved selected model from localStorage, or default
 export function getSelectedModel(): string {
   const saved = localStorage.getItem(SELECTED_MODEL_KEY);
-  if (saved && AI_MODELS.some(m => m.id === saved)) {
+  if (saved && AI_MODELS.some((m) => m.id === saved)) {
     return saved;
   }
   return getDefaultModel();
@@ -89,7 +97,7 @@ export function addDownloadedModel(modelId: string): void {
 // Remove a model from downloaded list
 export function removeDownloadedModel(modelId: string): void {
   const downloaded = getDownloadedModels();
-  const updated = downloaded.filter(id => id !== modelId);
+  const updated = downloaded.filter((id) => id !== modelId);
   localStorage.setItem(DOWNLOADED_MODELS_KEY, JSON.stringify(updated));
 }
 
@@ -100,7 +108,7 @@ export function isModelDownloaded(modelId: string): boolean {
 
 // Get model info by ID
 export function getModelInfo(modelId: string) {
-  return AI_MODELS.find(m => m.id === modelId);
+  return AI_MODELS.find((m) => m.id === modelId);
 }
 
 // Global state for tracking active operations
@@ -121,7 +129,9 @@ export interface ExtendedInitProgressReport {
   totalBytes?: number;
 }
 
-export type ExtendedInitProgressCallback = (report: ExtendedInitProgressReport) => void;
+export type ExtendedInitProgressCallback = (
+  report: ExtendedInitProgressReport
+) => void;
 
 // Initialize AI engine with specific model
 export async function initializeAI(
@@ -150,7 +160,10 @@ export async function initializeAI(
       const progressCallback: InitProgressCallback = (report) => {
         const extendedReport: ExtendedInitProgressReport = {
           ...report,
-          eta: report.progress > 0 ? (report.timeElapsed / report.progress) * (1 - report.progress) : undefined,
+          eta:
+            report.progress > 0
+              ? (report.timeElapsed / report.progress) * (1 - report.progress)
+              : undefined,
           status: determineStatus(report.text),
         };
 
@@ -161,7 +174,9 @@ export async function initializeAI(
 
       // Check if model is already downloaded
       if (isModelDownloaded(targetModel)) {
-        console.log(`[AI Service] Model ${targetModel} already downloaded, loading from cache`);
+        console.log(
+          `[AI Service] Model ${targetModel} already downloaded, loading from cache`
+        );
       }
 
       CreateMLCEngine(targetModel, {
@@ -176,7 +191,10 @@ export async function initializeAI(
           resolve();
         })
         .catch((error) => {
-          console.error('[AI Service] Error initializing WebLLM engine:', error);
+          console.error(
+            '[AI Service] Error initializing WebLLM engine:',
+            error
+          );
           reject(error);
         });
     });
@@ -291,7 +309,9 @@ BEGIN ANALYSIS:`;
 
   try {
     console.log('[AI Service] Generating summary...');
-    console.log(`[AI Service] Input length: ${truncatedText.length} chars, estimated tokens: ${Math.ceil(truncatedText.length / 2.5)}`);
+    console.log(
+      `[AI Service] Input length: ${truncatedText.length} chars, estimated tokens: ${Math.ceil(truncatedText.length / 2.5)}`
+    );
 
     // Track generation state
     isGenerating = true;
@@ -302,7 +322,8 @@ BEGIN ANALYSIS:`;
       messages: [
         {
           role: 'system',
-          content: 'You are a professional document analyst. You output ONLY accurate facts from the source. You never hallucinate or guess.',
+          content:
+            'You are a professional document analyst. You output ONLY accurate facts from the source. You never hallucinate or guess.',
         },
         {
           role: 'user',
@@ -329,8 +350,13 @@ BEGIN ANALYSIS:`;
     }
 
     // Handle tokenizer/binding errors - reset engine
-    if (error.message?.includes('deleted object') || error.message?.includes('Tokenizer')) {
-      console.warn('[AI Service] Tokenizer error detected, resetting engine...');
+    if (
+      error.message?.includes('deleted object') ||
+      error.message?.includes('Tokenizer')
+    ) {
+      console.warn(
+        '[AI Service] Tokenizer error detected, resetting engine...'
+      );
       try {
         await cleanupAI();
       } catch (cleanupError) {
@@ -339,8 +365,14 @@ BEGIN ANALYSIS:`;
     }
 
     console.error('[AI Service] Error generating summary:', error);
-    if (error instanceof Error && (error.message.includes('ContextWindowSizeExceededError') || error.message.includes('prompt tokens exceed'))) {
-      throw new Error('Document too large to summarize. Please try with a shorter document or extract specific sections.');
+    if (
+      error instanceof Error &&
+      (error.message.includes('ContextWindowSizeExceededError') ||
+        error.message.includes('prompt tokens exceed'))
+    ) {
+      throw new Error(
+        'Document too large to summarize. Please try with a shorter document or extract specific sections.'
+      );
     }
     throw new Error('Failed to generate summary');
   } finally {
@@ -363,9 +395,14 @@ export async function askQuestion(
   const maxTokens = 1200;
   const charsPerToken = 1.5;
   const maxLength = Math.floor(maxTokens * charsPerToken);
-  const truncatedContext = context.length > maxLength ? context.substring(0, maxLength) + '... [truncated]' : context;
+  const truncatedContext =
+    context.length > maxLength
+      ? context.substring(0, maxLength) + '... [truncated]'
+      : context;
 
-  console.log(`[AI Service] Context size: ${context.length} chars. Snippet: "${context.substring(0, 100)}..."`);
+  console.log(
+    `[AI Service] Context size: ${context.length} chars. Snippet: "${context.substring(0, 100)}..."`
+  );
 
   const systemPrompt = `You are an Absolute-Truth-First Document Analyst. Your purpose is to provide surgically accurate metadata from the document.
 
@@ -386,7 +423,8 @@ USER QUERY:`;
   const recentHistory = history.slice(-10);
   const messages: any[] = [{ role: 'system', content: systemPrompt }];
 
-  const historyIncludesQuestion = recentHistory.length > 0 &&
+  const historyIncludesQuestion =
+    recentHistory.length > 0 &&
     recentHistory[recentHistory.length - 1].content === question &&
     recentHistory[recentHistory.length - 1].role === 'user';
 
@@ -398,7 +436,9 @@ USER QUERY:`;
 
   try {
     console.log('[AI Service] Generating answer with history...');
-    console.log(`[AI Service] Context length: ${truncatedContext.length} chars, estimated tokens: ${Math.ceil(truncatedContext.length / 2.5)}, history messages: ${recentHistory.length}`);
+    console.log(
+      `[AI Service] Context length: ${truncatedContext.length} chars, estimated tokens: ${Math.ceil(truncatedContext.length / 2.5)}, history messages: ${recentHistory.length}`
+    );
 
     // Track generation state
     isGenerating = true;
@@ -427,8 +467,13 @@ USER QUERY:`;
     }
 
     // Handle tokenizer/binding errors - reset engine
-    if (error.message?.includes('deleted object') || error.message?.includes('Tokenizer')) {
-      console.warn('[AI Service] Tokenizer error detected, resetting engine...');
+    if (
+      error.message?.includes('deleted object') ||
+      error.message?.includes('Tokenizer')
+    ) {
+      console.warn(
+        '[AI Service] Tokenizer error detected, resetting engine...'
+      );
       try {
         await cleanupAI();
       } catch (cleanupError) {
@@ -437,8 +482,14 @@ USER QUERY:`;
     }
 
     console.error('[AI Service] Error generating answer:', error);
-    if (error instanceof Error && (error.message.includes('ContextWindowSizeExceededError') || error.message.includes('prompt tokens exceed'))) {
-      throw new Error('Document context too large. Please try with a shorter document or ask about specific sections.');
+    if (
+      error instanceof Error &&
+      (error.message.includes('ContextWindowSizeExceededError') ||
+        error.message.includes('prompt tokens exceed'))
+    ) {
+      throw new Error(
+        'Document context too large. Please try with a shorter document or ask about specific sections.'
+      );
     }
     throw new Error('Failed to generate answer');
   } finally {
@@ -456,9 +507,12 @@ export async function cleanupAI(): Promise<void> {
       await engine.interruptGenerate();
       console.log('[AI Service] Interrupted ongoing generation');
       // Give a small delay for the interrupt to take effect
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     } catch (error) {
-      console.warn('[AI Service] Error interrupting generation during cleanup:', error);
+      console.warn(
+        '[AI Service] Error interrupting generation during cleanup:',
+        error
+      );
     }
   }
 
@@ -471,13 +525,16 @@ export async function cleanupAI(): Promise<void> {
 
     try {
       // Add a small delay before unload to allow GPU operations to complete
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
       await engineToCleanup.unload();
       console.log('[AI Service] WebLLM engine terminated');
     } catch (error) {
       // Suppress cleanup errors - web-llm has known issues with cleanup
       // This prevents the GPUBuffer unmapped error from being shown
-      console.warn('[AI Service] Engine cleanup completed with warnings:', error);
+      console.warn(
+        '[AI Service] Engine cleanup completed with warnings:',
+        error
+      );
     }
   }
 }

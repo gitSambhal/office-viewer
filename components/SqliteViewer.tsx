@@ -48,13 +48,33 @@ const IconSlicer = () => (
   </svg>
 );
 const IconTextWrap = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h7" />
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M4 6h16M4 12h16M4 18h7"
+    />
   </svg>
 );
 const IconTextWrapOff = () => (
-  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h10M4 18h16" />
+  <svg
+    className="w-4 h-4"
+    fill="none"
+    stroke="currentColor"
+    viewBox="0 0 24 24"
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth="2"
+      d="M4 6h16M4 12h10M4 18h16"
+    />
   </svg>
 );
 
@@ -226,7 +246,7 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({
   // Async filtering
   useEffect(() => {
     dispatch({ type: 'SET_SEARCH_LOADING', payload: true });
-    
+
     // Use setTimeout to allow UI to update with loading indicator
     const timer = setTimeout(() => {
       if (!currentTableData) {
@@ -294,7 +314,10 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({
         );
       }
 
-      const result = indices.map((idx) => ({ row: rows[idx], originalIndex: idx }));
+      const result = indices.map((idx) => ({
+        row: rows[idx],
+        originalIndex: idx,
+      }));
       setFilteredData(result);
       dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
     }, 50);
@@ -477,11 +500,16 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({
         ) : (
           <div
             style={{
-              height: Math.max(filteredData.length * ROW_HEIGHT, containerHeight),
+              height: Math.max(
+                filteredData.length * ROW_HEIGHT,
+                containerHeight
+              ),
               position: 'relative',
             }}
           >
-            <table className={`${fillWidth ? 'w-full' : 'w-min'} border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0`}>
+            <table
+              className={`${fillWidth ? 'w-full' : 'w-min'} border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0`}
+            >
               <thead className="sticky top-0 z-20 shadow-sm">
                 <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
                   <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] font-black uppercase py-2">
@@ -558,12 +586,19 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({
                           No records found
                         </p>
                         <button
-                            onClick={() => {
-                              setSortConfig({ key: '', direction: null });
-                              setSlicer({ mode: 'all', value: 100, endValue: 200 });
-                              setHiddenColumns(new Set());
-                              dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
-                            }}
+                          onClick={() => {
+                            setSortConfig({ key: '', direction: null });
+                            setSlicer({
+                              mode: 'all',
+                              value: 100,
+                              endValue: 200,
+                            });
+                            setHiddenColumns(new Set());
+                            dispatch({
+                              type: 'SET_GLOBAL_SEARCH_TERM',
+                              payload: '',
+                            });
+                          }}
                           className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all"
                         >
                           Clear Filters
@@ -595,16 +630,32 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({
             className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors shrink-0 mr-1 touch-manipulation"
             title="Scroll left"
             onClick={() => {
-              const container = document.getElementById('tables-tabs-container');
-              if (container) container.scrollBy({ left: -200, behavior: 'smooth' });
+              const container = document.getElementById(
+                'tables-tabs-container'
+              );
+              if (container)
+                container.scrollBy({ left: -200, behavior: 'smooth' });
             }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
         )}
-        <div id="tables-tabs-container" className="flex gap-0 overflow-x-auto no-scrollbar flex-1">
+        <div
+          id="tables-tabs-container"
+          className="flex gap-0 overflow-x-auto no-scrollbar flex-1"
+        >
           {tableNames.map((name) => (
             <button
               key={name}
@@ -624,12 +675,25 @@ const SqliteViewer: React.FC<SqliteViewerProps> = ({
             className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors shrink-0 ml-1 touch-manipulation"
             title="Scroll right"
             onClick={() => {
-              const container = document.getElementById('tables-tabs-container');
-              if (container) container.scrollBy({ left: 200, behavior: 'smooth' });
+              const container = document.getElementById(
+                'tables-tabs-container'
+              );
+              if (container)
+                container.scrollBy({ left: 200, behavior: 'smooth' });
             }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         )}

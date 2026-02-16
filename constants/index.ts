@@ -190,74 +190,88 @@ export const PREVIEW_TABS = [
 export const FILE_TYPE_SEO = {
   xlsx: {
     title: 'Excel & AI Spreadsheet Analysis - XLSX/XLS Viewer',
-    description: 'Free online Excel viewer with built-in AI analysis. Chat with your spreadsheets, get summaries, and find insights instantly. 100% private local processing.',
+    description:
+      'Free online Excel viewer with built-in AI analysis. Chat with your spreadsheets, get summaries, and find insights instantly. 100% private local processing.',
     type: 'ai spreadsheet viewer',
-    keywords: 'excel ai, talk to excel, xlsx viewer, spreadsheet analysis, local ai',
+    keywords:
+      'excel ai, talk to excel, xlsx viewer, spreadsheet analysis, local ai',
   },
   csv: {
     title: 'CSV Viewer & AI Data Analysis',
-    description: 'View and analyze CSV files with AI. Ask questions about your data and get instant answers without uploading files to a server.',
+    description:
+      'View and analyze CSV files with AI. Ask questions about your data and get instant answers without uploading files to a server.',
     type: 'ai csv viewer',
     keywords: 'csv ai, chat with csv, csv viewer, data analysis, local llm',
   },
   docx: {
     title: 'Word Reader & AI Summarizer - DOCX Viewer',
-    description: 'Read Word documents with instant AI summaries. Chat with your DOCX files to extract key information privately in your browser.',
+    description:
+      'Read Word documents with instant AI summaries. Chat with your DOCX files to extract key information privately in your browser.',
     type: 'ai document reader',
     keywords: 'word ai, docx summary, chat with document, private ai reader',
   },
   pdf: {
     title: 'PDF Viewer with AI Chat - Private Local Analysis',
-    description: 'Chat with PDF documents using local AI. Summarize reports, ask questions, and extract data from PDFs without server uploads.',
+    description:
+      'Chat with PDF documents using local AI. Summarize reports, ask questions, and extract data from PDFs without server uploads.',
     type: 'ai pdf viewer',
     keywords: 'chat with pdf, pdf ai, pdf summary, local pdf analysis',
   },
   txt: {
     title: 'Text File Viewer & AI Analysis',
-    description: 'View and analyze text files with local AI. Summarize notes, logs, and code snippets instantly.',
+    description:
+      'View and analyze text files with local AI. Summarize notes, logs, and code snippets instantly.',
     type: 'ai text viewer',
     keywords: 'text ai, txt analysis, log viewer ai, local llm',
   },
   md: {
     title: 'Markdown Viewer & AI Helper',
-    description: 'Render Markdown files and use AI to summarize content or format structure. Perfect for documentation and notes.',
+    description:
+      'Render Markdown files and use AI to summarize content or format structure. Perfect for documentation and notes.',
     type: 'ai markdown viewer',
     keywords: 'markdown ai, md viewer, documentation helper, local ai',
   },
   image: {
     title: 'Image Viewer - Photo and Image File Viewer',
-    description: 'Free online image viewer. View JPG, PNG, GIF, and WEBP images with our fast and secure image viewer. Supports zoom and rotation.',
+    description:
+      'Free online image viewer. View JPG, PNG, GIF, and WEBP images with our fast and secure image viewer. Supports zoom and rotation.',
     type: 'image viewer',
     keywords: 'image viewer, photo viewer, jpg viewer, png viewer',
   },
   rtf: {
     title: 'RTF File Viewer - Rich Text Format Reader',
-    description: 'Free online RTF file viewer. View Rich Text Format documents with formatting. Supports text styles, images, and tables.',
+    description:
+      'Free online RTF file viewer. View Rich Text Format documents with formatting. Supports text styles, images, and tables.',
     type: 'rtf viewer',
     keywords: 'rtf viewer, rich text format, rtf reader, document viewer',
   },
   mdb: {
     title: 'Access Database Viewer - MDB/ACCDB File Reader',
-    description: 'Free online Access database viewer. View MDB and ACCDB files without Microsoft Access. Supports tables, queries, and data export.',
+    description:
+      'Free online Access database viewer. View MDB and ACCDB files without Microsoft Access. Supports tables, queries, and data export.',
     type: 'database viewer',
     keywords: 'access viewer, mdb viewer, accdb viewer, database viewer',
   },
   sqlite: {
     title: 'SQLite Database Viewer - DB/SQLite3 File Reader',
-    description: 'Free online SQLite database viewer. View DB, SQLite3, and SQLITE files. Supports tables, queries, and data export.',
+    description:
+      'Free online SQLite database viewer. View DB, SQLite3, and SQLITE files. Supports tables, queries, and data export.',
     type: 'database viewer',
     keywords: 'sqlite viewer, db viewer, sqlite3 viewer, database viewer',
   },
   dbf: {
     title: 'DBF File Viewer - dBase Database Viewer',
-    description: 'Free online DBF file viewer. View dBase database files with our fast and secure DBF viewer. Supports tables, fields, and data export.',
+    description:
+      'Free online DBF file viewer. View dBase database files with our fast and secure DBF viewer. Supports tables, fields, and data export.',
     type: 'dbf viewer',
     keywords: 'dbf viewer, dbase viewer, database viewer, table viewer',
   },
   pptx: {
     title: 'PowerPoint AI Viewer - Presentation Summaries',
-    description: 'View PowerPoint slides with instant AI summaries. Extract key points from presentations privately without Microsoft Office.',
+    description:
+      'View PowerPoint slides with instant AI summaries. Extract key points from presentations privately without Microsoft Office.',
     type: 'ai presentation viewer',
-    keywords: 'pptx ai, powerpoint summary, chat with slides, presentation analysis',
+    keywords:
+      'pptx ai, powerpoint summary, chat with slides, presentation analysis',
   },
 } as const;

@@ -5,7 +5,13 @@ import { FileType } from '../types';
 import { getFileIcon } from '../utils/helpers';
 import { DashboardPreview } from './DashboardPreview';
 import { RecentFiles } from './RecentFiles';
-import { FILE_ACCEPT, PREVIEW_DATA, FEATURES, FILE_TYPE_EXTENSIONS, SUPPORTED_EXTENSIONS } from '../constants';
+import {
+  FILE_ACCEPT,
+  PREVIEW_DATA,
+  FEATURES,
+  FILE_TYPE_EXTENSIONS,
+  SUPPORTED_EXTENSIONS,
+} from '../constants';
 import { CREDITS } from '../utils/credits';
 // import { CreditsPopup } from './CreditsPopup';
 import { useAppContext } from '../context/AppContext';
@@ -21,16 +27,37 @@ interface Props {
 const getQueryType = (query: string): FileType | null => {
   const lowerQuery = query.toLowerCase().trim();
 
-  if (lowerQuery.includes('pdf') || lowerQuery.includes('pdf viewer') || lowerQuery.includes('pdf reader')) {
+  if (
+    lowerQuery.includes('pdf') ||
+    lowerQuery.includes('pdf viewer') ||
+    lowerQuery.includes('pdf reader')
+  ) {
     return 'pdf';
   }
-  if (lowerQuery.includes('excel') || lowerQuery.includes('sheet') || lowerQuery.includes('xlsx') || lowerQuery.includes('xls') || lowerQuery.includes('spreadsheet')) {
+  if (
+    lowerQuery.includes('excel') ||
+    lowerQuery.includes('sheet') ||
+    lowerQuery.includes('xlsx') ||
+    lowerQuery.includes('xls') ||
+    lowerQuery.includes('spreadsheet')
+  ) {
     return 'xlsx';
   }
-  if (lowerQuery.includes('word') || lowerQuery.includes('doc') || lowerQuery.includes('docx') || lowerQuery.includes('document')) {
+  if (
+    lowerQuery.includes('word') ||
+    lowerQuery.includes('doc') ||
+    lowerQuery.includes('docx') ||
+    lowerQuery.includes('document')
+  ) {
     return 'docx';
   }
-  if (lowerQuery.includes('image') || lowerQuery.includes('photo') || lowerQuery.includes('jpg') || lowerQuery.includes('png') || lowerQuery.includes('gif')) {
+  if (
+    lowerQuery.includes('image') ||
+    lowerQuery.includes('photo') ||
+    lowerQuery.includes('jpg') ||
+    lowerQuery.includes('png') ||
+    lowerQuery.includes('gif')
+  ) {
     return 'image';
   }
   if (lowerQuery.includes('rtf') || lowerQuery.includes('rich text')) {
@@ -42,23 +69,39 @@ const getQueryType = (query: string): FileType | null => {
   if (lowerQuery.includes('txt') || lowerQuery.includes('text file')) {
     return 'txt';
   }
-  if (lowerQuery.includes('access') || lowerQuery.includes('mdb') || lowerQuery.includes('accdb')) {
+  if (
+    lowerQuery.includes('access') ||
+    lowerQuery.includes('mdb') ||
+    lowerQuery.includes('accdb')
+  ) {
     return 'mdb';
   }
-  if (lowerQuery.includes('sqlite') || lowerQuery.includes('db') || lowerQuery.includes('sql')) {
+  if (
+    lowerQuery.includes('sqlite') ||
+    lowerQuery.includes('db') ||
+    lowerQuery.includes('sql')
+  ) {
     return 'sqlite';
   }
   if (lowerQuery.includes('dbf') || lowerQuery.includes('dbase')) {
     return 'dbf';
   }
-  if (lowerQuery.includes('powerpoint') || lowerQuery.includes('pptx') || lowerQuery.includes('presentation') || lowerQuery.includes('slide')) {
+  if (
+    lowerQuery.includes('powerpoint') ||
+    lowerQuery.includes('pptx') ||
+    lowerQuery.includes('presentation') ||
+    lowerQuery.includes('slide')
+  ) {
     return 'pptx';
   }
 
   return null;
 };
 
-export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) => {
+export const DashboardHero: React.FC<Props> = ({
+  deferredPrompt,
+  onInstall,
+}) => {
   const { handleFiles } = useFileHandler();
   const { setShowUrlModal } = useUrlHandler();
   const { state, dispatch } = useAppContext();
@@ -69,7 +112,7 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
 
   const isFileSupported = (fileName: string): boolean => {
     const extension = '.' + fileName.split('.').pop()?.toLowerCase();
-    return SUPPORTED_EXTENSIONS.some(ext =>
+    return SUPPORTED_EXTENSIONS.some((ext) =>
       fileName.toLowerCase().endsWith(ext.toLowerCase())
     );
   };
@@ -85,10 +128,14 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
     if (!files || files.length === 0) return;
 
     // Check for unsupported files
-    const unsupportedFiles = Array.from(files).filter(file => !isFileSupported(file.name));
+    const unsupportedFiles = Array.from(files).filter(
+      (file) => !isFileSupported(file.name)
+    );
     if (unsupportedFiles.length > 0) {
-      const fileNames = unsupportedFiles.map(f => f.name).join(', ');
-      setErrorMessage(`Unsupported file format: ${fileNames}. Please select a supported file type.`);
+      const fileNames = unsupportedFiles.map((f) => f.name).join(', ');
+      setErrorMessage(
+        `Unsupported file format: ${fileNames}. Please select a supported file type.`
+      );
       e.target.value = '';
       return;
     }
@@ -155,10 +202,22 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
         {/* Hero Section Heading */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 border border-violet-200 dark:border-violet-800 mb-6 group transition-all hover:scale-105 active:scale-95 animate-in slide-in-from-bottom duration-700">
-            <svg className="w-4 h-4 group-hover:rotate-12 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            <svg
+              className="w-4 h-4 group-hover:rotate-12 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2.5"
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
             </svg>
-            <span className="text-[10px] font-black uppercase tracking-[0.2em]">Local AI Insights Included</span>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em]">
+              Local AI Insights Included
+            </span>
           </div>
           {queryType && FILE_TYPE_SEO[queryType] ? (
             <>
@@ -173,10 +232,17 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
             <>
               <h2 className="text-4xl sm:text-7xl font-black text-zinc-950 dark:text-white mb-4 sm:mb-6 tracking-tighter leading-[1.05]">
                 The Universal AI{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-400 dark:to-indigo-400">File Viewer</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 dark:from-violet-400 dark:to-indigo-400">
+                  File Viewer
+                </span>
               </h2>
               <p className="text-base sm:text-lg sm:text-xl text-zinc-500 dark:text-zinc-400 font-medium max-w-2xl mx-auto leading-relaxed">
-                Open multiple documents, spreadsheets, and databases instantly. No installations, get direct insights with <span className="text-zinc-900 dark:text-white font-bold underline decoration-violet-500 decoration-2 underline-offset-4">100% Private Local AI</span>.
+                Open multiple documents, spreadsheets, and databases instantly.
+                No installations, get direct insights with{' '}
+                <span className="text-zinc-900 dark:text-white font-bold underline decoration-violet-500 decoration-2 underline-offset-4">
+                  100% Private Local AI
+                </span>
+                .
               </p>
             </>
           )}
@@ -269,16 +335,36 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
           {errorMessage && (
             <div className="w-full max-w-md mb-2 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-red-700 dark:text-red-400 text-sm animate-in fade-in slide-in-from-top-2 duration-300">
               <div className="flex items-center gap-2">
-                <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-5 h-5 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 <span>{errorMessage}</span>
                 <button
                   onClick={() => setErrorMessage(null)}
                   className="ml-auto hover:bg-red-100 dark:hover:bg-red-800/50 rounded-full p-1 transition-colors"
                 >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -399,7 +485,8 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
                 Select Files
               </h4>
               <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                Click "Open Files" to choose documents from your device or drag & drop them directly
+                Click "Open Files" to choose documents from your device or drag
+                & drop them directly
               </p>
             </div>
             <div className="text-center">
@@ -410,7 +497,8 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
                 View Instantly
               </h4>
               <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                Files open in tabs - switch between them instantly and view content without installation
+                Files open in tabs - switch between them instantly and view
+                content without installation
               </p>
             </div>
             <div className="text-center">
@@ -421,7 +509,8 @@ export const DashboardHero: React.FC<Props> = ({ deferredPrompt, onInstall }) =>
                 Work Offline
               </h4>
               <p className="text-xs sm:text-sm text-zinc-500 dark:text-zinc-400">
-                All processing happens locally on your device. Your files stay private and secure
+                All processing happens locally on your device. Your files stay
+                private and secure
               </p>
             </div>
           </div>

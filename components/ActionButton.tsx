@@ -71,10 +71,11 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
         ref={buttonRef}
         title={title}
         onClick={handleButtonClick}
-        className={`p-1.5 rounded-lg transition-all border ${isActive
+        className={`p-1.5 rounded-lg transition-all border ${
+          isActive
             ? 'bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-900/30 dark:border-amber-800'
             : 'bg-white dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 text-zinc-400'
-          } ${buttonClassName}`}
+        } ${buttonClassName}`}
       >
         {icon}
       </button>

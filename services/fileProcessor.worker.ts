@@ -71,37 +71,43 @@ self.addEventListener('message', async (e) => {
       self.postMessage({
         success: true,
         data: { type, data: result },
-        fileName
+        fileName,
       });
-    } else if (type === 'docx' || type === 'pdf' || type === 'rtf' || type === 'pptx') {
+    } else if (
+      type === 'docx' ||
+      type === 'pdf' ||
+      type === 'rtf' ||
+      type === 'pptx'
+    ) {
       const buffer = await file.arrayBuffer();
       self.postMessage({
         success: true,
         data: { type, data: buffer },
-        fileName
+        fileName,
       });
     } else if (type === 'txt' || type === 'md') {
       const text = await file.text();
       self.postMessage({
         success: true,
         data: { type, data: text },
-        fileName
+        fileName,
       });
     } else {
       self.postMessage({
         success: true,
         data: { type: 'unknown', data: null },
-        fileName
+        fileName,
       });
     }
   } catch (error) {
     console.error(`Error processing ${fileName}:`, error);
     self.postMessage({
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to parse file content',
-      fileName
+      error:
+        error instanceof Error ? error.message : 'Failed to parse file content',
+      fileName,
     });
   }
 });
 
-export { };
+export {};

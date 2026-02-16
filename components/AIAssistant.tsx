@@ -26,7 +26,9 @@ interface AIAssistantProps {
   initialSummary?: string;
   initialMessages?: Array<{ role: 'user' | 'assistant'; content: string }>;
   onSummaryUpdate?: (summary: string) => void;
-  onMessagesUpdate?: (messages: Array<{ role: 'user' | 'assistant'; content: string }>) => void;
+  onMessagesUpdate?: (
+    messages: Array<{ role: 'user' | 'assistant'; content: string }>
+  ) => void;
 }
 
 interface Message {
@@ -53,11 +55,14 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
   const [qaStreaming, setQaStreaming] = useState<string>('');
   const [error, setError] = useState<string>('');
   const [isAIReady, setIsAIReady] = useState<boolean>(false);
-  const [initReport, setInitReport] = useState<ExtendedInitProgressReport | null>(null);
+  const [initReport, setInitReport] =
+    useState<ExtendedInitProgressReport | null>(null);
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [modelSearch, setModelSearch] = useState<string>('');
   const [showModelDropdown, setShowModelDropdown] = useState<boolean>(false);
-  const [modelSortBy, setModelSortBy] = useState<'name' | 'size' | 'performance'>('name');
+  const [modelSortBy, setModelSortBy] = useState<
+    'name' | 'size' | 'performance'
+  >('name');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -73,26 +78,26 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
 
   const availableModels = useMemo(() => getAvailableModels(), []);
   const currentModelInfo = useMemo(() => {
-    const model = availableModels.find(m => m.id === selectedModel);
+    const model = availableModels.find((m) => m.id === selectedModel);
     return model || availableModels[0];
   }, [selectedModel, availableModels]);
 
   // Filter and sort models based on search and sort criteria
   const filteredModels = useMemo(() => {
     let models = [...availableModels];
-    
+
     // Apply search filter
     if (modelSearch.trim()) {
       const searchLower = modelSearch.toLowerCase();
       models = models.filter(
-        m =>
+        (m) =>
           m.displayName.toLowerCase().includes(searchLower) ||
           m.description.toLowerCase().includes(searchLower) ||
           m.size.toLowerCase().includes(searchLower) ||
           m.id.toLowerCase().includes(searchLower)
       );
     }
-    
+
     // Apply sorting
     models.sort((a, b) => {
       switch (modelSortBy) {
@@ -107,11 +112,16 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
             const value = parseFloat(match[1]);
             const unit = match[2].toUpperCase();
             switch (unit) {
-              case 'GB': return value * 1024 * 1024 * 1024;
-              case 'MB': return value * 1024 * 1024;
-              case 'KB': return value * 1024;
-              case 'B': return value;
-              default: return value;
+              case 'GB':
+                return value * 1024 * 1024 * 1024;
+              case 'MB':
+                return value * 1024 * 1024;
+              case 'KB':
+                return value * 1024;
+              case 'B':
+                return value;
+              default:
+                return value;
             }
           };
           return parseSize(a.size) - parseSize(b.size);
@@ -126,7 +136,7 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
           return 0;
       }
     });
-    
+
     return models;
   }, [modelSearch, modelSortBy, availableModels]);
 
@@ -139,7 +149,10 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setShowModelDropdown(false);
       }
     };
@@ -161,7 +174,9 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
           setIsAIReady(true);
         } catch (err) {
           console.error('[AI Assistant] Error initializing AI:', err);
-          setError('Failed to initialize AI engine. Your browser might not support WebGPU.');
+          setError(
+            'Failed to initialize AI engine. Your browser might not support WebGPU.'
+          );
         } finally {
           setIsLoading(false);
         }
@@ -172,14 +187,18 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       checkAIStatus();
     } else {
       if (typeof cleanupAI === 'function') {
-        cleanupAI().catch(err => console.error('Error during AI cleanup:', err));
+        cleanupAI().catch((err) =>
+          console.error('Error during AI cleanup:', err)
+        );
       }
       setIsAIReady(false);
     }
 
     return () => {
       if (typeof cleanupAI === 'function') {
-        cleanupAI().catch(err => console.error('Error during AI cleanup on unmount:', err));
+        cleanupAI().catch((err) =>
+          console.error('Error during AI cleanup on unmount:', err)
+        );
       }
     };
   }, [isVisible, selectedModel]);
@@ -187,13 +206,25 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
   // Auto-generate summary when AI is ready and on summary tab
   // Only generate if we have no existing summary AND no initialSummary was provided
   useEffect(() => {
-    const shouldGenerate = isVisible && isAIReady && activeTab === 'summary' &&
-      !summary && !summaryStreaming && !initialSummary;
+    const shouldGenerate =
+      isVisible &&
+      isAIReady &&
+      activeTab === 'summary' &&
+      !summary &&
+      !summaryStreaming &&
+      !initialSummary;
 
     if (shouldGenerate) {
       generateSummary();
     }
-  }, [isVisible, isAIReady, activeTab, summary, summaryStreaming, initialSummary]);
+  }, [
+    isVisible,
+    isAIReady,
+    activeTab,
+    summary,
+    summaryStreaming,
+    initialSummary,
+  ]);
 
   // Auto-scroll to bottom of chat
   useEffect(() => {
@@ -231,7 +262,9 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       setIsAIReady(true);
     } catch (err) {
       console.error('[AI Assistant] Error switching model:', err);
-      setError('Failed to load model. Please try again or select a different model.');
+      setError(
+        'Failed to load model. Please try again or select a different model.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -252,9 +285,13 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     setSummaryStreaming('');
 
     try {
-      const result = await summarizeText(content, (partial) => {
-        setSummaryStreaming(partial);
-      }, fileName);
+      const result = await summarizeText(
+        content,
+        (partial) => {
+          setSummaryStreaming(partial);
+        },
+        fileName
+      );
       setSummary(result);
       setSummaryStreaming('');
       if (onSummaryUpdate) {
@@ -265,7 +302,10 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         console.log('[AI Assistant] Summary generation stopped');
       } else {
         console.error('[AI Assistant] Error generating summary:', err);
-        setError(err?.message || 'Failed to generate summary. The document content might be too complex.');
+        setError(
+          err?.message ||
+            'Failed to generate summary. The document content might be too complex.'
+        );
       }
     } finally {
       setIsLoading(false);
@@ -289,9 +329,15 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     setQaStreaming('');
 
     try {
-      const result = await askQuestion(content, currentQuestion, updatedMessages, (partial) => {
-        setQaStreaming(partial);
-      }, fileName);
+      const result = await askQuestion(
+        content,
+        currentQuestion,
+        updatedMessages,
+        (partial) => {
+          setQaStreaming(partial);
+        },
+        fileName
+      );
       const assistantMsg: Message = { role: 'assistant', content: result };
       const finalMessages = [...updatedMessages, assistantMsg];
       setMessages(finalMessages);
@@ -304,7 +350,10 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         console.log('[AI Assistant] QA generation stopped');
       } else {
         console.error('[AI Assistant] Error generating answer:', err);
-        setError(err?.message || 'Failed to generate answer. The AI model might have reached its limit.');
+        setError(
+          err?.message ||
+            'Failed to generate answer. The AI model might have reached its limit.'
+        );
       }
     } finally {
       setIsLoading(false);
@@ -332,26 +381,66 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
     switch (status) {
       case 'downloading':
         return (
-          <svg className="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          <svg
+            className="w-5 h-5 animate-bounce"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
           </svg>
         );
       case 'compiling':
         return (
-          <svg className="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          <svg
+            className="w-5 h-5 animate-spin"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+            />
           </svg>
         );
       case 'initializing':
         return (
-          <svg className="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          <svg
+            className="w-5 h-5 animate-pulse"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M13 10V3L4 14h7v7l9-11h-7z"
+            />
           </svg>
         );
       default:
         return (
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5 13l4 4L19 7"
+            />
           </svg>
         );
     }
@@ -362,13 +451,28 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
-          h3: ({ node, ...props }) => <h3 className="font-black text-zinc-950 dark:text-white uppercase tracking-tighter text-sm pt-4 mb-2 flex items-center gap-2" {...props} />,
-          p: ({ node, ...props }) => <p className="text-sm font-medium leading-relaxed mb-3" {...props} />,
-          ul: ({ node, ...props }) => <ul className="space-y-2 mb-4 list-none" {...props} />,
+          h3: ({ node, ...props }) => (
+            <h3
+              className="font-black text-zinc-950 dark:text-white uppercase tracking-tighter text-sm pt-4 mb-2 flex items-center gap-2"
+              {...props}
+            />
+          ),
+          p: ({ node, ...props }) => (
+            <p
+              className="text-sm font-medium leading-relaxed mb-3"
+              {...props}
+            />
+          ),
+          ul: ({ node, ...props }) => (
+            <ul className="space-y-2 mb-4 list-none" {...props} />
+          ),
           li: ({ node, ...props }) => (
             <li className="flex gap-3 pl-1">
               <div className="w-1.5 h-1.5 rounded-full bg-violet-500 mt-2 shrink-0"></div>
-              <span className="text-sm text-zinc-600 dark:text-zinc-400 font-medium leading-relaxed" {...props} />
+              <span
+                className="text-sm text-zinc-600 dark:text-zinc-400 font-medium leading-relaxed"
+                {...props}
+              />
             </li>
           ),
         }}
@@ -386,13 +490,27 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
           <h3 className="text-[10px] font-black text-zinc-400 dark:text-zinc-500 uppercase tracking-[0.2em]">
             AI Assistant
           </h3>
-          {isAIReady && <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>}
+          {isAIReady && (
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+          )}
         </div>
         <button
           onClick={onClose}
           className="p-1 hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded text-zinc-400 transition-colors"
         >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" /></svg>
+          <svg
+            className="w-4 h-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.5"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
         </button>
       </div>
 
@@ -405,17 +523,41 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
           >
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 bg-white dark:bg-zinc-800 rounded-md border border-zinc-100 dark:border-zinc-700 flex items-center justify-center shrink-0">
-                <svg className="w-4 h-4 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <svg
+                  className="w-4 h-4 text-violet-600 dark:text-violet-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
                 </svg>
               </div>
               <div className="text-left min-w-0">
-                <p className="text-[10px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate">{currentModelInfo.displayName}</p>
-                <p className="text-[9px] text-zinc-400 truncate">{currentModelInfo.size} • {currentModelInfo.performance}</p>
+                <p className="text-[10px] font-black text-zinc-700 dark:text-zinc-300 uppercase tracking-wider truncate">
+                  {currentModelInfo.displayName}
+                </p>
+                <p className="text-[9px] text-zinc-400 truncate">
+                  {currentModelInfo.size} • {currentModelInfo.performance}
+                </p>
               </div>
             </div>
-            <svg className={`w-4 h-4 text-zinc-400 transition-transform ${showModelDropdown ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            <svg
+              className={`w-4 h-4 text-zinc-400 transition-transform ${showModelDropdown ? 'rotate-180' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 9l-7 7-7-7"
+              />
             </svg>
           </button>
 
@@ -426,8 +568,18 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
               <div className="p-3 border-b border-zinc-100 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-800/30">
                 {/* Search Input */}
                 <div className="relative mb-3">
-                  <svg className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  <svg
+                    className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                   <input
                     type="text"
@@ -440,7 +592,9 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                 </div>
                 {/* Sort Buttons with Default Label */}
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold text-zinc-400">Sort:</span>
+                  <span className="text-[10px] font-bold text-zinc-400">
+                    Sort:
+                  </span>
                   <div className="flex gap-1 flex-1">
                     {(['name', 'size', 'performance'] as const).map((key) => (
                       <button
@@ -448,7 +602,11 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                         onClick={() => setModelSortBy(key)}
                         className={`flex-1 px-2 py-1.5 text-[10px] font-bold uppercase tracking-wide rounded transition-all ${modelSortBy === key ? 'bg-violet-600 text-white' : 'bg-zinc-100 dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-700'}`}
                       >
-                        {key === 'name' ? 'Name' : key === 'size' ? 'Size' : 'Speed'}
+                        {key === 'name'
+                          ? 'Name'
+                          : key === 'size'
+                            ? 'Size'
+                            : 'Speed'}
                       </button>
                     ))}
                   </div>
@@ -463,12 +621,16 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
 
                   // Performance badge colors
                   const perfColors: Record<string, string> = {
-                    'Fastest': 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
-                    'Fast': 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
-                    'Medium': 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
-                    'Slow': 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
+                    Fastest:
+                      'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400',
+                    Fast: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400',
+                    Medium:
+                      'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400',
+                    Slow: 'bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400',
                   };
-                  const perfColor = perfColors[model.performance] || 'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400';
+                  const perfColor =
+                    perfColors[model.performance] ||
+                    'bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-400';
 
                   return (
                     <button
@@ -477,30 +639,72 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                       className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-800/50 transition-all ${isSelected ? 'bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800' : 'border border-transparent'}`}
                     >
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? 'bg-violet-100 dark:bg-violet-900/30' : 'bg-zinc-100 dark:bg-zinc-800'}`}>
+                        <div
+                          className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? 'bg-violet-100 dark:bg-violet-900/30' : 'bg-zinc-100 dark:bg-zinc-800'}`}
+                        >
                           {isSelected ? (
-                            <svg className="w-5 h-5 text-violet-600 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            <svg
+                              className="w-5 h-5 text-violet-600 dark:text-violet-400"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           ) : isDownloaded ? (
-                            <svg className="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            <svg
+                              className="w-4 h-4 text-emerald-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           ) : (
-                            <svg className="w-4 h-4 text-zinc-300 dark:text-zinc-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            <svg
+                              className="w-4 h-4 text-zinc-300 dark:text-zinc-600"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
                             </svg>
                           )}
                         </div>
                         <div className="text-left min-w-0 flex-1">
-                          <p className={`text-xs font-bold truncate ${isSelected ? 'text-violet-700 dark:text-violet-300' : 'text-zinc-700 dark:text-zinc-200'}`}>{model.displayName}</p>
+                          <p
+                            className={`text-xs font-bold truncate ${isSelected ? 'text-violet-700 dark:text-violet-300' : 'text-zinc-700 dark:text-zinc-200'}`}
+                          >
+                            {model.displayName}
+                          </p>
                           <div className="flex items-center gap-2 mt-0.5">
-                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${perfColor}`}>
+                            <span
+                              className={`px-2 py-0.5 rounded-full text-[9px] font-semibold ${perfColor}`}
+                            >
                               {model.performance}
                             </span>
-                            <span className="text-[9px] text-zinc-400">{model.size}</span>
+                            <span className="text-[9px] text-zinc-400">
+                              {model.size}
+                            </span>
                             {(isSelected || model.isDefault) && (
-                              <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${isSelected ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'}`}>
+                              <span
+                                className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase ${isSelected ? 'bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400' : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'}`}
+                              >
                                 {isSelected ? 'Selected' : 'Default'}
                               </span>
                             )}
@@ -522,14 +726,38 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
           onClick={() => setActiveTab('summary')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-widest transition-all rounded-lg ${activeTab === 'summary' ? 'bg-white dark:bg-zinc-800 text-violet-600 shadow-md' : 'text-zinc-500 dark:text-zinc-400'}`}
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 6h16M4 12h16M4 18h7" /></svg>
+          <svg
+            className="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.5"
+              d="M4 6h16M4 12h16M4 18h7"
+            />
+          </svg>
           Summary
         </button>
         <button
           onClick={() => setActiveTab('qa')}
           className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-black uppercase tracking-widest transition-all rounded-lg ${activeTab === 'qa' ? 'bg-white dark:bg-zinc-800 text-violet-600 shadow-md' : 'text-zinc-500 dark:text-zinc-400'}`}
         >
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+          <svg
+            className="w-3.5 h-3.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2.5"
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            />
+          </svg>
           Interactive Q&A
         </button>
       </div>
@@ -547,7 +775,9 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
               </div>
             </div>
             <h3 className="text-xl font-black text-zinc-900 dark:text-white uppercase mb-2">
-              {initReport?.status === 'downloading' ? 'Downloading Model' : 'Preparing AI'}
+              {initReport?.status === 'downloading'
+                ? 'Downloading Model'
+                : 'Preparing AI'}
             </h3>
             <p className="text-xs font-bold text-zinc-400 uppercase tracking-widest mb-6">
               {currentModelInfo.displayName} • {currentModelInfo.size}
@@ -569,7 +799,8 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                 <div className="flex items-center gap-2 text-violet-500">
                   {getStatusIcon(initReport.status)}
                   <span className="text-xs font-medium uppercase tracking-wider">
-                    {initReport.status.charAt(0).toUpperCase() + initReport.status.slice(1)}
+                    {initReport.status.charAt(0).toUpperCase() +
+                      initReport.status.slice(1)}
                   </span>
                 </div>
                 <p className="text-[10px] font-black text-violet-500 uppercase tracking-widest">
@@ -577,7 +808,8 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                 </p>
                 {initReport.downloadedBytes && initReport.totalBytes && (
                   <p className="text-[10px] text-zinc-400">
-                    {formatBytes(initReport.downloadedBytes)} / {formatBytes(initReport.totalBytes)}
+                    {formatBytes(initReport.downloadedBytes)} /{' '}
+                    {formatBytes(initReport.totalBytes)}
                   </p>
                 )}
               </div>
@@ -588,8 +820,18 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
               onClick={handleCancelDownload}
               className="px-6 py-3 bg-rose-50 dark:bg-rose-900/20 text-rose-600 dark:text-rose-400 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-rose-100 transition-colors flex items-center gap-2"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
               Cancel Download
             </button>
@@ -600,10 +842,26 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         {error && (
           <div className="flex flex-col items-center justify-center py-20 text-center p-8">
             <div className="w-20 h-20 bg-rose-50 dark:bg-rose-900/20 rounded-3xl flex items-center justify-center mb-6 border border-rose-100 dark:border-rose-900/50">
-              <svg className="w-10 h-10 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+              <svg
+                className="w-10 h-10 text-rose-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2.5"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
             </div>
-            <h3 className="text-lg font-black text-rose-600 uppercase mb-2">Analysis Failed</h3>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium mb-8 max-w-[280px]">{error}</p>
+            <h3 className="text-lg font-black text-rose-600 uppercase mb-2">
+              Analysis Failed
+            </h3>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium mb-8 max-w-[280px]">
+              {error}
+            </p>
             <button
               onClick={() => {
                 setError('');
@@ -620,7 +878,9 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
         {isAIReady && !error && activeTab === 'summary' && (
           <div className="py-4 animate-in fade-in duration-700">
             <div className="flex items-center justify-between mb-4">
-              <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Document Analysis</h4>
+              <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">
+                Document Analysis
+              </h4>
               {isLoading && (
                 <button
                   onClick={handleStop}
@@ -638,7 +898,9 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
             {!summary && !summaryStreaming && isLoading && (
               <div className="flex flex-col items-center justify-center py-20 text-center">
                 <div className="w-12 h-12 border-4 border-violet-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-                <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">Reading between the lines...</p>
+                <p className="text-xs font-black text-zinc-400 uppercase tracking-widest">
+                  Reading between the lines...
+                </p>
               </div>
             )}
           </div>
@@ -666,7 +928,19 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                     onClick={() => setMessages([])}
                     className="text-[10px] font-black text-rose-500 hover:text-rose-600 uppercase tracking-widest flex items-center gap-1 transition-colors"
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2.5"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
+                    </svg>
                     Clear History
                   </button>
                 )}
@@ -675,15 +949,38 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
 
             {messages.length === 0 && !isLoading && (
               <div className="flex flex-col items-center justify-center py-20 text-center opacity-30">
-                <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
-                <p className="text-sm font-black uppercase tracking-widest">Ask anything about this document</p>
+                <svg
+                  className="w-16 h-16 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+                  />
+                </svg>
+                <p className="text-sm font-black uppercase tracking-widest">
+                  Ask anything about this document
+                </p>
               </div>
             )}
 
             {messages.map((msg, i) => (
-              <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-2`}>
-                <div className={`max-w-[90%] px-5 py-3 rounded-2xl text-sm font-medium ${msg.role === 'user' ? 'bg-violet-600 text-white rounded-tr-none shadow-lg shadow-violet-600/20' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 rounded-tl-none border border-zinc-200 dark:border-zinc-800'}`}>
-                  {msg.role === 'assistant' ? <MarkdownRenderer text={msg.content} /> : msg.content}
+              <div
+                key={i}
+                className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'} space-y-2`}
+              >
+                <div
+                  className={`max-w-[90%] px-5 py-3 rounded-2xl text-sm font-medium ${msg.role === 'user' ? 'bg-violet-600 text-white rounded-tr-none shadow-lg shadow-violet-600/20' : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 rounded-tl-none border border-zinc-200 dark:border-zinc-800'}`}
+                >
+                  {msg.role === 'assistant' ? (
+                    <MarkdownRenderer text={msg.content} />
+                  ) : (
+                    msg.content
+                  )}
                 </div>
               </div>
             ))}
@@ -718,7 +1015,17 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
       {activeTab === 'qa' && isAIReady && !error && (
         <div className="p-6 border-t border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950">
           <div className="flex items-center gap-2 mb-3 px-1">
-            <svg className="w-3.5 h-3.5 text-amber-500 fill-amber-500/10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m11.5 2.5 3.32 6.72 7.42 1.08-5.37 5.23 1.27 7.39-6.64-3.49-6.64 3.49 1.27-7.39-5.37-5.23 7.42-1.08L11.5 2.5Z" /></svg>
+            <svg
+              className="w-3.5 h-3.5 text-amber-500 fill-amber-500/10"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="m11.5 2.5 3.32 6.72 7.42 1.08-5.37 5.23 1.27 7.39-6.64-3.49-6.64 3.49 1.27-7.39-5.37-5.23 7.42-1.08L11.5 2.5Z" />
+            </svg>
             <p className="text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase tracking-widest">
               Note: AI can generate incorrect info. Always verify.
             </p>
@@ -748,7 +1055,19 @@ export const AIAssistant: React.FC<AIAssistantProps> = ({
                 className="absolute right-2 top-2 p-2.5 bg-violet-600 text-white rounded-xl hover:bg-violet-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 active:scale-95 transition-all shadow-lg shadow-violet-600/20"
                 title="Send Question"
               >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2.5"
+                    d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                  />
+                </svg>
               </button>
             )}
           </div>

@@ -149,7 +149,7 @@ const DbfViewer: React.FC<DbfViewerProps> = ({
   // Async filtering
   useEffect(() => {
     dispatch({ type: 'SET_SEARCH_LOADING', payload: true });
-    
+
     // Use setTimeout to allow UI to update with loading indicator
     const timer = setTimeout(() => {
       if (!tableData) {
@@ -226,7 +226,10 @@ const DbfViewer: React.FC<DbfViewerProps> = ({
         );
       }
 
-      const result = indices.map((idx) => ({ row: rows[idx], originalIndex: idx }));
+      const result = indices.map((idx) => ({
+        row: rows[idx],
+        originalIndex: idx,
+      }));
       setFilteredData(result);
       dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
     }, 50);
@@ -400,11 +403,16 @@ const DbfViewer: React.FC<DbfViewerProps> = ({
         ) : (
           <div
             style={{
-              height: Math.max(filteredData.length * ROW_HEIGHT, containerHeight),
+              height: Math.max(
+                filteredData.length * ROW_HEIGHT,
+                containerHeight
+              ),
               position: 'relative',
             }}
           >
-            <table className={`${fillWidth ? 'w-full' : 'w-min'} border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0`}>
+            <table
+              className={`${fillWidth ? 'w-full' : 'w-min'} border-collapse table-fixed absolute top-0 left-0 right-0 bottom-0`}
+            >
               <thead className="sticky top-0 z-20 shadow-sm">
                 <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
                   <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] font-black uppercase py-2 text-zinc-400">
@@ -481,9 +489,16 @@ const DbfViewer: React.FC<DbfViewerProps> = ({
                         <button
                           onClick={() => {
                             setSortConfig({ key: '', direction: null });
-                            setSlicer({ mode: 'all', value: 100, endValue: 200 });
+                            setSlicer({
+                              mode: 'all',
+                              value: 100,
+                              endValue: 200,
+                            });
                             setHiddenColumns(new Set());
-                            dispatch({ type: 'SET_GLOBAL_SEARCH_TERM', payload: '' });
+                            dispatch({
+                              type: 'SET_GLOBAL_SEARCH_TERM',
+                              payload: '',
+                            });
                           }}
                           className="px-6 py-2 border border-zinc-200 dark:border-zinc-800 rounded-full text-[9px] font-black uppercase text-violet-500 hover:bg-violet-50 transition-all"
                         >

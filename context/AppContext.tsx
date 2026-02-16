@@ -62,7 +62,12 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
           action.payload.length > 0
             ? action.payload[action.payload.length - 1].id
             : state.activeTabId,
-        isSidebarOpen: state.tabs.length === 0 ? true : (isMobile ? false : state.isSidebarOpen),
+        isSidebarOpen:
+          state.tabs.length === 0
+            ? true
+            : isMobile
+              ? false
+              : state.isSidebarOpen,
       };
     }
     case 'SET_ACTIVE_TAB':

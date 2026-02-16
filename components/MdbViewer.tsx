@@ -237,7 +237,7 @@ const MdbViewer: React.FC<MdbViewerProps> = ({
   // Async filtering
   useEffect(() => {
     dispatch({ type: 'SET_SEARCH_LOADING', payload: true });
-    
+
     // Use setTimeout to allow UI to update with loading indicator
     const timer = setTimeout(() => {
       if (!activeTable) {
@@ -299,7 +299,10 @@ const MdbViewer: React.FC<MdbViewerProps> = ({
         );
       }
 
-      const result = indices.map((idx) => ({ row: rows[idx], originalIndex: idx }));
+      const result = indices.map((idx) => ({
+        row: rows[idx],
+        originalIndex: idx,
+      }));
       setFilteredData(result);
       dispatch({ type: 'SET_SEARCH_LOADING', payload: false });
     }, 50);
@@ -478,7 +481,9 @@ const MdbViewer: React.FC<MdbViewerProps> = ({
               position: 'relative',
             }}
           >
-            <table className={`${fillWidth ? 'w-full' : 'w-min'} border-collapse table-fixed absolute top-0 left-0 right-0`}>
+            <table
+              className={`${fillWidth ? 'w-full' : 'w-min'} border-collapse table-fixed absolute top-0 left-0 right-0`}
+            >
               <thead className="sticky top-0 z-20 shadow-sm">
                 <tr className="bg-zinc-100 dark:bg-zinc-900 border-b border-zinc-200 dark:border-zinc-800">
                   <th className="w-12 border-r border-zinc-200 dark:border-zinc-800 text-[9px] text-zinc-400 font-black uppercase py-2">
@@ -558,16 +563,32 @@ const MdbViewer: React.FC<MdbViewerProps> = ({
             className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors shrink-0 mr-1 touch-manipulation"
             title="Scroll left"
             onClick={() => {
-              const container = document.getElementById('tables-tabs-container');
-              if (container) container.scrollBy({ left: -200, behavior: 'smooth' });
+              const container = document.getElementById(
+                'tables-tabs-container'
+              );
+              if (container)
+                container.scrollBy({ left: -200, behavior: 'smooth' });
             }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M15 19l-7-7 7-7"
+              />
             </svg>
           </button>
         )}
-        <div id="tables-tabs-container" className="flex gap-0 overflow-x-auto no-scrollbar flex-1">
+        <div
+          id="tables-tabs-container"
+          className="flex gap-0 overflow-x-auto no-scrollbar flex-1"
+        >
           {tables.map((table) => (
             <button
               key={table.id}
@@ -587,12 +608,25 @@ const MdbViewer: React.FC<MdbViewerProps> = ({
             className="p-2 text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-200 transition-colors shrink-0 ml-1 touch-manipulation"
             title="Scroll right"
             onClick={() => {
-              const container = document.getElementById('tables-tabs-container');
-              if (container) container.scrollBy({ left: 200, behavior: 'smooth' });
+              const container = document.getElementById(
+                'tables-tabs-container'
+              );
+              if (container)
+                container.scrollBy({ left: 200, behavior: 'smooth' });
             }}
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </button>
         )}
